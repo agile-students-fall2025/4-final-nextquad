@@ -29,7 +29,7 @@ The app map illustrates the hierarchical structure and navigation flow of the Ne
 ### 2. Dorm Feeds Section
 
 #### 2.1 Feed Default (Main Feed)
-![Feed Default](ux-design/prototype/NextQuad_Feed_Wireframes/Feed/Feed%20Default.png)
+![Feed Default](ux-design/prototype/NextQuad_Feed_Wireframes/Feed%20Default.png)
 
 **Purpose**: Main community feed where users can view and interact with campus posts.
 
@@ -54,7 +54,7 @@ The app map illustrates the hierarchical structure and navigation flow of the Ne
 
 
 #### 2.2 Feed by Category
-![Feed Categories](ux-design/prototype/NextQuad_Feed_Wireframes/Feed/Feed%20Categories.png)
+![Feed Categories](ux-design/prototype/NextQuad_Feed_Wireframes/Feed%20Categories.png)
 
 **Purpose**: Allow users to browse feed content filtered by specific topic or category.
 
@@ -74,7 +74,7 @@ The app map illustrates the hierarchical structure and navigation flow of the Ne
 
 
 #### 2.3 Feed Sort
-![Feed Sort](ux-design/prototype/NextQuad_Feed_Wireframes/Feed/Feed%20Sort%20By.png)
+![Feed Sort](ux-design/prototype/NextQuad_Feed_Wireframes/Feed%20Sort%20By.png)
 
 **Purpose**: Provide users with sorting functionality to organize posts effectively.
 
@@ -91,7 +91,7 @@ The app map illustrates the hierarchical structure and navigation flow of the Ne
 
 
 #### 2.4 Create New Post
-![Feed Create Post](ux-design/prototype/NextQuad_Feed_Wireframes/Feed/Feed%20Create%20Post.png)
+![Feed Create Post](ux-design/prototype/NextQuad_Feed_Wireframes/Feed%20Create%20Post.png)
 
 **Purpose**: Allow users to publish posts on the community feed.
 
@@ -110,7 +110,7 @@ The app map illustrates the hierarchical structure and navigation flow of the Ne
 
 
 #### 2.5 Create Post with Categories
-![Feed Create Post Categories](ux-design/prototype/NextQuad_Feed_Wireframes/Feed/Feed%20Create%20Post%20Categories.png)
+![Feed Create Post Categories](ux-design/prototype/NextQuad_Feed_Wireframes/Feed%20Create%20Post%20Categories.png)
 
 **Purpose**: Expanded version of post creation with clear category selection options.
 
@@ -126,7 +126,7 @@ The app map illustrates the hierarchical structure and navigation flow of the Ne
 
 
 #### 2.6 Feed Comments
-![Feed Comments](ux-design/prototype/NextQuad_Feed_Wireframes/Feed/Feed%20Comments.png)
+![Feed Comments](ux-design/prototype/NextQuad_Feed_Wireframes/Feed%20Comments.png)
 
 **Purpose**: Display comments for a selected post and allow users to engage in discussions.
 
@@ -402,7 +402,7 @@ To let users adjust the map scale for better navigation and focus on specific ar
 ### 5. Profile/Settings Section
 
 #### 5.1 Profile Page
-![Profile Page](ux-design/prototype/NextQuad_Profile_Wireframes/Profile_Settings/Profile%20Page.png)
+![Profile Page](ux-design/prototype/NextQuad_Profile_Wireframes/Profile%20Page.png)
 
 **Purpose**: Display user's personal information and provide access to profile customization and app settings.
 
@@ -423,7 +423,7 @@ To let users adjust the map scale for better navigation and focus on specific ar
 
 
 #### 5.2 Edit Profile Page
-![Edit Profile](ux-design/prototype/NextQuad_Profile_Wireframes/Profile_Settings/Edit%20Profile%20Page.png)
+![Edit Profile](ux-design/prototype/NextQuad_Profile_Wireframes/Edit%20Profile%20Page.png)
 
 **Purpose**: Allow users to update personal information and profile image.
 
