@@ -2,7 +2,7 @@
 
 ## Interactive Prototype
 
-🔗 **[View Interactive Prototype](https://www.figma.com/design/d9sAx6JfiaAR5zUUyGk0eo/NextQuad-Wireframes?node-id=109-2&t=hrsWrP18m1sV444F-1)**
+🔗 **[View Interactive Prototype](https://www.figma.com/proto/d9sAx6JfiaAR5zUUyGk0eo/NextQuad-Wireframes?node-id=137-198&p=f&t=X3MGksc5ebRMSdaN-1&scaling=min-zoom&content-scaling=fixed&page-id=109%3A2&starting-point-node-id=137%3A198)**
 
 This mobile prototype demonstrates the core user flows and interactions for the NextQuad MVP, including dorm feeds, event management, campus map navigation, and user account features.
 
@@ -28,8 +28,120 @@ The app map illustrates the hierarchical structure and navigation flow of the Ne
 
 ### 2. Dorm Feeds Section
 
-**[To be completed]**
+#### 2.1 Feed Default (Main Feed)
+![Feed Default](ux-design/prototype/NextQuad_Feed_Wireframes/Feed/Feed%20Default.png)
 
+**Purpose**: Main community feed where users can view and interact with campus posts.
+
+**Key Features**:
+- Category filter dropdown (“All Categories”)
+- “Sort By” menu (Latest, Oldest, Engagement)
+- “Create New Post” button
+- Search bar for posts by name or keyword
+- Post cards showing:
+  - Author name and profile image
+  - Post content preview
+  - Category tag
+  - Buttons for “Bump,” “Comment,” and “Save”
+
+**User Interactions**:
+- Scroll to browse posts
+- Tap “Bump” to boost visibility
+- Tap “Comment” to open the Comments page
+- Tap “Save” to bookmark posts
+- Tap “Create New Post” to write a new post
+- Use filters or sort options to refine post view
+
+
+#### 2.2 Feed by Category
+![Feed Categories](ux-design/prototype/NextQuad_Feed_Wireframes/Feed/Feed%20Categories.png)
+
+**Purpose**: Allow users to browse feed content filtered by specific topic or category.
+
+**Key Features**:
+- Category dropdown with options like:
+  - General
+  - Marketplace
+  - Lost and Found
+  - Roommate Request
+  - Safety Alerts
+- Filtered feed view showing relevant posts
+
+**User Interactions**:
+- Tap dropdown to select a category
+- Browse posts within the chosen category
+- Use navigation icons for app-wide movement
+
+
+#### 2.3 Feed Sort
+![Feed Sort](ux-design/prototype/NextQuad_Feed_Wireframes/Feed/Feed%20Sort%20By.png)
+
+**Purpose**: Provide users with sorting functionality to organize posts effectively.
+
+**Key Features**:
+- Sort options:
+  - Latest
+  - Oldest
+  - Engagement
+- Feed updates dynamically based on selection
+
+**User Interactions**:
+- Tap “Sort By” to view sorting options
+- Select sort order to refresh the feed view
+
+
+#### 2.4 Create New Post
+![Feed Create Post](ux-design/prototype/NextQuad_Feed_Wireframes/Feed/Feed%20Create%20Post.png)
+
+**Purpose**: Allow users to publish posts on the community feed.
+
+**Key Features**:
+- Text field for writing a post
+- “Category” selection for tagging posts
+- “Post” button to publish
+- Option to attach media (placeholder)
+- “Go Back” navigation
+
+**User Interactions**:
+- Tap text area to begin typing
+- Choose a category before posting
+- Tap “Post” to publish
+- Navigate back to feed after posting
+
+
+#### 2.5 Create Post with Categories
+![Feed Create Post Categories](ux-design/prototype/NextQuad_Feed_Wireframes/Feed/Feed%20Create%20Post%20Categories.png)
+
+**Purpose**: Expanded version of post creation with clear category selection options.
+
+**Key Features**:
+- Dropdown menu for category tags
+- Visual category indicators (General, Marketplace, etc.)
+- “Post” button confirmation
+
+**User Interactions**:
+- Select one or more categories before posting
+- Tap “Post” to confirm
+- Return to main feed upon submission
+
+
+#### 2.6 Feed Comments
+![Feed Comments](ux-design/prototype/NextQuad_Feed_Wireframes/Feed/Feed%20Comments.png)
+
+**Purpose**: Display comments for a selected post and allow users to engage in discussions.
+
+**Key Features**:
+- Post content summary
+- Comment thread list with author names
+- Input box for new comments
+- “Add comment…” text field
+- Navigation to return to feed
+
+**User Interactions**:
+- Scroll to view existing comments
+- Enter text to add a new comment
+- Tap “Post Comment” to publish
+- Tap “Go Back” or feed icon to return to main feed
 
 ### 3. Campus Map Section
 #### 3.1 Campus Map Main
@@ -289,4 +401,43 @@ To let users adjust the map scale for better navigation and focus on specific ar
 
 ### 5. Profile/Settings Section
 
-**[To be completed]**
+#### 5.1 Profile Page
+![Profile Page](ux-design/prototype/NextQuad_Profile_Wireframes/Profile_Settings/Profile%20Page.png)
+
+**Purpose**: Display user's personal information and provide access to profile customization and app settings.
+
+**Key Features**:
+- Profile image placeholder
+- User details:
+  - Name
+  - Graduation Year
+  - NYU Email
+- “Edit Profile” link for modifying personal details
+- Navigation icon to access Settings
+- “Go Back” button for navigation to previous page
+
+**User Interactions**:
+- Tap “Edit Profile” to open the Profile Edit page
+- Tap the menu icon to access app-wide navigation options
+- Tap “Go Back” to return to the previous screen
+
+
+#### 5.2 Edit Profile Page
+![Edit Profile](ux-design/prototype/NextQuad_Profile_Wireframes/Profile_Settings/Edit%20Profile%20Page.png)
+
+**Purpose**: Allow users to update personal information and profile image.
+
+**Key Features**:
+- Editable fields:
+  - Profile photo upload
+  - First Name
+  - Last Name
+  - Graduation Year
+- “Done” button to save updated profile information
+- “Go Back” link to return to the main Profile page
+
+**User Interactions**:
+- Tap the profile photo placeholder to upload a new image
+- Edit text fields to modify personal details
+- Tap “Done” to save changes and return to Profile Page
+- Tap “Go Back” to cancel edits and navigate backward
