@@ -32,8 +32,80 @@ The app map illustrates the hierarchical structure and navigation flow of the Ne
 
 
 ### 3. Campus Map Section
+#### 3.1 Campus Map Main
+![Event Main](ux-design/prototype/NextQuad_CampusMap_Wireframes/Campus_Map_Default.png)
+  
+**Purpose**:  
+To provide users with a clear and interactive map interface for exploring campus locations and accessibility features.
 
-**[To be completed]**
+**Key Features**:
+- Displays multiple **map pins** marking campus facilities and buildings.  
+- Includes a **Filter dropdown** for accessibility and other facilities customization.  
+- Features a **hamburger menu** for navigation to other app sections (Feed, Events, Profile, Settings).  
+- Zoom controls located at the bottom-right corner for easy map adjustment.
+
+**User Interactions**:
+- Tap any **map pin** to view location details.  
+- Tap **Filter** to open accessibility options.  
+- Use **zoom icons** to navigate the map at different scales.  
+- Access additional pages through the **menu icon**.
+
+#### 3.2 Campus Map Filter
+![Event Main](ux-design/prototype/NextQuad_CampusMap_Wireframes/Campus_Map_Filter.png)
+**Purpose**:  
+To allow users to customize the map view based on specific accessibility needs.
+
+**Key Features**:
+- Dropdown expands to show **checklist filters** such as:
+  - Wheelchair Accessible  
+  - Step-Free Routes  
+  - Automatic Doors  
+  - Elevator Access  
+  - Braille Signage  
+  - Hearing Loop  
+- **Save button** applies selected filters and refreshes the map view.
+
+**User Interactions**:
+- Tap on **Filter** to expand or collapse the menu.  
+- Select or deselect checkboxes to adjust preferences.  
+- Press **Save** to update the displayed locations.  
+
+#### 3.3 Campus Map Location Detail
+![Event Main](ux-design/prototype/NextQuad_CampusMap_Wireframes/Campus_Map_Loc_Clicked.png)
+![Event Main](ux-design/prototype/NextQuad_CampusMap_Wireframes/Campus_Map_Loc_Clicked_2.png)
+
+**Purpose**:  
+To display detailed information about a specific campus location selected from the map.
+
+**Key Features**:
+- **Popup card** containing:
+  - Location title and address.  
+  - Short description of the location.  
+  - **“Book Now” button** for reservable spaces.  
+- **Close icon (X)** for dismissing the card.  
+- Highlighted **purple map pin** indicating the active selection.
+
+**User Interactions**:
+- Tap a **map pin** to open the location info card.  
+- Tap **Book Now** to proceed to the booking page (external links).  
+- Tap the **close (X)** icon to close the info popup and return to the main map.  
+- Tap a non-purple **map pin** to open another location info card.
+
+#### 3.4 Campus Map Zoom In/Out
+![Event Main](ux-design/prototype/NextQuad_CampusMap_Wireframes/Campus_Map_Zoom_In.png)
+![Event Main](ux-design/prototype/NextQuad_CampusMap_Wireframes/Campus_Map_Zoom_Out.png)
+**Purpose**:  
+To let users adjust the map scale for better navigation and focus on specific areas.
+
+**Key Features**:
+- **Zoom In (+)** and **Zoom Out (-)** icons located at the bottom-right corner.  
+- Automatically adjusts visible pins and map detail based on zoom level.  
+- Preserves filter settings during zoom interactions.
+
+**User Interactions**:
+- Tap **Zoom In (+)** to magnify campus areas.  
+- Tap **Zoom Out (-)** to view a wider section of the map.  
+- Combined with panning gestures for full navigation control.
 
 
 ### 4. Events Section
