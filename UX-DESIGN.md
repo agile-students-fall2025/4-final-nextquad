@@ -51,7 +51,8 @@ To provide users with a clear and interactive map interface for exploring campus
 - Access additional pages through the **menu icon**.
 
 #### 3.2 Campus Map Filter
-![Event Main](ux-design/prototype/NextQuad_CampusMap_Wireframes/Campus_Map_Filter.png)
+![Event Main](ux-design/prototype/NextQuad_CampusMap_Wireframes/Campus_Map_Filter.png)  
+
 **Purpose**:  
 To allow users to customize the map view based on specific accessibility needs.
 
@@ -93,7 +94,8 @@ To display detailed information about a specific campus location selected from t
 
 #### 3.4 Campus Map Zoom In/Out
 ![Event Main](ux-design/prototype/NextQuad_CampusMap_Wireframes/Campus_Map_Zoom_In.png)
-![Event Main](ux-design/prototype/NextQuad_CampusMap_Wireframes/Campus_Map_Zoom_Out.png)
+![Event Main](ux-design/prototype/NextQuad_CampusMap_Wireframes/Campus_Map_Zoom_Out.png)  
+
 **Purpose**:  
 To let users adjust the map scale for better navigation and focus on specific areas.
 
