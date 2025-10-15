@@ -9,7 +9,7 @@ This mobile prototype demonstrates the core user flows and interactions for the 
 
 ## App Map
 
-![App Map](ux-design/prototype/app-map.png) # Just a placeholder here, need to upload app map .png file, route should be "ux-design/prototype/app-map.png"
+![App Map](ux-design/appmap/app_map.png) 
 
 The app map illustrates the hierarchical structure and navigation flow of the NextQuad application. The main sections include:
 
@@ -23,7 +23,136 @@ The app map illustrates the hierarchical structure and navigation flow of the Ne
 
 ### 1. User Authentication
 
-**[To be completed]**
+#### 1.1 Hello Window
+![Hello Window](ux-design/prototype/NextQuad_UserAuthentication_Wireframes/Hello%20Window.png)
+
+**Purpose**: Entry screen that allows users to choose between logging into an existing account or signing up for a new one.
+
+**Key Features**:
+- App name "NextQuad" centered at the top
+- “Log in” button
+- “Sign up” button
+
+**User Interactions**:
+- Tap “Log in” to go to the login screen
+- Tap “Sign up” to go to the registration screen
+
+#### 1.2 Sign In
+![Sign In](ux-design/prototype/NextQuad_UserAuthentication_Wireframes/Sign%20in.png)
+
+**Purpose**: Allow users to securely log in using their email and password, or via Google authentication.
+
+**Key Features**:
+- App name "NextQuad" displayed at the top
+- Page title “Sign in” with supporting instruction text
+- Email input field with envelope icon
+- Password input field with key icon
+- “Forget password?” link
+- “Log in” button
+- Divider with “or” to indicate alternative login method
+- “Sign in with Google” button featuring Google icon
+- Footer text with link: “Don’t have an account? Sign up here.”
+
+**User Interactions**:
+- Enter email and password, then tap “Log in”
+- Tap “Forget password?” to begin password recovery process
+- Tap “Sign in with Google” to authenticate via Google account
+- Tap “Sign up here” to navigate to the registration page
+
+#### 1.3 Sign Up
+![Sign Up](ux-design/prototype/NextQuad_UserAuthentication_Wireframes/Sign%20up.png)
+
+**Purpose**: Allow new users to register an account either through Google authentication or by providing an email and password.
+
+**Key Features**:
+- App name "NextQuad" displayed at the top
+- Page title “Create Your Account”
+- “Continue with Google” button with Google icon
+- Divider with “or” to indicate alternative registration method
+- Email input field with envelope icon
+- Password input field with key icon
+- Checkbox to agree to “Terms & Privacy Policy”
+- “Create Account” button
+- Footer text with link: “Already have an account? Log in here.”
+
+**User Interactions**:
+- Tap “Continue with Google” to sign up using a Google account
+- Fill in email and password fields
+- Tap checkbox to read and agree to Terms & Privacy Policy
+- Tap “Create Account” to complete registration
+- Tap “Log in here” to go to the login screen if user already has an account
+
+#### 1.4 Forget Password
+![Forget Password](ux-design/prototype/NextQuad_UserAuthentication_Wireframes/Forget%20Password.png)
+
+**Purpose**: Allow users to reset their password by entering their email to receive a verification code.
+
+**Key Features**:
+- App name "NextQuad" displayed at the top
+- Page title “Forgot your password?”
+- Instructional text prompting user to enter their email
+- Email input field with envelope icon
+- “Send” button
+
+**User Interactions**:
+- Enter email address in the input field
+- Tap “Send” to receive a password reset verification code via email
+
+#### 1.5 Code Verification
+![Verification](ux-design/prototype/NextQuad_UserAuthentication_Wireframes/Verify.png)
+
+**Purpose**: Allow users to enter a 4-digit verification code sent to their email to confirm their identity before proceeding with password reset.
+
+**Key Features**:
+- App name "NextQuad" displayed at the top
+- Page title “Verification Code”
+- Instructional text: “We have sent a verification code to your email.”
+- Four input boxes for entering each digit of the verification code
+- “Verify” button
+
+**User Interactions**:
+- Enter verification code one digit per input box
+- Tap “Verify” to submit and proceed to reset password
+
+#### 1.6 Reset Password
+![Reset Password](ux-design/prototype/NextQuad_UserAuthentication_Wireframes/Reset%20Password.png)
+
+**Purpose**: Allow users to securely create a new password after successfully verifying their identity.
+
+**Key Features**:
+- App name "NextQuad" displayed at the top
+- Page title “Set a new password”
+- Instructional text confirming successful verification
+- Input field for “New Password” with key icon
+- Input field for “Confirm Password” with key icon
+- “Reset” button
+
+**User Interactions**:
+- Enter a new password in the first input field
+- Re-enter the same password in the confirmation field
+- Tap “Reset” to submit the new password and complete the password reset process
+
+#### 1.7 Profile Setup
+![Profile Setup](ux-design/prototype/NextQuad_UserAuthentication_Wireframes/Profile%20Setup.png)
+
+**Purpose**: Collect user profile information to personalize their NextQuad experience and complete the onboarding process.
+
+**Key Features**:
+- App name "NextQuad" displayed at the top
+- Page title: “Welcome to NextQuad!”
+- Instructional subtitle: “Let’s finish setting up your profile.”
+- Profile image upload icon
+- Input field for “First name”
+- Input field for “Last name”
+- Input field for “NYU email”
+- Input field for “Graduation Year”
+- “Continue” button
+
+**User Interactions**:
+- Tap camera icon to upload or take a profile picture
+- Fill in first name, last name, NYU email, and graduation year
+- Tap “Continue” to complete profile setup and proceed to the app
+
 
 
 ### 2. Dorm Feeds Section
