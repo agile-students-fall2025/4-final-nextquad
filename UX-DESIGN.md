@@ -441,3 +441,49 @@ To let users adjust the map scale for better navigation and focus on specific ar
 - Edit text fields to modify personal details
 - Tap “Done” to save changes and return to Profile Page
 - Tap “Go Back” to cancel edits and navigate backward
+
+#### 5.3 Settings Default
+![Settings Default](ux-design/prototype/NextQuad_Settings_Wireframes/Settings%20Default.png) 
+
+**Purpose**: Allow users to customize their app settings. 
+
+**Key Features**: 
+- Action Buttons: 
+  - Notification Settings 
+  - Change Password 
+  - Privacy Policy 
+  - Log Out 
+  - Go Back 
+
+**User Interactions**: 
+- Allow user to access page their notification settings 
+- Allow user to access page to change their password 
+- Allow user to access page to view privacy policy 
+- Allow user to access page to log out of application 
+- Allow user to go to previous page 
+
+#### 5.4 Notification Settings 
+![Notification Settings](ux-design/prototype/NextQuad_Settings_Wireframes/Settings%20Toggle.png) 
+
+**Purpose**: Allow user to configure their notification settings 
+
+**Key Features**: 
+- Quickly turn on/off all notifications 
+- Customize which notifications to recieve 
+
+**User Interactions**: 
+- Toggle on and off various settings using buttons 
+- Go back to previous settings page 
+
+#### 5.5 Privacy Policy 
+![Privacy Policy](ux-design/prototype/NextQuad_Settings_Wireframes/Privacy%20Policy.png) 
+
+**Purpose**: 
+- Allow user to read over our privacy policy 
+
+**Key Features**: 
+- View privacy policy 
+
+**User Interactions**: 
+- Scroll through privacy policy 
+- Go back to previous settings page
