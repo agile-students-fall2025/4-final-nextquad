@@ -1,5 +1,5 @@
-import Header from "./components/Header";
-import MapCanvas from "./components/MapCanvas";
+import Header from "./components/campus_map/Header";
+import MapCanvas from "./components/campus_map/MapCanvas";
 import "./index.css"; 
 
 export default function App() {
