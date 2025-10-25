@@ -6,7 +6,7 @@
   background: #d9d9d9;     
 }
 
-/* pin button */
+/* map pin */
 .pin {
   position: absolute;
   transform: translate(-50%, -100%); 
@@ -22,17 +22,40 @@
   display: block;
   width: 24px;
   height: 24px;
-  filter: drop-shadow(0 1px 2px rgba(0,0,0,.35));
 }
 
-.pin-label {
-  display: inline-block;
-  margin-top: 6px;
-  padding: 2px 6px;
-  background: rgba(255,255,255,.9);
+/* floating card */
+.pin-info {
+  position: absolute;
+  transform: translate(calc(-50% + 12px), calc(-100% - 50px));
+  background: #fff;
   border: 1px solid #e5e5e5;
-  border-radius: 8px;
-  font-size: 11px;
-  color: #111;
-  white-space: nowrap;
+  border-radius: 12px;
+  padding: 20px 30px;
+  width: min(80vw, 260px);
+  z-index: 3;
 }
+
+/* location name/title */
+.pin-info h4 {
+  margin: 0 0 4px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #111;
+}
+
+/* hours and other meta info */
+.pin-info .meta { 
+  font-size: 12px;
+  color: #111;
+  margin-bottom: 6px;
+}
+
+/* description */
+.pin-info p {
+  margin: 0;
+  font-size: 12px;
+  color: #111;
+  line-height: 1.35;
+}
+
