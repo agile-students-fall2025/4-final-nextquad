@@ -1,0 +1,12 @@
+/* Page layout */
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* The area below the header */
+.app-main {
+  flex: 1;
+  display: block;
+}
