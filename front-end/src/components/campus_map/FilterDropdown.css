@@ -1,0 +1,103 @@
+:root {
+    --brand: #6B46C1;
+    --text: #333;
+    --muted: #666;
+    --card: #fff;
+    --line: #e5e5e5;
+    --shadow-lg: 0 8px 24px rgba(0,0,0,.12);
+    --shadow-sm: 0 2px 8px rgba(0,0,0,.08);
+  }
+  
+  .filter-bar {
+    position: sticky;      
+    top: var(--header-h, 56px);
+    z-index: 9;
+    background: var(--card);
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    justify-content: center;
+    padding: 10px 16px;
+  }
+  
+  .filter-wrap {
+    position: relative;
+  }
+  
+  .filter-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--card);
+    color: var(--text);
+    font-weight: 600;
+    cursor: pointer;
+    transition: box-shadow .15s ease, border-color .15s ease, opacity .15s ease;
+    box-shadow: var(--shadow-sm);
+  }
+  .filter-trigger:hover { opacity: .92; border-color: #d6d6d6; }
+  .filter-trigger:active { transform: translateY(1px); }
+  
+  .chev { transition: transform .15s ease; }
+  .chev.rot { transform: rotate(180deg); }
+  
+  /* The dropdown card */
+  .filter-panel {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(92vw, 360px);
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    box-shadow: var(--shadow-lg);
+    padding: 12px;
+    z-index: 1000;
+  }
+  
+  .filter-list {
+    display: grid;
+    gap: 10px;
+    max-height: 50vh;
+    overflow: auto;
+  }
+  
+  .filter-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 8px;
+    border-radius: 10px;
+    transition: background-color .15s ease;
+  }
+  .filter-item:hover { background: #f9f9ff; }
+  
+  .filter-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding-top: 10px;
+  }
+  
+  .btn {
+    border: 1px solid var(--line);
+    background: var(--card);
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity .15s ease, transform .15s ease, box-shadow .15s ease;
+    box-shadow: var(--shadow-sm);
+  }
+  .btn:hover { opacity: .92; }
+  .btn:active { transform: translateY(1px); }
+  
+  .btn.primary {
+    background: var(--brand);
+    color: #fff;
+    border-color: var(--brand);
+  }
+  
