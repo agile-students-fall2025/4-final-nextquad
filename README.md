@@ -37,7 +37,32 @@ Our team came together in Oct 2025 as part of the Agile Software Development & D
 Please read our [CONTRIBUTING.md](./CONTRIBUTING.md) for details on our team workflow, development setup, and how to submit contributions.
 
 ## Building and Testing
-*[Will be updated after Sprint 1]*
+
+### Sprint 1 - Frontend Development
+
+**Prerequisites:**
+- Node.js (v14 or higher)
+- npm (comes with Node.js)
+
+**Setup and Run:**
+```bash
+# Navigate to frontend directory
+cd front-end
+
+# Install dependencies
+npm install
+
+# Start development server
+npm start
+```
+
+The application will open automatically at `http://localhost:3000`
+
+**Running Tests: (Not completed yet)**
+```bash
+# Run test suite [This will be completed after sprint 2]
+npm test
+```
 
 ## Additional Documentation
 

@@ -1,13 +1,21 @@
 import { getUserRSVPedEvents } from '../../data/Events/mockEventData';
-import { styles } from './eventStyles';
+import './MyEvents.css';
 
 export default function MyEvents({ navigateTo }) {
   // TODO Sprint 2: Replace with backend API call
   // GET /api/events/user/rsvps - Get events user has RSVP'd to (attending)
-  const rsvpedEvents = getUserRSVPedEvents();
+  const allRsvpedEvents = getUserRSVPedEvents();
+  
+  // Filter to only show upcoming events (not past events)
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const rsvpedEvents = allRsvpedEvents.filter(event => {
+    const eventDate = new Date(event.date);
+    return eventDate >= today;
+  });
 
   return (
-    <div style={styles.container}>
+    <div className="my-events-container">
       {/* Quick Navigation Bar */}
       <div style={{
         display: 'flex',
@@ -55,22 +63,22 @@ export default function MyEvents({ navigateTo }) {
           }}
           onClick={() => navigateTo('rsvps')}
         >
-           My RSVPs
+          My RSVPs
         </button>
       </div>
 
-      <div style={styles.myEventsContent}>
+      <div className="my-events-content">
         {/* Upcoming Events - Shows events user has RSVP'd to (ATTENDING) */}
-        <div style={styles.eventSection}>
-          <h2 style={styles.sectionHeader}>Upcoming Events (Attending)</h2>
+        <div className="my-events-section">
+          <h2 className="my-events-section-header">Upcoming Events (Attending)</h2>
           {rsvpedEvents.length > 0 ? (
             rsvpedEvents.map(event => (
-              <div key={event.id} style={styles.myEventCard}>
-                <h3 style={styles.myEventTitle}>{event.title}</h3>
-                <p style={styles.myEventInfo}> {event.date} at {event.time}</p>
-                <p style={styles.myEventInfo}> {event.location}</p>
+              <div key={event.id} className="my-events-card">
+                <h3 className="my-events-card-title">{event.title}</h3>
+                <p className="my-events-card-info">{event.date} at {event.time}</p>
+                <p className="my-events-card-info">{event.location}</p>
                 <button 
-                  style={styles.secondaryButton} 
+                  className="my-events-button"
                   onClick={() => navigateTo('detail', event.id)}
                 >
                   View Details
@@ -78,18 +86,18 @@ export default function MyEvents({ navigateTo }) {
               </div>
             ))
           ) : (
-            <p style={styles.emptyText}>No upcoming events</p>
+            <p className="my-events-empty">No upcoming events</p>
           )}
         </div>
 
         {/* Past Events */}
-        <div style={styles.eventSection}>
-          <h2 style={styles.sectionHeader}>Past Events</h2>
-          <div style={styles.myEventCard}>
-            <h3 style={styles.myEventTitle}>Tech Talk: AI in Healthcare</h3>
-            <p style={styles.myEventInfo}> Oct 20, 2025</p>
+        <div className="my-events-section">
+          <h2 className="my-events-section-header">Past Events</h2>
+          <div className="my-events-card">
+            <h3 className="my-events-card-title">Tech Talk: AI in Healthcare</h3>
+            <p className="my-events-card-info">Oct 20, 2025</p>
             <button 
-              style={styles.secondaryButton} 
+              className="my-events-button"
               onClick={() => navigateTo('analytics')}
             >
               View Stats
@@ -100,3 +108,4 @@ export default function MyEvents({ navigateTo }) {
     </div>
   );
 }
+

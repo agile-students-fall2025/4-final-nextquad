@@ -68,6 +68,40 @@ export const mockEvents = [
     },
     isUserHost: false,
     hasUserRSVPed: false
+  },
+  {
+    id: 5,
+    title: "Networking Mixer",
+    date: "2025-10-22",
+    time: "6:00 PM",
+    location: "Stern School, Rooftop Terrace",
+    category: ["Career", "Social"],
+    rsvpCount: 38,
+    description: "Connect with fellow students and alumni in a casual networking environment. Light refreshments will be served. Great opportunity to expand your professional network!",
+    image: "https://picsum.photos/seed/networking/400/300",
+    host: { 
+      name: "Business Network Club", 
+      avatar: "https://picsum.photos/seed/bnc/50/50" 
+    },
+    isUserHost: false,
+    hasUserRSVPed: true
+  },
+  {
+    id: 6,
+    title: "Fall Music Festival 2",
+    date: "2025-10-26",
+    time: "7:00 PM",
+    location: "Kimmel Center",
+    category: ["Music", "Social"],
+    rsvpCount: 67,
+    description: "The second installment of our Fall Music Festival! Enjoy an evening of live performances from talented student musicians and bands. This event features a diverse lineup including jazz, indie rock, and acoustic performances.",
+    image: "https://picsum.photos/seed/festival2/400/300",
+    host: { 
+      name: "NYU Events Team", 
+      avatar: "https://picsum.photos/50/50?random=10" 
+    },
+    isUserHost: false,
+    hasUserRSVPed: true
   }
 ];
 
