@@ -1,38 +1,17 @@
-:root {
-    --header-h: 56px;
-  }
-  
-  .header {
-    height: var(--header-h);
-    background: #fff;
-    border-bottom: 1px solid #e5e5e5;
-    display: flex;
-    align-items: center;
-    padding: 0 12px;
-    position: sticky;
-    top: 0;
-    z-index: 10;
-  }
-  
-  .header-title {
-    margin: 0 auto;
-    font-weight: 600;
-  }
+.header {
+  background: white;
+  color: black;
+  padding: 24px 32px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+}
 
-  .hamburger {
-    display: inline-flex;
-    flex-direction: column;
-    gap: 4px;
-    padding: 8px;
-    border: 0;
-    background: transparent;
-    cursor: pointer;
-  }
-  
-  .hamburger span {
-    width: 20px;
-    height: 2px;
-    background: #222;
-    display: block;
-  }
-  
+.header-title {
+  margin: 0;
+  font-size: 28px;    
+  font-weight: 600;
+  line-height: 1.2;
+}

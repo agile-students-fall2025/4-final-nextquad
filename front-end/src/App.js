@@ -15,6 +15,10 @@ import RSVPsDashboard from './components/Events/RSVPsDashboard';
 import EventCheckIn from './components/Events/EventCheckIn';
 import EventSurvey from './components/Events/EventSurvey';
 import EventAnalytics from './components/Events/EventAnalytics';
+import FilterDropdown from './components/campus_map/FilterDropdown';
+import { CATEGORIES } from './data/campus_map/mapPoints';
+import './components/campus_map/FilterDropdown.css';
+
 
 export default function App() {
   const [activeModule, setActiveModule] = useState('events');
@@ -24,6 +28,8 @@ export default function App() {
   // TODO Sprint 2: This will be managed by backend session/auth
   // For now, we track RSVP'd events in local state
   const [rsvpedEventIds, setRsvpedEventIds] = useState([2, 3]); // Mock: user has RSVP'd to events 2 and 3
+  const allIds = useMemo(() => CATEGORIES.map(c => c.id), []);
+  const [activeCats, setActiveCats] = useState(new Set(allIds));
 
   const selectedEvent = useMemo(
     () => mockEvents.find((event) => event.id === selectedEventId) || null,
@@ -97,8 +103,14 @@ export default function App() {
     return (
       <div className="map-wrapper">
         <Header />
+        <div className="filter-bar">
+          <FilterDropdown
+            value={activeCats}
+            onSave={(nextSet) => setActiveCats(new Set(nextSet))}  
+          />
+        </div>
         <div className="map-canvas-region">
-          <MapCanvas />
+          <MapCanvas activeCategories={activeCats} />
         </div>
       </div>
     );
@@ -139,4 +151,3 @@ export default function App() {
     </div>
   );
 }
-

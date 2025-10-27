@@ -1,61 +1,137 @@
-.map-canvas {
-  position: relative;   
-  width: 100%;
-  height: calc(100vh - var(--header-h, 56px));
-  min-height: 60vh;      
-  background: #d9d9d9;     
+:root {
+  --brand: #6B46C1;
+  --text: #333;
+  --muted: #666;
+  --card: #fff;
+  --line: #e5e5e5;
+  --shadow-lg: 0 8px 24px rgba(0,0,0,.12);
+  --shadow-sm: 0 2px 8px rgba(0,0,0,.08);
+  --header-h: 56px;
+
+  /* Info box offset */
+  --pin-info-shift-x: 12px;   /* + right, - left */
+  --pin-info-shift-y: -6px;   /* + down,  - up   */
 }
 
-/* map pin */
+/* region container (you already wrap this in .map-canvas-region) */
+.map-canvas {
+  position: relative;
+  width: 100%;
+  min-height: 60vh;
+  background: #f0e7ff;        /* placeholder map background */
+  overflow: hidden;            /* hide scaled overflow edges */
+  box-shadow: var(--shadow-sm);
+}
+
+/* scaled inner layer; pins live inside this */
+.map-inner {
+  position: relative;
+  width: 100%;
+  height: calc(100vh - var(--header-h) - 56px); /* header + filter approx */
+  min-height: 60vh;
+  transform-origin: center center;
+  will-change: transform;
+}
+
+/* Pin container at % coordinate */
 .pin {
   position: absolute;
-  transform: translate(-50%, -100%); 
+  transform: translate(-50%, -100%);
+  z-index: 2;
+}
+
+/* Clickable icon button */
+.pin-btn {
   border: 0;
   background: transparent;
   padding: 0;
   cursor: pointer;
-  text-align: center;
-  z-index: 2;
+  display: inline-grid;
+  place-items: center;
+  transition: transform .1s ease;
 }
+.pin-btn:active { transform: translateY(1px); }
 
 .pin-img {
   display: block;
   width: 24px;
   height: 24px;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.35));
 }
 
-/* floating card */
+/* Floating info card (no arrow), scales with the map */
 .pin-info {
   position: absolute;
-  transform: translate(calc(-50% + 12px), calc(-100% - 50px));
-  background: #fff;
-  border: 1px solid #e5e5e5;
+  transform: translate(
+    calc(-50% + var(--pin-info-shift-x)),
+    calc(-100% - 10px + var(--pin-info-shift-y))
+  );
+  background: var(--card);
+  border: 1px solid var(--line);
   border-radius: 12px;
-  padding: 20px 30px;
-  width: min(80vw, 260px);
+  box-shadow: var(--shadow-lg);
+  padding: 12px 14px;
+  width: min(86vw, 280px);
   z-index: 3;
 }
 
-/* location name/title */
-.pin-info h4 {
-  margin: 0 0 4px 0;
-  font-size: 14px;
-  font-weight: 600;
-  color: #111;
+.pin-info-title {
+  margin: 0 0 6px 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: .2px;
 }
 
-/* hours and other meta info */
-.pin-info .meta { 
-  font-size: 12px;
-  color: #111;
-  margin-bottom: 6px;
+.pin-info .meta {
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 8px;
 }
 
-/* description */
-.pin-info p {
+.pin-info-desc {
   margin: 0;
-  font-size: 12px;
-  color: #111;
-  line-height: 1.35;
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.55;
 }
 
+/* Zoom controls (top-right overlay) */
+.zoom-controls {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  background: rgba(255,255,255,.9);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+  z-index: 5;
+  backdrop-filter: saturate(1.2) blur(2px);
+}
+
+.zoom-btn,
+.zoom-reset {
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--text);
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity .15s ease, transform .1s ease;
+}
+.zoom-btn:hover,
+.zoom-reset:hover { opacity: .9; }
+.zoom-btn:active,
+.zoom-reset:active { transform: translateY(1px); }
+
+.zoom-indicator {
+  min-width: 48px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--muted);
+}
