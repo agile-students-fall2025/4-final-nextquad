@@ -1,0 +1,74 @@
+.my-events-container {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+  padding-bottom: 20px;
+}
+
+.my-events-content {
+  padding: 32px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.my-events-section {
+  margin-bottom: 40px;
+}
+
+.my-events-section-header {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.my-events-card {
+  background-color: white;
+  padding: 24px;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  transition: box-shadow 0.2s ease;
+}
+
+.my-events-card:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+}
+
+.my-events-card-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+  color: #333;
+}
+
+.my-events-card-info {
+  font-size: 15px;
+  color: #666;
+  margin: 6px 0;
+}
+
+.my-events-button {
+  padding: 12px 24px;
+  background-color: white;
+  color: #6B46C1;
+  border: 1px solid #6B46C1;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 12px;
+  transition: all 0.2s ease;
+}
+
+.my-events-button:hover {
+  background-color: #6B46C1;
+  color: white;
+}
+
+.my-events-empty {
+  text-align: center;
+  color: #999;
+  font-size: 15px;
+  padding: 40px;
+}
+

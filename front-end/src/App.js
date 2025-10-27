@@ -67,12 +67,11 @@ export default function App() {
     switch (currentPage) {
       case 'detail':
         return (
-          <EventDetail
-            event={selectedEvent}
+          <EventDetail 
+            event={selectedEvent} 
             navigateTo={navigateTo}
             onRSVP={handleRSVP}
             previousPage={previousPage}
-            hideRSVPButton={selectedEvent?.isUserHost} // Hide RSVP button if user is the host
           />
         );
       case 'rsvp-confirm':

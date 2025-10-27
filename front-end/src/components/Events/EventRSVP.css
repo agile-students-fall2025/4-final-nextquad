@@ -1,0 +1,100 @@
+.event-rsvp-container {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+  padding-bottom: 20px;
+}
+
+.event-rsvp-header {
+  background-color: #6B46C1;
+  color: white;
+  padding: 24px 32px;
+  text-align: center;
+  position: relative;
+}
+
+.event-rsvp-title {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 600;
+}
+
+.event-rsvp-content {
+  padding: 60px 40px;
+  text-align: center;
+  background-color: white;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.event-rsvp-checkmark {
+  width: 80px;
+  height: 80px;
+  border-radius: 40px;
+  background-color: #4CAF50;
+  color: white;
+  font-size: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+}
+
+.event-rsvp-success-title {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+  color: #333;
+}
+
+.event-rsvp-success-text {
+  font-size: 16px;
+  color: #666;
+  margin-bottom: 32px;
+}
+
+.event-rsvp-event-card {
+  background-color: #f9f9f9;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.event-rsvp-event-image {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.event-rsvp-event-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+  color: #333;
+}
+
+.event-rsvp-event-info {
+  font-size: 14px;
+  color: #666;
+  margin: 4px 0;
+}
+
+.event-rsvp-button {
+  width: 100%;
+  max-width: 400px;
+  padding: 16px;
+  background-color: #6B46C1;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.event-rsvp-button:hover {
+  background-color: #5a3ba1;
+}
+

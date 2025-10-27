@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { mockEvents, categories } from '../../data/Events/mockEventData';
-import { styles } from './eventStyles';
+import './EventMain.css';
 
 export default function EventMain({ navigateTo }) {
   const [searchTerm, setSearchTerm] = useState('');
@@ -25,7 +25,12 @@ export default function EventMain({ navigateTo }) {
   const filteredEvents = mockEvents.filter(event => {
     const matchesSearch = event.title.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'All' || event.category.includes(selectedCategory);
-    return matchesSearch && matchesCategory;
+    // Filter out past events (only show upcoming events)
+    const eventDate = new Date(event.date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset time to compare only dates
+    const isUpcoming = eventDate >= today;
+    return matchesSearch && matchesCategory && isUpcoming;
   });
 
   const sortedEvents = [...filteredEvents].sort((a, b) => {
@@ -36,7 +41,7 @@ export default function EventMain({ navigateTo }) {
   });
 
   return (
-    <div style={styles.container}>
+    <div className="event-main-container">
       {/* Quick Navigation Bar */}
       <div style={{
         display: 'flex',
@@ -90,12 +95,12 @@ export default function EventMain({ navigateTo }) {
         </button>
       </div>
 
-      <div style={styles.controls}>
-        <div style={styles.filterRow}>
+      <div className="event-main-controls">
+        <div className="event-main-filter-row">
           {/* Category Dropdown */}
-          <div style={styles.sortContainer}>
+          <div className="event-main-sort-container">
             <button 
-              style={styles.sortButton} 
+              className="event-main-sort-button"
               onClick={(e) => {
                 e.stopPropagation();
                 setShowCategoryMenu(!showCategoryMenu);
@@ -105,11 +110,11 @@ export default function EventMain({ navigateTo }) {
               Category: {selectedCategory} ▼
             </button>
             {showCategoryMenu && (
-              <div style={styles.sortMenu}>
+              <div className="event-main-sort-menu">
                 {categories.map(cat => (
                   <div 
                     key={cat} 
-                    style={styles.sortOption} 
+                    className="event-main-sort-option"
                     onClick={() => { 
                       setSelectedCategory(cat); 
                       setShowCategoryMenu(false); 
@@ -123,9 +128,9 @@ export default function EventMain({ navigateTo }) {
           </div>
           
           {/* Sort Dropdown */}
-          <div style={styles.sortContainer}>
+          <div className="event-main-sort-container">
             <button 
-              style={styles.sortButton} 
+              className="event-main-sort-button"
               onClick={(e) => {
                 e.stopPropagation();
                 setShowSortMenu(!showSortMenu);
@@ -135,11 +140,11 @@ export default function EventMain({ navigateTo }) {
               Sort: {sortBy} ▼
             </button>
             {showSortMenu && (
-              <div style={styles.sortMenu}>
+              <div className="event-main-sort-menu">
                 {['Latest', 'Oldest', 'Engagement'].map(option => (
                   <div 
                     key={option} 
-                    style={styles.sortOption} 
+                    className="event-main-sort-option"
                     onClick={() => { 
                       setSortBy(option); 
                       setShowSortMenu(false); 
@@ -156,34 +161,34 @@ export default function EventMain({ navigateTo }) {
         <input 
           type="text" 
           placeholder="Search events..." 
-          style={styles.searchInput} 
+          className="event-main-search-input"
           value={searchTerm} 
           onChange={(e) => setSearchTerm(e.target.value)} 
         />
         <button 
-          style={styles.createButton} 
+          className="event-main-create-button"
           onClick={() => navigateTo('create')}
         >
           + Create New Event
         </button>
       </div>
 
-      <div className="event-list" style={styles.eventList}>
+      <div className="event-list">
         {sortedEvents.map(event => (
           <div 
             key={event.id} 
-            style={styles.eventCard} 
+            className="event-card"
             onClick={() => navigateTo('detail', event.id)}
           >
-            <img src={event.image} alt={event.title} style={styles.eventImage} />
-            <div style={styles.eventContent}>
-              <h3 style={styles.eventTitle}>{event.title}</h3>
-              <p style={styles.eventInfo}> {event.date} • {event.time}</p>
-              <p style={styles.eventInfo}> {event.location}</p>
-              <p style={styles.eventRsvp}> {event.rsvpCount} going</p>
-              <div style={styles.tags}>
+            <img src={event.image} alt={event.title} className="event-card-image" />
+            <div className="event-card-content">
+              <h3 className="event-card-title">{event.title}</h3>
+              <p className="event-card-info"> {event.date} • {event.time}</p>
+              <p className="event-card-info"> {event.location}</p>
+              <p className="event-card-rsvp"> {event.rsvpCount} going</p>
+              <div className="event-card-tags">
                 {event.category.map(cat => (
-                  <span key={cat} style={styles.tag}>#{cat}</span>
+                  <span key={cat} className="event-card-tag">#{cat}</span>
                 ))}
               </div>
             </div>
@@ -193,3 +198,4 @@ export default function EventMain({ navigateTo }) {
     </div>
   );
 }
+
