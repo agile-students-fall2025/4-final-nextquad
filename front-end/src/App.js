@@ -18,6 +18,7 @@ import EventAnalytics from './components/Events/EventAnalytics';
 import FilterDropdown from './components/campus_map/FilterDropdown';
 import { CATEGORIES } from './data/campus_map/mapPoints';
 import './components/campus_map/FilterDropdown.css';
+import Settings from './components/Settings/Settings';
 
 
 export default function App() {
@@ -95,10 +96,11 @@ export default function App() {
   };
 
   const renderActiveModule = () => {
-    if (activeModule === 'events') {
-      return <div className="events-wrapper">{renderEventPage()}</div>;
-    }
+  if (activeModule === 'events') {
+    return <div className="events-wrapper">{renderEventPage()}</div>;
+  }
 
+  if (activeModule === 'map') {
     return (
       <div className="map-wrapper">
         <Header />
@@ -113,7 +115,19 @@ export default function App() {
         </div>
       </div>
     );
-  };
+  }
+
+  if (activeModule === 'settings') {
+    return (
+      <div className="settings-wrapper">
+        <Settings navigateTo={(page) => setActiveModule(page)} />
+      </div>
+    );
+  }
+
+  return null;
+};
+
 
   const handleModuleChange = (module) => {
     setActiveModule(module);
@@ -130,7 +144,8 @@ export default function App() {
         <div className="tab-bar-title">NextQuad</div>
         {[
           { id: 'events', label: 'Events' },
-          { id: 'map', label: 'Campus Map' }
+          { id: 'map', label: 'Campus Map' },
+          { id: 'settings', label: 'Settings' }
         ].map((module) => (
           <button
             key={module.id}
