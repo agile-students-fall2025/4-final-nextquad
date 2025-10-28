@@ -4,8 +4,6 @@
     --muted: #666;
     --card: #fff;
     --line: #e5e5e5;
-    --shadow-lg: 0 8px 24px rgba(0,0,0,.12);
-    --shadow-sm: 0 2px 8px rgba(0,0,0,.08);
   }
   
   .filter-bar {
@@ -27,21 +25,15 @@
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 10px 16px;
+    padding: 10px 200px;
     border-radius: 999px;
     border: 1px solid var(--line);
     background: var(--card);
     color: var(--text);
     font-weight: 600;
     cursor: pointer;
-    transition: box-shadow .15s ease, border-color .15s ease, opacity .15s ease;
-    box-shadow: var(--shadow-sm);
   }
-  .filter-trigger:hover { opacity: .92; border-color: #d6d6d6; }
-  .filter-trigger:active { transform: translateY(1px); }
   
-  .chev { transition: transform .15s ease; }
-  .chev.rot { transform: rotate(180deg); }
   
   /* The dropdown card */
   .filter-panel {
@@ -53,7 +45,6 @@
     background: var(--card);
     border: 1px solid var(--line);
     border-radius: 12px;
-    box-shadow: var(--shadow-lg);
     padding: 12px;
     z-index: 1000;
   }
@@ -88,9 +79,6 @@
     padding: 10px 14px;
     border-radius: 10px;
     font-weight: 600;
-    cursor: pointer;
-    transition: opacity .15s ease, transform .15s ease, box-shadow .15s ease;
-    box-shadow: var(--shadow-sm);
   }
   .btn:hover { opacity: .92; }
   .btn:active { transform: translateY(1px); }

@@ -5,7 +5,7 @@ import { POINTS } from "../../data/campus_map/mapPoints";
 
 export default function MapCanvas({ activeCategories }) {
   const [openId, setOpenId] = useState(null);
-  const [zoom, setZoom] = useState(1); 
+  const [zoom, setZoom] = useState(1);
   const canvasRef = useRef(null);
 
   const Z_MIN = 0.75;
@@ -28,7 +28,7 @@ export default function MapCanvas({ activeCategories }) {
     return () => document.removeEventListener("mousedown", onDocClick);
   }, []);
 
-  // Keyboard shortcuts: +/-/0
+  // Keyboard shortcuts: +/-
   useEffect(() => {
     const onKey = (e) => {
       if (e.key === "+" || e.key === "=") zoomIn();
@@ -39,10 +39,8 @@ export default function MapCanvas({ activeCategories }) {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  // Double-click to zoom in
   const onDoubleClick = () => zoomIn();
 
-  // Filter points by categories (show if any category matches)
   const visible = useMemo(() => {
     if (!(activeCategories instanceof Set)) return POINTS;
     return POINTS.filter((p) => p.categories?.some((c) => activeCategories.has(c)));
@@ -51,6 +49,8 @@ export default function MapCanvas({ activeCategories }) {
   const onPinClick = (id) => {
     setOpenId((cur) => (cur === id ? null : id));
   };
+
+  const closeCard = () => setOpenId(null);
 
   return (
     <div className="map-canvas" ref={canvasRef} onDoubleClick={onDoubleClick}>
@@ -67,7 +67,7 @@ export default function MapCanvas({ activeCategories }) {
           return (
             <div
               key={p.id}
-              className="pin"
+              className={`pin ${isOpen ? "is-open" : ""}`}
               style={{ left: `${p.x}%`, top: `${p.y}%` }}
             >
               <button
@@ -82,11 +82,32 @@ export default function MapCanvas({ activeCategories }) {
 
               {isOpen && (
                 <div className="pin-info" role="dialog" aria-label={`${p.title} information`}>
+                  <button
+                    type="button"
+                    className="pin-info-close"
+                    aria-label="Close"
+                    onClick={closeCard}
+                  >
+                    X
+                  </button>
+
                   <h4 className="pin-info-title">{p.title}</h4>
                   {p.hours ? <div className="meta">Hours: {p.hours}</div> : null}
                   <p className="pin-info-desc">
                     {p.desc ?? "Lorem ipsum dolor sit amet, consectetur adipisicing elit."}
                   </p>
+
+                  <div className="pin-info-actions">
+                    <a
+                      className="pin-info-link-btn"
+                      href={""}  // placeholder link
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={`Reserve at ${p.title}`}
+                    >
+                      Reserve
+                    </a>
+                  </div>
                 </div>
               )}
             </div>

@@ -7,40 +7,41 @@
   --shadow-lg: 0 8px 24px rgba(0,0,0,.12);
   --shadow-sm: 0 2px 8px rgba(0,0,0,.08);
   --header-h: 56px;
-
-  /* Info box offset */
-  --pin-info-shift-x: 12px;   /* + right, - left */
-  --pin-info-shift-y: -6px;   /* + down,  - up   */
+  --pin-info-shift-x: 0px;   /* + right, - left  */
+  --pin-info-shift-y: -6px;  /* + down,  - up    */
 }
 
-/* region container (you already wrap this in .map-canvas-region) */
 .map-canvas {
   position: relative;
   width: 100%;
   min-height: 60vh;
-  background: #f0e7ff;        /* placeholder map background */
-  overflow: hidden;            /* hide scaled overflow edges */
+  background: #f0e7ff; 
+  overflow: visible;
   box-shadow: var(--shadow-sm);
 }
 
-/* scaled inner layer; pins live inside this */
 .map-inner {
   position: relative;
   width: 100%;
-  height: calc(100vh - var(--header-h) - 56px); /* header + filter approx */
+  height: calc(100vh - var(--header-h) - 56px); 
   min-height: 60vh;
   transform-origin: center center;
   will-change: transform;
 }
 
-/* Pin container at % coordinate */
+/* map pins */
 .pin {
   position: absolute;
+  left: 0; top: 0;
   transform: translate(-50%, -100%);
-  z-index: 2;
+  z-index: 0; /* baseline under any open pin */
 }
 
-/* Clickable icon button */
+.pin.is-open {
+  z-index: 10000;
+}
+
+/*Clickable icon button */
 .pin-btn {
   border: 0;
   background: transparent;
@@ -48,8 +49,11 @@
   cursor: pointer;
   display: inline-grid;
   place-items: center;
-  transition: transform .1s ease;
+  transition: transform .1s ease, opacity .15s ease;
+  position: relative;
+  z-index: 0;
 }
+.pin-btn:hover { opacity: 0.95; }
 .pin-btn:active { transform: translateY(1px); }
 
 .pin-img {
@@ -57,26 +61,39 @@
   width: 24px;
   height: 24px;
   filter: drop-shadow(0 1px 2px rgba(0,0,0,.35));
+  pointer-events: none;
 }
 
-/* Floating info card (no arrow), scales with the map */
 .pin-info {
   position: absolute;
-  transform: translate(
-    calc(-50% + var(--pin-info-shift-x)),
-    calc(-100% - 10px + var(--pin-info-shift-y))
-  );
+  transform: translate(calc(-50% + var(--pin-info-shift-x)), calc(-100% + var(--pin-info-shift-y)));
+  min-width: 220px;
+  max-width: 280px;
   background: var(--card);
-  border: 1px solid var(--line);
+  color: var(--text);
   border-radius: 12px;
-  box-shadow: var(--shadow-lg);
-  padding: 12px 14px;
-  width: min(86vw, 280px);
-  z-index: 3;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+  padding: 12px 12px 14px;
+  z-index: 1;
 }
 
+
+.pin-info-close {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  border: none;
+  background: transparent;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--muted);
+}
+.pin-info-close:hover { color: #000; }
+
+
 .pin-info-title {
-  margin: 0 0 6px 0;
+  margin: 0 24px 6px 0; 
   font-size: 16px;
   font-weight: 700;
   color: var(--text);
@@ -96,7 +113,28 @@
   line-height: 1.55;
 }
 
-/* Zoom controls (top-right overlay) */
+
+.pin-info-actions {
+  margin-top: 10px;
+  display: flex;
+  gap: 8px;
+}
+
+.pin-info-link-btn {
+  display: inline-block;
+  text-decoration: none;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--brand);
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
+}
+.pin-info-link-btn:hover { background: #faf7ff; }
+.pin-info-link-btn:active { transform: translateY(1px); }
+
+
 .zoom-controls {
   position: absolute;
   top: 12px;
@@ -109,7 +147,7 @@
   border: 1px solid var(--line);
   border-radius: 12px;
   box-shadow: var(--shadow-sm);
-  z-index: 5;
+  z-index: 5; 
   backdrop-filter: saturate(1.2) blur(2px);
 }
 
@@ -122,10 +160,11 @@
   border-radius: 8px;
   font-weight: 700;
   cursor: pointer;
-  transition: opacity .15s ease, transform .1s ease;
+  transition: opacity .15s ease, transform .1s ease, box-shadow .15s ease;
+  box-shadow: var(--shadow-sm);
 }
 .zoom-btn:hover,
-.zoom-reset:hover { opacity: .9; }
+.zoom-reset:hover { opacity: .95; }
 .zoom-btn:active,
 .zoom-reset:active { transform: translateY(1px); }
 
@@ -134,4 +173,17 @@
   text-align: center;
   font-size: 12px;
   color: var(--muted);
+}
+
+@media (max-width: 480px) {
+  .pin-info {
+    min-width: 200px;
+    max-width: 240px;
+  }
+  .zoom-controls {
+    top: 8px;
+    right: 8px;
+    gap: 6px;
+    padding: 6px;
+  }
 }
