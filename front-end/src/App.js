@@ -19,6 +19,7 @@ import FilterDropdown from './components/campus_map/FilterDropdown';
 import { CATEGORIES } from './data/campus_map/mapPoints';
 import './components/campus_map/FilterDropdown.css';
 import Settings from './components/Settings/Settings';
+import ChangePasswordForm from './components/Settings/ChangePassword';
 
 
 export default function App() {
@@ -116,11 +117,20 @@ export default function App() {
       </div>
     );
   }
-
+//SETTINGS MODULE
+  // main settings page 
   if (activeModule === 'settings') {
     return (
       <div className="settings-wrapper">
         <Settings navigateTo={(page) => setActiveModule(page)} />
+      </div>
+    );
+  }
+  // change password page
+  if (activeModule === 'changePassword') {
+    return (
+      <div className="change-password-wrapper">
+        <ChangePasswordForm navigateTo={(page) => setActiveModule(page)} />
       </div>
     );
   }

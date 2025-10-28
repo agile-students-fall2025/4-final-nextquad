@@ -8,6 +8,11 @@ export default function Settings({ navigateTo }) {
     navigateTo('home');
   };
 
+  const handleChangePassword = () => {
+    console.log('Navigating to Change Password');
+    navigateTo('changePassword');
+  }
+
   return (
     <div className="settings-container">
       {/* Header */}
@@ -18,7 +23,7 @@ export default function Settings({ navigateTo }) {
       {/* Settings Buttons */}
       <div className="settings-content">
         <button className="settings-button">Notification Settings</button>
-        <button className="settings-button">Change Password</button>
+        <button className="settings-button" onClick={handleChangePassword}>Change Password</button>
         <button className="settings-button">Privacy Policy</button>
         <button className="logout-button" onClick={handleLogout}>Log Out</button>
       </div>
