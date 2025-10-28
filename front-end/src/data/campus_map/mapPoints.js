@@ -1,4 +1,3 @@
-// Map locations
 // Map locations (50 total, all family names)
 export const POINTS = [
   { id: 1,  title: "Smith",        x: 18, y: 22, hours: "8:00-22:00",   desc: "Etiam porta sem malesuada.",             categories: ["wheelchair", "elevator", "autodoor", "hearingloop"] },
