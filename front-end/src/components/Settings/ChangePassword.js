@@ -9,7 +9,7 @@ export default function ChangePasswordForm({ navigateTo }) {
 
     // Navigate back to login after short delay
     setTimeout(() => {
-      if (navigateTo) navigateTo('login');
+      if (navigateTo) navigateTo('auth');
     }, 1500);
   };
 
