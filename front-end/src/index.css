@@ -16,6 +16,9 @@ code {
 .event-list {
   display: grid !important;
   gap: 24px !important;
+  padding: 24px 32px !important;
+  align-items: start !important;
+  justify-items: stretch !important;
 }
 
 @media (min-width: 1200px) {

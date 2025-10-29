@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import './EventSurvey.css';
 
-export default function EventSurvey({ navigateTo }) {
+export default function EventSurvey({ navigateTo, event }) {
   const [rating, setRating] = useState(0);
   const [feedback, setFeedback] = useState('');
 
@@ -15,6 +15,23 @@ export default function EventSurvey({ navigateTo }) {
     navigateTo('main');
   };
 
+  // If no event is provided, show a fallback
+  if (!event) {
+    return (
+      <div className="event-survey-container">
+        <div className="event-survey-header">
+          <button className="event-survey-back-button" onClick={() => navigateTo('rsvps')}>
+            ← Back
+          </button>
+          <h1 className="event-survey-title">Event Feedback</h1>
+        </div>
+        <div className="event-survey-form">
+          <p>No event selected for survey</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="event-survey-container">
       <div className="event-survey-header">
@@ -26,7 +43,7 @@ export default function EventSurvey({ navigateTo }) {
 
       <form className="event-survey-form" onSubmit={handleSubmit}>
         <h2 className="event-survey-heading">
-          How was Networking Mixer?
+          How was {event.title}?
         </h2>
 
         <div className="event-survey-section">

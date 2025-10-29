@@ -1,18 +1,13 @@
-import { getUserRSVPedEvents } from '../../data/Events/mockEventData';
+import { getUserRSVPedEvents, getUserPastEvents } from '../../data/Events/mockEventData';
 import './MyEvents.css';
 
 export default function MyEvents({ navigateTo }) {
   // TODO Sprint 2: Replace with backend API call
   // GET /api/events/user/rsvps - Get events user has RSVP'd to (attending)
-  const allRsvpedEvents = getUserRSVPedEvents();
+  const rsvpedEvents = getUserRSVPedEvents();
   
-  // Filter to only show upcoming events (not past events)
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const rsvpedEvents = allRsvpedEvents.filter(event => {
-    const eventDate = new Date(event.date);
-    return eventDate >= today;
-  });
+  // GET /api/events/user/past - Get user's past events
+  const pastEvents = getUserPastEvents();
 
   return (
     <div className="my-events-container">
@@ -93,16 +88,22 @@ export default function MyEvents({ navigateTo }) {
         {/* Past Events */}
         <div className="my-events-section">
           <h2 className="my-events-section-header">Past Events</h2>
-          <div className="my-events-card">
-            <h3 className="my-events-card-title">Tech Talk: AI in Healthcare</h3>
-            <p className="my-events-card-info">Oct 20, 2025</p>
-            <button 
-              className="my-events-button"
-              onClick={() => navigateTo('analytics')}
-            >
-              View Stats
-            </button>
-          </div>
+          {pastEvents.length > 0 ? (
+            pastEvents.map(event => (
+              <div key={event.id} className="my-events-card">
+                <h3 className="my-events-card-title">{event.title}</h3>
+                <p className="my-events-card-info">{event.date}</p>
+                <button 
+                  className="my-events-button"
+                  onClick={() => navigateTo('analytics', event.id)}
+                >
+                  View Stats
+                </button>
+              </div>
+            ))
+          ) : (
+            <p className="my-events-empty">No past events</p>
+          )}
         </div>
       </div>
     </div>
