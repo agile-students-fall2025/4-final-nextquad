@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { mockEvents } from './data/Events/mockEventData';
+import { getPostById } from './data/Feed/mockFeedData';
 import './App.css';
 import './index.css';
 
@@ -15,6 +16,11 @@ import RSVPsDashboard from './components/Events/RSVPsDashboard';
 import EventCheckIn from './components/Events/EventCheckIn';
 import EventSurvey from './components/Events/EventSurvey';
 import EventAnalytics from './components/Events/EventAnalytics';
+// Feed module components
+import FeedMain from './components/Feed/FeedMain';
+import FeedCreatePost from './components/Feed/FeedCreatePost';
+import FeedComments from './components/Feed/FeedComments';
+import FeedSavedPosts from './components/Feed/FeedSavedPosts';
 import FilterDropdown from './components/campus_map/FilterDropdown';
 import { CATEGORIES } from './data/campus_map/mapPoints';
 import './components/campus_map/FilterDropdown.css';
@@ -36,6 +42,7 @@ export default function App() {
   const [activeModule, setActiveModule] = useState('auth');
   const [currentPage, setCurrentPage] = useState('hellowindow');
   const [selectedEventId, setSelectedEventId] = useState(null);
+  const [selectedPostId, setSelectedPostId] = useState(null);
   const [previousPage, setPreviousPage] = useState('main'); // Track where user came from
   // TODO Sprint 2: This will be managed by backend session/auth
   // For now, we track RSVP'd events in local state
@@ -47,20 +54,24 @@ export default function App() {
     () => mockEvents.find((event) => event.id === selectedEventId) || null,
     [selectedEventId]
   );
+  const selectedPost = useMemo(
+    () => (selectedPostId != null ? getPostById(selectedPostId) : null),
+    [selectedPostId]
+  );
 
-  const navigateTo = (page, eventId = null) => {
+  const navigateTo = (page, entityId = null) => {
     // Handle module switches (auth, events, map, settings)
-    if (['auth', 'events', 'map', 'settings'].includes(page)) {
+    if (['auth', 'events', 'map', 'settings', 'feed'].includes(page)) {
       setActiveModule(page);
   
       // If navigating to 'auth' without specifying a page, default to 'hellowindow'
-      if (page === 'auth' && !eventId) {
+      if (page === 'auth' && !entityId) {
         setCurrentPage('hellowindow');
       }
   
       // If a specific sub-page is provided, navigate to it
-      if (eventId) {
-        setCurrentPage(eventId);
+      if (entityId) {
+        setCurrentPage(entityId);
       }
   
       return;
@@ -73,7 +84,11 @@ export default function App() {
   
     // Default page navigation within a module
     setCurrentPage(page);
-    setSelectedEventId(eventId);
+    if (activeModule === 'events') {
+      setSelectedEventId(entityId);
+    } else if (activeModule === 'feed') {
+      setSelectedPostId(entityId);
+    }
   };
 
   const handleRSVP = (eventId) => {
@@ -176,12 +191,35 @@ export default function App() {
     }
   };
 
+  const renderFeedPage = () => {
+    switch (currentPage) {
+      case 'saved':
+        return <FeedSavedPosts navigateTo={navigateTo} />;
+      case 'comments':
+        return (
+          <FeedComments
+            post={selectedPost}
+            navigateTo={navigateTo}
+          />
+        );
+      case 'create':
+        return <FeedCreatePost navigateTo={navigateTo} />;
+      case 'main':
+      default:
+        return <FeedMain navigateTo={navigateTo} />;
+    }
+  };
+
   const renderActiveModule = () => {
   // HelloWindow
   if (activeModule === 'auth') return renderAuthPages();
 
   if (activeModule === 'events') {
     return <div className="events-wrapper">{renderEventPage()}</div>;
+  }
+
+  if (activeModule === 'feed') {
+    return <div className="events-wrapper">{renderFeedPage()}</div>;
   }
 
   if (activeModule === 'map') {
@@ -246,6 +284,10 @@ export default function App() {
       setCurrentPage('main');
       setSelectedEventId(null);
     }
+    if (module === 'feed') {
+      setCurrentPage('main');
+      setSelectedPostId(null);
+    }
   };
 
   return (
@@ -255,6 +297,7 @@ export default function App() {
           <div className="tab-bar-title">NextQuad</div>
           {[
             { id: 'events', label: 'Events' },
+            { id: 'feed', label: 'Feed' },
             { id: 'map', label: 'Campus Map' },
             { id: 'settings', label: 'Settings' }
           ].map((module) => (
