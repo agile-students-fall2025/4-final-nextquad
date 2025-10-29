@@ -5,7 +5,7 @@ export default function Settings({ navigateTo }) {
 
   const handleLogout = () => {
     console.log('User logged out');
-    navigateTo('home');
+    navigateTo('auth'); 
   };
 
   const handleChangePassword = () => {
