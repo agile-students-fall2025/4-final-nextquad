@@ -85,11 +85,11 @@ export default function App() {
       case 'rsvps':
         return <RSVPsDashboard navigateTo={navigateTo} />;
       case 'checkin':
-        return <EventCheckIn navigateTo={navigateTo} />;
+        return <EventCheckIn navigateTo={navigateTo} event={selectedEvent} />;
       case 'survey':
-        return <EventSurvey navigateTo={navigateTo} />;
+        return <EventSurvey navigateTo={navigateTo} event={selectedEvent} />;
       case 'analytics':
-        return <EventAnalytics navigateTo={navigateTo} />;
+        return <EventAnalytics navigateTo={navigateTo} event={selectedEvent} />;
       case 'main':
       default:
         return <EventMain navigateTo={navigateTo} />;

@@ -1,6 +1,23 @@
 import './EventAnalytics.css';
 
-export default function EventAnalytics({ navigateTo }) {
+export default function EventAnalytics({ navigateTo, event }) {
+  // If no event is provided, show a fallback
+  if (!event) {
+    return (
+      <div className="event-analytics-container">
+        <div className="event-analytics-header">
+          <button className="event-analytics-back-button" onClick={() => navigateTo('my-events')}>
+            ← Back
+          </button>
+          <h1 className="event-analytics-title">Event Analytics</h1>
+        </div>
+        <div className="event-analytics-content">
+          <p>No event selected for analytics</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="event-analytics-container">
       <div className="event-analytics-header">
@@ -12,7 +29,7 @@ export default function EventAnalytics({ navigateTo }) {
 
       <div className="event-analytics-content">
         <h2 className="event-analytics-heading">
-          Tech Talk: AI in Healthcare
+          {event.title}
         </h2>
 
         <div className="event-analytics-metrics">
