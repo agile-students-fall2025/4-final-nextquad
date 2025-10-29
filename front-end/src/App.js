@@ -20,6 +20,7 @@ import { CATEGORIES } from './data/campus_map/mapPoints';
 import './components/campus_map/FilterDropdown.css';
 import Settings from './components/Settings/Settings';
 import ChangePasswordForm from './components/Settings/ChangePassword';
+import PrivacyPolicy from './components/Settings/PrivacyPolicy';
 
 import HelloWindow from './components/log_in/HelloWindow';
 import SignIn from './components/log_in/SignIn';
@@ -214,6 +215,14 @@ export default function App() {
       </div>
     );
   }
+  // privacy policy page
+  if (activeModule === 'privacyPolicy') {
+  return (
+    <div className="change-password-wrapper">
+      <PrivacyPolicy navigateTo={(page) => setActiveModule(page)} />
+    </div>
+  );
+}
 
   return null;
 };
