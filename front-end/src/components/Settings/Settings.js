@@ -1,4 +1,3 @@
-// import ChangePasswordForm from '../components/ChangePassword';
 import './Settings.css';
 
 export default function Settings({ navigateTo }) {
@@ -12,6 +11,10 @@ export default function Settings({ navigateTo }) {
     console.log('Navigating to Change Password');
     navigateTo('changePassword');
   }
+  const handlePrivacyPolicy = () => {
+    console.log('Navigating to Privacy Policy');
+    navigateTo('privacyPolicy');
+  }
 
   return (
     <div className="settings-container">
@@ -24,7 +27,7 @@ export default function Settings({ navigateTo }) {
       <div className="settings-content">
         <button className="settings-button">Notification Settings</button>
         <button className="settings-button" onClick={handleChangePassword}>Change Password</button>
-        <button className="settings-button">Privacy Policy</button>
+        <button className="settings-button" onClick={handlePrivacyPolicy}>Privacy Policy</button>
         <button className="logout-button" onClick={handleLogout}>Log Out</button>
       </div>
 
