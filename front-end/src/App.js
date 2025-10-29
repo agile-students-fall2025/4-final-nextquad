@@ -21,10 +21,17 @@ import './components/campus_map/FilterDropdown.css';
 import Settings from './components/Settings/Settings';
 import ChangePasswordForm from './components/Settings/ChangePassword';
 
+import HelloWindow from './components/log_in/HelloWindow';
+import SignIn from './components/log_in/SignIn';
+import SignUp from './components/log_in/SignUp';
+import ProfileSetup from './components/log_in/ProfileSetup';
+import ForgotPassword from './components/log_in/ForgotPassword';
+import VerifyCode from './components/log_in/VerifyCode';
+import ResetPassword from './components/log_in/ResetPassword';
 
 export default function App() {
-  const [activeModule, setActiveModule] = useState('events');
-  const [currentPage, setCurrentPage] = useState('main');
+  const [activeModule, setActiveModule] = useState('auth');
+  const [currentPage, setCurrentPage] = useState('hellowindow');
   const [selectedEventId, setSelectedEventId] = useState(null);
   const [previousPage, setPreviousPage] = useState('main'); // Track where user came from
   // TODO Sprint 2: This will be managed by backend session/auth
@@ -39,10 +46,29 @@ export default function App() {
   );
 
   const navigateTo = (page, eventId = null) => {
-    // Track where we're coming from for proper back navigation
+    // Handle module switches (auth, events, map, settings)
+    if (['auth', 'events', 'map', 'settings'].includes(page)) {
+      setActiveModule(page);
+  
+      // If navigating to 'auth' without specifying a page, default to 'hellowindow'
+      if (page === 'auth' && !eventId) {
+        setCurrentPage('hellowindow');
+      }
+  
+      // If a specific sub-page is provided, navigate to it
+      if (eventId) {
+        setCurrentPage(eventId);
+      }
+  
+      return;
+    }
+  
+    // If navigating to 'detail', store the previous page for back navigation
     if (page === 'detail') {
       setPreviousPage(currentPage);
     }
+  
+    // Default page navigation within a module
     setCurrentPage(page);
     setSelectedEventId(eventId);
   };
@@ -63,6 +89,57 @@ export default function App() {
     }
 
     navigateTo('rsvp-confirm', eventId);
+  };
+
+
+  // Auth Module Rendering ✅
+  const renderAuthPages = () => {
+    switch (currentPage) {
+      case 'hellowindow':
+        return (
+          <HelloWindow
+            setActiveModule={setActiveModule}
+            setCurrentPage={setCurrentPage}
+          />
+        );
+      case 'signin':
+        return (
+          <SignIn
+            setActiveModule={setActiveModule}
+            setCurrentPage={setCurrentPage}
+          />
+        );
+      case 'signup':
+        return (
+          <SignUp
+            setActiveModule={setActiveModule}
+            setCurrentPage={setCurrentPage}
+          />
+        );
+      case 'profilesetup':
+        return (
+          <ProfileSetup setActiveModule={setActiveModule} />
+        );
+      case 'forgot':
+        return (
+          <ForgotPassword setCurrentPage={setCurrentPage} />
+        );
+      case 'verify':
+        return (
+          <VerifyCode setCurrentPage={setCurrentPage} />
+        );
+      case 'reset':
+        return (
+          <ResetPassword setActiveModule={setActiveModule} setCurrentPage={setCurrentPage} />
+        );
+      default:
+        return (
+          <HelloWindow
+            setActiveModule={setActiveModule}
+            setCurrentPage={setCurrentPage}
+          />
+        );
+    }
   };
 
   const renderEventPage = () => {
@@ -97,6 +174,9 @@ export default function App() {
   };
 
   const renderActiveModule = () => {
+  // HelloWindow
+  if (activeModule === 'auth') return renderAuthPages();
+
   if (activeModule === 'events') {
     return <div className="events-wrapper">{renderEventPage()}</div>;
   }
@@ -150,27 +230,28 @@ export default function App() {
 
   return (
     <div className="app-shell">
-      <div className="tab-bar">
-        <div className="tab-bar-title">NextQuad</div>
-        {[
-          { id: 'events', label: 'Events' },
-          { id: 'map', label: 'Campus Map' },
-          { id: 'settings', label: 'Settings' }
-        ].map((module) => (
-          <button
-            key={module.id}
-            type="button"
-            onClick={() => handleModuleChange(module.id)}
-            aria-pressed={activeModule === module.id}
-            className={`tab-button ${
-              activeModule === module.id ? 'tab-button-active' : ''
-            }`}
-          >
-            {module.label}
-          </button>
-        ))}
-      </div>
-
+      {activeModule !== 'auth' && (
+        <div className="tab-bar">
+          <div className="tab-bar-title">NextQuad</div>
+          {[
+            { id: 'events', label: 'Events' },
+            { id: 'map', label: 'Campus Map' },
+            { id: 'settings', label: 'Settings' }
+          ].map((module) => (
+            <button
+              key={module.id}
+              type="button"
+              onClick={() => handleModuleChange(module.id)}
+              aria-pressed={activeModule === module.id}
+              className={`tab-button ${
+                activeModule === module.id ? 'tab-button-active' : ''
+              }`}
+            >
+              {module.label}
+            </button>
+          ))}
+        </div>
+      )}
       <div className="module-body">{renderActiveModule()}</div>
     </div>
   );
