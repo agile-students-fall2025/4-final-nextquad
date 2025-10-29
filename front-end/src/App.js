@@ -26,6 +26,8 @@ import { CATEGORIES } from './data/campus_map/mapPoints';
 import './components/campus_map/FilterDropdown.css';
 import Settings from './components/Settings/Settings';
 import ChangePasswordForm from './components/Settings/ChangePassword';
+import PrivacyPolicy from './components/Settings/PrivacyPolicy';
+import NotificationSettings from './components/Settings/NotificationSettings';
 
 import HelloWindow from './components/log_in/HelloWindow';
 import SignIn from './components/log_in/SignIn';
@@ -34,6 +36,7 @@ import ProfileSetup from './components/log_in/ProfileSetup';
 import ForgotPassword from './components/log_in/ForgotPassword';
 import VerifyCode from './components/log_in/VerifyCode';
 import ResetPassword from './components/log_in/ResetPassword';
+
 
 export default function App() {
   const [activeModule, setActiveModule] = useState('auth');
@@ -252,6 +255,23 @@ export default function App() {
       </div>
     );
   }
+  // privacy policy page
+  if (activeModule === 'privacyPolicy') {
+  return (
+    <div className="change-password-wrapper">
+      <PrivacyPolicy navigateTo={(page) => setActiveModule(page)} />
+    </div>
+    );
+  }
+  // notification settings page
+  if (activeModule === 'notificationSettings') {
+    return (
+      <div className="notification-settings-wrapper">
+        <NotificationSettings navigateTo={(page) => setActiveModule(page)} />
+      </div>
+    );
+  } 
+
 
   return null;
 };
