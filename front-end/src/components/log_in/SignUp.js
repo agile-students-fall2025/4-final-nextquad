@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { faker } from '@faker-js/faker'; 
 import './SignUp.css';
 import googleIcon from '../../assets/log_in/google_icon.png';
 
@@ -7,6 +8,8 @@ export default function SignUp({ setActiveModule, setCurrentPage }) {
   const [password, setPassword] = useState("");
   const [agree, setAgree] = useState(false);
   const [showModal, setShowModal] = useState(false);
+
+  const fakeTerms = faker.lorem.paragraphs(4);
 
   const handleCreateAccount = () => {
     if (!email.trim() || !password.trim()) {
@@ -77,16 +80,11 @@ export default function SignUp({ setActiveModule, setCurrentPage }) {
         Already have an account? Log in here.
       </p>
 
-      {/* Modal */}
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <h3>Terms & Privacy Policy</h3>
-            <p>
-              By using this application, you agree to our collection and use of information 
-              in accordance with this policy. This includes how we store, protect, and 
-              utilize your personal data in accordance with industry standards...
-            </p>
+            <p>{fakeTerms}</p> 
             <button className="close-modal" onClick={() => setShowModal(false)}>Close</button>
           </div>
         </div>
