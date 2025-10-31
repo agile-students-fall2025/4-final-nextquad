@@ -61,7 +61,7 @@ export default function App() {
 
   const navigateTo = (page, entityId = null) => {
     // Handle module switches (auth, events, map, settings)
-    if (['auth', 'events', 'map', 'settings', 'feed'].includes(page)) {
+    if (['auth', 'events', 'map', 'settings', 'feed', 'changePassword', 'privacyPolicy', 'notificationSettings'].includes(page)) {
       setActiveModule(page);
   
       // If navigating to 'auth' without specifying a page, default to 'hellowindow'
@@ -243,7 +243,7 @@ export default function App() {
   if (activeModule === 'settings') {
     return (
       <div className="settings-wrapper">
-        <Settings navigateTo={(page) => setActiveModule(page)} />
+        <Settings navigateTo={navigateTo} />
       </div>
     );
   }
