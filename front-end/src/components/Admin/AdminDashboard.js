@@ -23,7 +23,7 @@ export default function AdminDashboard({ navigateTo }) {
   };
   const handleLogOut = () => {
     console.log('Logging out');
-    navigateTo('adminSignIn');
+    navigateTo('auth');
   }
 
   return (
