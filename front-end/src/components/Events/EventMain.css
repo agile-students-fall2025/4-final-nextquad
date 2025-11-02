@@ -4,6 +4,40 @@
   padding-bottom: 20px;
 }
 
+.event-main-nav-bar {
+  display: flex;
+  gap: 12px;
+  padding: 20px 24px;
+  background-color: #fff;
+  border-bottom: 1px solid #e5e7eb;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.event-main-nav-title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: #333;
+  margin-right: auto;
+}
+
+.event-main-nav-button {
+  padding: 10px 20px;
+  background-color: white;
+  color: #6B46C1;
+  border: 1px solid #6B46C1;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.event-main-nav-button:hover {
+  background-color: #f5f3ff;
+}
+
 .event-main-controls {
   padding: 24px 32px;
   background-color: white;
@@ -86,6 +120,13 @@
   background-color: #5a3ba1;
 }
 
+.event-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+  padding: 0 32px;
+}
+
 .event-card {
   background-color: white;
   border-radius: 12px;
@@ -146,5 +187,67 @@
   border-radius: 16px;
   font-size: 12px;
   font-weight: 500;
+}
+
+/* Responsive Design for Mobile */
+@media (max-width: 768px) {
+  .event-main-nav-bar {
+    padding: 16px;
+    gap: 10px;
+  }
+
+  .event-main-nav-title {
+    font-size: 24px;
+    width: 100%;
+    margin-bottom: 8px;
+  }
+
+  .event-main-nav-button {
+    flex: 1;
+    padding: 10px 16px;
+    font-size: 14px;
+  }
+
+  .event-main-controls {
+    padding: 20px 16px;
+  }
+
+  .event-list {
+    padding: 0 16px;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .event-main-nav-bar {
+    padding: 12px;
+    gap: 8px;
+  }
+
+  .event-main-nav-title {
+    font-size: 20px;
+    margin-bottom: 8px;
+  }
+
+  .event-main-nav-button {
+    flex: 1;
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+
+  .event-main-controls {
+    padding: 16px 12px;
+  }
+
+  .event-list {
+    padding: 0 12px;
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .event-card-image {
+    height: 180px;
+  }
 }
 

@@ -12,39 +12,6 @@ code {
     monospace;
 }
 
-/* Responsive Grid Layout for Events */
-.event-list {
-  display: grid !important;
-  gap: 24px !important;
-  padding: 24px 32px !important;
-  align-items: start !important;
-  justify-items: stretch !important;
-}
-
-@media (min-width: 1200px) {
-  .event-list {
-    grid-template-columns: repeat(3, 1fr) !important;
-  }
-}
-
-@media (min-width: 768px) and (max-width: 1199px) {
-  .event-list {
-    grid-template-columns: repeat(2, 1fr) !important;
-  }
-}
-
-@media (max-width: 767px) {
-  .event-list {
-    grid-template-columns: 1fr !important;
-  }
-}
-
-/* Hover effects for desktop */
-.event-list > div:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15) !important;
-}
-
 /* Button hover effects */
 button:hover {
   opacity: 0.9;
