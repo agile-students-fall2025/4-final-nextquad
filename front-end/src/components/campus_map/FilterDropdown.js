@@ -36,12 +36,12 @@ export default function FilterDropdown({ value, onSave }) {
   return (
     <div className="filter-wrap" ref={wrapRef}>
       <button
-        className="filter-trigger"
+        className="map-main-filter-button"
         onClick={() => setOpen(v => !v)}
         aria-expanded={open}
-        type="button"
+        // type="button"
       >
-        Filter
+        Filter 
         <span className={`chev ${open ? "rot" : ""}`}>▾</span>
       </button>
 

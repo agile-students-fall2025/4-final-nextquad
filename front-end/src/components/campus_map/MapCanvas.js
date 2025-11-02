@@ -8,9 +8,9 @@ export default function MapCanvas({ activeCategories }) {
   const [zoom, setZoom] = useState(1);
   const canvasRef = useRef(null);
 
-  const Z_MIN = 0.75;
+  const Z_MIN = 0.55;
   const Z_MAX = 2.0;
-  const Z_STEP = 0.25;
+  const Z_STEP = 0.15;
 
   const clamp = (z) => Math.min(Z_MAX, Math.max(Z_MIN, Number(z.toFixed(2))));
 
@@ -62,13 +62,12 @@ export default function MapCanvas({ activeCategories }) {
       </div>
 
       <div className="map-inner" style={{ transform: `scale(${zoom})` }}>
-        {visible.map((p) => {
-          const isOpen = openId === p.id;
+        {visible.map((p) => {const isOpen = openId === p.id;
           return (
             <div
               key={p.id}
               className={`pin ${isOpen ? "is-open" : ""}`}
-              style={{ left: `${p.x}%`, top: `${p.y}%` }}
+              style={{ left: `${p.x}%`, top: `${p.y}%`}}
             >
               <button
                 type="button"
