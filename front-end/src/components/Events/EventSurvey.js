@@ -12,7 +12,7 @@ export default function EventSurvey({ navigateTo, event }) {
     // Body: { rating, enjoyedAspects, feedback }
     console.log('Sprint 2: POST survey data:', { rating, feedback });
     alert('Thank you for your feedback!');
-    navigateTo('main');
+    navigateTo('rsvps');
   };
 
   // If no event is provided, show a fallback
@@ -93,7 +93,7 @@ export default function EventSurvey({ navigateTo, event }) {
         <button type="submit" className="event-survey-submit-button">
           Submit Feedback
         </button>
-        <button type="button" className="event-survey-skip-button" onClick={() => navigateTo('main')}>
+        <button type="button" className="event-survey-skip-button" onClick={() => navigateTo('rsvps')}>
           Skip for now
         </button>
       </form>

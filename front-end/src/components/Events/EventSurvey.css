@@ -153,3 +153,73 @@
   color: #666;
 }
 
+/* Responsive Design for Mobile */
+@media (max-width: 768px) {
+  .event-survey-header {
+    padding: 20px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .event-survey-back-button {
+    position: relative;
+    left: auto;
+    top: auto;
+    transform: none;
+    padding: 8px;
+    margin-right: auto;
+    font-size: 16px;
+  }
+
+  .event-survey-back-button:hover,
+  .event-survey-back-button:active {
+    transform: none;
+  }
+
+  .event-survey-title {
+    font-size: 24px;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: 60%;
+    text-align: center;
+  }
+
+  .event-survey-form {
+    padding: 24px 16px;
+  }
+
+  .event-survey-heading {
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .event-survey-header {
+    padding: 16px 12px;
+  }
+
+  .event-survey-back-button {
+    font-size: 14px;
+    padding: 6px;
+  }
+
+  .event-survey-title {
+    font-size: 22px;
+    max-width: 55%;
+  }
+
+  .event-survey-form {
+    padding: 20px 12px;
+  }
+
+  .event-survey-heading {
+    font-size: 16px;
+  }
+
+  .event-survey-star {
+    font-size: 28px;
+  }
+}
+

@@ -4,6 +4,55 @@
   padding-bottom: 20px;
 }
 
+.rsvps-nav-bar {
+  display: flex;
+  gap: 12px;
+  padding: 20px 24px;
+  background-color: #fff;
+  border-bottom: 1px solid #e5e7eb;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.rsvps-back-button {
+  padding: 8px 16px;
+  background-color: transparent;
+  color: #6B46C1;
+  border: none;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.rsvps-back-button:hover {
+  opacity: 0.7;
+}
+
+.rsvps-nav-title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: #333;
+  margin-right: auto;
+}
+
+.rsvps-nav-button {
+  padding: 10px 20px;
+  background-color: white;
+  color: #6B46C1;
+  border: 1px solid #6B46C1;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.rsvps-nav-button:hover {
+  background-color: #f5f3ff;
+}
+
 .rsvps-content {
   padding: 32px;
   max-width: 1200px;
@@ -168,5 +217,86 @@
   color: #999;
   font-size: 15px;
   padding: 40px;
+}
+
+/* Responsive Design for Mobile */
+@media (max-width: 768px) {
+  .rsvps-nav-bar {
+    padding: 16px;
+    gap: 10px;
+  }
+
+  .rsvps-back-button {
+    width: 100%;
+    text-align: left;
+    padding: 8px 12px;
+    font-size: 15px;
+  }
+
+  .rsvps-nav-title {
+    font-size: 24px;
+    width: 100%;
+    margin-bottom: 8px;
+  }
+
+  .rsvps-nav-button {
+    flex: 1;
+    padding: 10px 16px;
+    font-size: 14px;
+  }
+
+  .rsvps-content {
+    padding: 20px 16px;
+  }
+
+  .rsvps-button-row {
+    flex-wrap: wrap;
+  }
+
+  .rsvps-action-button,
+  .rsvps-action-button-secondary {
+    min-width: 120px;
+  }
+}
+
+@media (max-width: 480px) {
+  .rsvps-nav-bar {
+    padding: 12px;
+    gap: 8px;
+  }
+
+  .rsvps-back-button {
+    font-size: 14px;
+    padding: 6px 8px;
+  }
+
+  .rsvps-nav-title {
+    font-size: 20px;
+    margin-bottom: 8px;
+  }
+
+  .rsvps-nav-button {
+    flex: 1;
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+
+  .rsvps-content {
+    padding: 16px 12px;
+  }
+
+  .rsvps-card,
+  .rsvps-attention-card {
+    padding: 16px;
+  }
+
+  .rsvps-button-row {
+    flex-direction: column;
+  }
+
+  .rsvps-action-button,
+  .rsvps-action-button-secondary {
+    width: 100%;
+  }
 }
 
