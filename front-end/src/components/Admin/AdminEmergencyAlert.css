@@ -1,0 +1,77 @@
+
+/* Main container */
+.admin-dashboard-container {
+  max-width: 800px;
+  margin: 40px auto;
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  font-family: 'Arial', sans-serif;
+}
+
+/* Header */
+.admin-dashboard-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.admin-dashboard-header h1 {
+  font-size: 2rem;
+  color: #333;
+}
+
+/* Content section */
+.admin-dashboard-content {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+/* Paragraph above textarea */
+.admin-dashboard-content p {
+  font-size: 1.1rem;
+  color: #555;
+}
+
+/* Textarea styling */
+.admin-dashboard-content textarea {
+  width: 100%;
+  padding: 10px;
+  font-size: 1rem;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.admin-dashboard-content textarea:focus {
+  border-color: #6B46C1;
+}
+
+/* Buttons */
+.admin-dashboard-button {
+  padding: 12px 20px;
+  font-size: 1rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+  background-color: #6B46C1;
+  color: white;
+}
+
+.admin-dashboard-button:hover {
+  background-color: #6B46C1;
+}
+
+/* Alert button (red) */
+.admin-dashboard-button.alert {
+  background-color: #e53e3e;
+}
+
+.admin-dashboard-button.alert:hover {
+  background-color: #c53030;
+}
+

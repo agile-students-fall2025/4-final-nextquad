@@ -36,6 +36,11 @@ import ProfileSetup from './components/log_in/ProfileSetup';
 import ForgotPassword from './components/log_in/ForgotPassword';
 import VerifyCode from './components/log_in/VerifyCode';
 import ResetPassword from './components/log_in/ResetPassword';
+import AdminSignin from './components/Admin/AdminSignIn';
+import AdminDashboard from './components/Admin/AdminDashboard';
+import AdminNotifications from './components/Admin/AdminNotifications';
+import AdminEmergencyAlert from './components/Admin/AdminEmergencyAlert';
+import AdminReportUser from './components/Admin/AdminReportUser';
 
 
 export default function App() {
@@ -150,6 +155,10 @@ export default function App() {
         return (
           <ResetPassword setActiveModule={setActiveModule} setCurrentPage={setCurrentPage} />
         );
+      case 'adminSignin':
+        return (
+          <AdminSignin setActiveModule={setActiveModule} setCurrentPage={setCurrentPage} />
+        );
       default:
         return (
           <HelloWindow
@@ -159,6 +168,21 @@ export default function App() {
         );
     }
   };
+
+  const renderAdminPages = () => {
+  switch (currentPage) {
+    case 'adminNotifications':
+      return <AdminNotifications navigateTo={navigateTo} />;
+    case 'adminReportUser':
+      return <AdminReportUser navigateTo={navigateTo} />;
+    case 'adminEmergencyAlert':
+      return <AdminEmergencyAlert navigateTo={navigateTo} />;
+    case 'dashboard': 
+    default:
+      return <AdminDashboard navigateTo={navigateTo} />;
+  }
+};
+
 
   const renderEventPage = () => {
     switch (currentPage) {
@@ -213,6 +237,8 @@ export default function App() {
   const renderActiveModule = () => {
   // HelloWindow
   if (activeModule === 'auth') return renderAuthPages();
+  if (activeModule === 'admin') return renderAdminPages();
+
 
   if (activeModule === 'events') {
     return <div className="events-wrapper">{renderEventPage()}</div>;
@@ -292,7 +318,7 @@ export default function App() {
 
   return (
     <div className="app-shell">
-      {activeModule !== 'auth' && (
+      {activeModule !== 'auth' && activeModule !== 'admin' &&(
         <div className="tab-bar">
           <div className="tab-bar-title">NextQuad</div>
           {[
