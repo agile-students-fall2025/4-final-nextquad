@@ -43,52 +43,18 @@ export default function EventMain({ navigateTo }) {
   return (
     <div className="event-main-container">
       {/* Quick Navigation Bar */}
-      <div style={{
-        display: 'flex',
-        gap: '12px',
-        padding: '20px 24px',
-        backgroundColor: '#fff',
-        borderBottom: '1px solid #e5e7eb',
-        flexWrap: 'wrap',
-        alignItems: 'center'
-      }}>
-        <h2 style={{
-          margin: 0,
-          fontSize: '24px',
-          fontWeight: '700',
-          color: '#333',
-          marginRight: 'auto'
-        }}>
+      <div className="event-main-nav-bar">
+        <h2 className="event-main-nav-title">
           Browse Events
         </h2>
         <button 
-          style={{
-            padding: '10px 20px',
-            backgroundColor: 'white',
-            color: '#6B46C1',
-            border: '1px solid #6B46C1',
-            borderRadius: '8px',
-            fontSize: '15px',
-            fontWeight: '600',
-            cursor: 'pointer',
-            transition: 'all 0.2s ease'
-          }}
+          className="event-main-nav-button"
           onClick={() => navigateTo('my-events')}
         >
           My Events
         </button>
         <button 
-          style={{
-            padding: '10px 20px',
-            backgroundColor: 'white',
-            color: '#6B46C1',
-            border: '1px solid #6B46C1',
-            borderRadius: '8px',
-            fontSize: '15px',
-            fontWeight: '600',
-            cursor: 'pointer',
-            transition: 'all 0.2s ease'
-          }}
+          className="event-main-nav-button"
           onClick={() => navigateTo('rsvps')}
         >
           My RSVPs
