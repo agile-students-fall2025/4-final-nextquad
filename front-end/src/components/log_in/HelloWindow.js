@@ -12,6 +12,10 @@ export default function HelloWindow({ setActiveModule, setCurrentPage }) {
     setActiveModule('auth');
     setCurrentPage('signup');
   };
+  const goToAdminLogin = () => {
+    setActiveModule('auth');
+    setCurrentPage('adminSignin');
+  };
 
   return (
     <div className="hello-container">
@@ -23,6 +27,10 @@ export default function HelloWindow({ setActiveModule, setCurrentPage }) {
 
       <button className="hello-btn" onClick={goToSignUp}>
         Sign up
+      </button>
+
+      <button className="hello-btn" onClick={goToAdminLogin}>
+        Admin Login
       </button>
     </div>
   );

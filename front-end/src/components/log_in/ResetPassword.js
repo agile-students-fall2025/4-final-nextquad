@@ -21,7 +21,7 @@ export default function ResetPassword({ setActiveModule, setCurrentPage }) {
 
     // Reset completed
     setActiveModule("auth");
-    setCurrentPage("signin");
+    setCurrentPage("auth");
   };
 
   return (
