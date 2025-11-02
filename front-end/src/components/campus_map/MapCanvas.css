@@ -16,7 +16,7 @@
   width: 100%;
   min-height: 60vh;
   background: #f0e7ff; 
-  overflow: visible;
+  overflow: hidden;
   box-shadow: var(--shadow-sm);
 }
 

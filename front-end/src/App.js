@@ -234,6 +234,33 @@ export default function App() {
     }
   };
 
+  const renderCampusMapPage = () => {
+    switch (currentPage) {
+      default:
+        return (
+          <div className="events-wrapper">
+            <Header />
+            <div className="event-main-controls">
+              <div className="event-main-filter-row">
+                <div className="event-main-sort-container">
+                  <FilterDropdown
+                    value={activeCats}
+                    onSave={(nextSet) => setActiveCats(new Set(nextSet))}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="map-content">
+              <div className="map-canvas-card">
+                <MapCanvas activeCategories={activeCats} />
+              </div>
+            </div>
+          </div>
+        );
+    }
+  };
+
   const renderActiveModule = () => {
   // HelloWindow
   if (activeModule === 'auth') return renderAuthPages();
@@ -249,21 +276,9 @@ export default function App() {
   }
 
   if (activeModule === 'map') {
-    return (
-      <div className="map-wrapper">
-        <Header />
-        <div className="filter-bar">
-          <FilterDropdown
-            value={activeCats}
-            onSave={(nextSet) => setActiveCats(new Set(nextSet))}  
-          />
-        </div>
-        <div className="map-canvas-region">
-          <MapCanvas activeCategories={activeCats} />
-        </div>
-      </div>
-    );
+    return <div className="events-wrapper">{renderCampusMapPage()}</div>;
   }
+    
 //SETTINGS MODULE
   // main settings page 
   if (activeModule === 'settings') {

@@ -1,17 +1,17 @@
-.header {
-  background: white;
-  color: black;
-  padding: 24px 32px;
-  position: sticky;
-  top: 0;
-  z-index: 10;
+.map-main-nav-bar {
   display: flex;
+  gap: 12px;
+  padding: 25.5px 24px;
+  background-color: #fff;
+  border-bottom: 1px solid #e5e7eb;
+  flex-wrap: wrap;
   align-items: center;
 }
 
-.header-title {
+.map-main-nav-title {
   margin: 0;
-  font-size: 28px;    
-  font-weight: 600;
-  line-height: 1.2;
+  font-size: 24px;
+  font-weight: 700;
+  color: #333;
+  margin-right: auto;
 }
