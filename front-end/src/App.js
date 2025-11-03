@@ -51,6 +51,7 @@ export default function App() {
   const [currentPage, setCurrentPage] = useState('hellowindow');
   const [selectedEventId, setSelectedEventId] = useState(null);
   const [selectedPostId, setSelectedPostId] = useState(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [previousPage, setPreviousPage] = useState('main'); // Track where user came from
   // TODO Sprint 2: This will be managed by backend session/auth
   // For now, we track RSVP'd events in local state
@@ -342,6 +343,7 @@ export default function App() {
 
   const handleModuleChange = (module) => {
     setActiveModule(module);
+    setIsMobileMenuOpen(false);
 
     if (module === 'events') {
       setCurrentPage('main');
@@ -355,28 +357,84 @@ export default function App() {
 
   return (
     <div className="app-shell">
-      {activeModule !== 'auth' && activeModule !== 'admin' &&(
-        <div className="tab-bar">
-          <div className="tab-bar-title">NextQuad</div>
-          {[
-            { id: 'events', label: 'Events' },
-            { id: 'feed', label: 'Feed' },
-            { id: 'map', label: 'Campus Map' },
-            { id: 'settings', label: 'Settings' }
-          ].map((module) => (
+      {activeModule !== 'auth' && activeModule !== 'admin' && (
+        <>
+          {/* Desktop Tab Bar */}
+          <div className="tab-bar desktop-only">
+            <div className="tab-bar-title">NextQuad</div>
+            {[
+              { id: 'events', label: 'Events' },
+              { id: 'feed', label: 'Feed' },
+              { id: 'map', label: 'Campus Map' },
+              { id: 'settings', label: 'Settings' }
+            ].map((module) => (
+              <button
+                key={module.id}
+                type="button"
+                onClick={() => handleModuleChange(module.id)}
+                aria-pressed={activeModule === module.id}
+                className={`tab-button ${
+                  activeModule === module.id ? 'tab-button-active' : ''
+                }`}
+              >
+                {module.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Mobile Topbar */}
+          <div className="mobile-topbar mobile-only">
             <button
-              key={module.id}
               type="button"
-              onClick={() => handleModuleChange(module.id)}
-              aria-pressed={activeModule === module.id}
-              className={`tab-button ${
-                activeModule === module.id ? 'tab-button-active' : ''
-              }`}
+              className="hamburger-button"
+              aria-label="Open navigation"
+              aria-expanded={isMobileMenuOpen}
+              onClick={() => setIsMobileMenuOpen((v) => !v)}
             >
-              {module.label}
+              <span className="hamburger-bar" />
+              <span className="hamburger-bar" />
+              <span className="hamburger-bar" />
             </button>
-          ))}
-        </div>
+            <div className="mobile-topbar-title">NextQuad</div>
+          </div>
+
+          {/* Mobile Drawer */}
+          <div 
+            className={`mobile-drawer ${isMobileMenuOpen ? 'open' : ''}`}
+            onClick={(e) => {
+              // Close drawer if clicking on drawer background (not on buttons)
+              if (!e.target.classList.contains('mobile-drawer-item')) {
+                setIsMobileMenuOpen(false);
+              }
+            }}
+          >
+            {[
+              { id: 'events', label: 'Events' },
+              { id: 'feed', label: 'Feed' },
+              { id: 'map', label: 'Campus Map' },
+              { id: 'settings', label: 'Settings' }
+            ].map((module) => (
+              <button
+                key={module.id}
+                type="button"
+                className={`mobile-drawer-item ${activeModule === module.id ? 'active' : ''}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleModuleChange(module.id);
+                }}
+              >
+                {module.label}
+              </button>
+            ))}
+          </div>
+          {isMobileMenuOpen && (
+            <div
+              className="mobile-drawer-overlay mobile-only"
+              onClick={() => setIsMobileMenuOpen(false)}
+              aria-hidden
+            />
+          )}
+        </>
       )}
       <div className="module-body">{renderActiveModule()}</div>
     </div>
