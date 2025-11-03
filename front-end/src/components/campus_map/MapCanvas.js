@@ -3,7 +3,7 @@ import "./MapCanvas.css";
 import pinPng from "../../assets/campus_map/mapPin.png";
 import { POINTS } from "../../data/campus_map/mapPoints";
 
-export default function MapCanvas({ activeCategories }) {
+export default function MapCanvas({ activeCategories, searchQuery }) {
   const [openId, setOpenId] = useState(null);
   const [zoom, setZoom] = useState(1);
   const canvasRef = useRef(null);
@@ -17,6 +17,46 @@ export default function MapCanvas({ activeCategories }) {
   const zoomIn = () => setZoom((z) => clamp(z + Z_STEP));
   const zoomOut = () => setZoom((z) => clamp(z - Z_STEP));
   const zoomReset = () => setZoom(1);
+
+  // filter search
+  const findBestMatch = (term) => {
+    if (!term) return null;
+    const q = term.toLowerCase();
+
+    const pool = (activeCategories instanceof Set)
+      ? POINTS.filter(p => p.categories?.some(c => activeCategories.has(c)))
+      : POINTS;
+
+    const score = (p) => {
+      const title = (p.title || "").toLowerCase();
+      const desc  = (p.desc  || "").toLowerCase();
+      const keys  = (p.keywords || []).map(k => (k || "").toLowerCase());
+
+      if (title.startsWith(q)) return 100;
+      if (title.includes(q))   return 80;
+      if (keys.includes(q))    return 70;
+      if (keys.some(k => k.includes(q))) return 60;
+      if (desc.includes(q))    return 40;
+      return 0;
+    };
+
+    let best = null, bestScore = 0;
+    for (const p of pool) {
+      const s = score(p);
+      if (s > bestScore) { best = p; bestScore = s; }
+    }
+    return best;
+  };
+
+  // open the info card 
+  useEffect(() => {
+    if (!searchQuery) {
+      setOpenId(null);
+      return;
+    }
+    const match = findBestMatch(searchQuery);
+    if (match) setOpenId(match.id);
+  }, [searchQuery, activeCategories]);
 
   // Close the info card when clicking outside the canvas
   useEffect(() => {

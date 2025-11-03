@@ -45,6 +45,8 @@ import AdminFeedMain from './components/Admin/AdminFeedMain';
 
 
 export default function App() {
+  const [mapSearchTerm, setMapSearchTerm] = useState("");
+  const [mapSearchQuery, setMapSearchQuery] = useState("");
   const [activeModule, setActiveModule] = useState('auth');
   const [currentPage, setCurrentPage] = useState('hellowindow');
   const [selectedEventId, setSelectedEventId] = useState(null);
@@ -56,6 +58,12 @@ export default function App() {
   const allIds = useMemo(() => CATEGORIES.map(c => c.id), []);
   const [activeCats, setActiveCats] = useState(new Set(allIds));
 
+  const onMapSearchChange = (e) => {
+    const v = e.target.value;
+    setMapSearchTerm(v);
+    setMapSearchQuery(v.trim().length >= 2 ? v.trim() : "");
+  };
+  
   const selectedEvent = useMemo(
     () => mockEvents.find((event) => event.id === selectedEventId) || null,
     [selectedEventId]
@@ -245,10 +253,21 @@ export default function App() {
             <Header />
             <div className="event-main-controls">
               <div className="event-main-filter-row">
+                {/* Filter */}
                 <div className="event-main-sort-container">
                   <FilterDropdown
                     value={activeCats}
                     onSave={(nextSet) => setActiveCats(new Set(nextSet))}
+                  />
+                </div>
+                {/* Search Bar */}
+                <div className="event-main-sort-container">
+                  <input
+                    type="text"
+                    placeholder="Search places..."
+                    className="event-main-search-input"
+                    value={mapSearchTerm}
+                    onChange={onMapSearchChange}
                   />
                 </div>
               </div>
@@ -256,7 +275,7 @@ export default function App() {
 
             <div className="map-content">
               <div className="map-canvas-card">
-                <MapCanvas activeCategories={activeCats} />
+                <MapCanvas activeCategories={activeCats} searchQuery={mapSearchQuery}/>
               </div>
             </div>
           </div>
