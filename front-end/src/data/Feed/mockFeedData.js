@@ -18,25 +18,17 @@ faker.seed(456);
 
 // Generate a random post using faker
 const generateMockPost = (id) => {
-  // Pick random categories (1-2 categories per post)
+  // Pick one random category (single category per post)
   const availableCategories = categories.filter(cat => cat !== 'All');
-  const numCategories = faker.number.int({ min: 1, max: 2 });
-  const postCategories = [];
-  for (let i = 0; i < numCategories; i++) {
-    const remainingCategories = availableCategories.filter(c => !postCategories.includes(c));
-    if (remainingCategories.length > 0) {
-      const category = faker.helpers.arrayElement(remainingCategories);
-      postCategories.push(category);
-    }
-  }
+  const postCategory = faker.helpers.arrayElement(availableCategories);
 
   // Generate post title and content
   const title = faker.lorem.sentence(faker.number.int({ min: 4, max: 8 }));
   const content = faker.lorem.paragraphs(faker.number.int({ min: 1, max: 3 }));
 
   // Generate timestamp (random time in the past 7 days)
-  const timestamp = faker.date.recent({ days: 7 });
-  const formattedTimestamp = formatRelativeTime(timestamp);
+  const createdAt = faker.date.recent({ days: 7 });
+  const formattedTimestamp = formatRelativeTime(createdAt);
 
   // Generate author info
   const authorName = faker.person.fullName();
@@ -49,7 +41,8 @@ const generateMockPost = (id) => {
     title,
     content,
     timestamp: formattedTimestamp,
-    category: postCategories,
+    createdAt: createdAt.getTime(),
+    category: postCategory,
     likes: faker.number.int({ min: 0, max: 150 }),
     commentCount: faker.number.int({ min: 0, max: 50 }),
     image: hasImage ? `https://picsum.photos/seed/post${id}/600/400` : null,

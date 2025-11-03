@@ -28,13 +28,13 @@ export default function FeedMain({ navigateTo, isAdmin = false }) {
       post.title.toLowerCase().includes(term) ||
       post.content.toLowerCase().includes(term) ||
       post.author.name.toLowerCase().includes(term);
-    const matchesCategory = selectedCategory === 'All' || post.category.includes(selectedCategory);
+    const matchesCategory = selectedCategory === 'All' || post.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
   const sortedPosts = [...filteredPosts].sort((a, b) => {
-    if (sortBy === 'Latest') return new Date(b.timestamp) - new Date(a.timestamp);
-    if (sortBy === 'Oldest') return new Date(a.timestamp) - new Date(b.timestamp);
+    if (sortBy === 'Latest') return (b.createdAt || 0) - (a.createdAt || 0);
+    if (sortBy === 'Oldest') return (a.createdAt || 0) - (b.createdAt || 0);
     if (sortBy === 'Most Liked') return b.likes - a.likes;
     if (sortBy === 'Most Comments') return b.commentCount - a.commentCount;
     return 0;
@@ -181,9 +181,9 @@ export default function FeedMain({ navigateTo, isAdmin = false }) {
             )}
 
             <div className="feed-post-tags">
-              {post.category.map(cat => (
-                <span key={cat} className="feed-post-tag">#{cat}</span>
-              ))}
+              {post.category && (
+                <span className="feed-post-tag">#{post.category}</span>
+              )}
             </div>
 
             <div className="feed-post-actions">
