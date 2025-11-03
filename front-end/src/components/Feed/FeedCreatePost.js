@@ -5,7 +5,7 @@ export default function FeedCreatePost({ navigateTo }) {
   const [formData, setFormData] = useState({
     title: '',
     content: '',
-    categories: []
+    category: ''
   });
 
   const categories = ['All','General','Marketplace','Lost and Found','Roommate Request','Safety Alerts'];
@@ -18,12 +18,9 @@ export default function FeedCreatePost({ navigateTo }) {
     navigateTo('main');
   };
 
-  const toggleCategory = (cat) => {
-    if (formData.categories.includes(cat)) {
-      setFormData({ ...formData, categories: formData.categories.filter(c => c !== cat) });
-    } else {
-      setFormData({ ...formData, categories: [...formData.categories, cat] });
-    }
+  const selectCategory = (cat) => {
+    if (cat === 'All') return;
+    setFormData({ ...formData, category: cat });
   };
 
   return (
@@ -62,14 +59,14 @@ export default function FeedCreatePost({ navigateTo }) {
         />
 
         <div className="event-create-categories">
-          <p className="event-create-categories-title">Categories</p>
+          <p className="event-create-categories-title">Category</p>
           <div className="event-create-categories-list">
-            {categories.map(cat => (
+            {categories.filter(c => c !== 'All').map(cat => (
               <button
                 key={cat}
                 type="button"
-                className={formData.categories.includes(cat) ? 'event-create-category-button-active' : 'event-create-category-button'}
-                onClick={() => toggleCategory(cat)}
+                className={formData.category === cat ? 'event-create-category-button-active' : 'event-create-category-button'}
+                onClick={() => selectCategory(cat)}
               >
                 #{cat}
               </button>

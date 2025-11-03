@@ -1,9 +1,10 @@
 import './FeedSavedPosts.css';
+import { useState, useMemo } from 'react';
 import { mockPosts } from '../../data/Feed/mockFeedData';
 
 export default function FeedSavedPosts({ navigateTo }) {
-  const savedIds = JSON.parse(localStorage.getItem('savedPostIds') || '[]');
-  const savedPosts = mockPosts.filter(p => savedIds.includes(p.id));
+  const [savedIds, setSavedIds] = useState(() => JSON.parse(localStorage.getItem('savedPostIds') || '[]'));
+  const savedPosts = useMemo(() => mockPosts.filter(p => savedIds.includes(p.id)), [savedIds]);
 
   return (
     <div className="feed-saved-container">
@@ -35,10 +36,9 @@ export default function FeedSavedPosts({ navigateTo }) {
               <button className="feed-post-action-button">❤️ {post.likes}</button>
               <button className="feed-post-action-button" onClick={() => {
                 const key = 'savedPostIds';
-                const current = JSON.parse(localStorage.getItem(key) || '[]');
-                const next = current.filter(id => id !== post.id);
+                const next = savedIds.filter(id => id !== post.id);
                 localStorage.setItem(key, JSON.stringify(next));
-                window.location.reload();
+                setSavedIds(next);
               }}>Remove</button>
             </div>
           </div>
