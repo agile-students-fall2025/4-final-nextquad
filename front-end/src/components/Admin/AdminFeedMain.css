@@ -1,0 +1,36 @@
+/* Wrapper */
+.admin-feed-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: #f9fafb;
+}
+
+/* Header bar */
+.admin-feed-header {
+  display: flex;
+  align-items: center;
+  padding: 16px 24px;
+  background-color: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+/* Back button */
+.admin-feed-back-button {
+  background-color: #6B46C1;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 16px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.admin-feed-back-button:hover {
+  background-color: #553C9A;
+}

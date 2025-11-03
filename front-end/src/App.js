@@ -41,6 +41,7 @@ import AdminDashboard from './components/Admin/AdminDashboard';
 import AdminNotifications from './components/Admin/AdminNotifications';
 import AdminEmergencyAlert from './components/Admin/AdminEmergencyAlert';
 import AdminReportUser from './components/Admin/AdminReportUser';
+import AdminFeedMain from './components/Admin/AdminFeedMain';
 
 
 export default function App() {
@@ -177,6 +178,8 @@ export default function App() {
       return <AdminReportUser navigateTo={navigateTo} />;
     case 'adminEmergencyAlert':
       return <AdminEmergencyAlert navigateTo={navigateTo} />;
+    case 'adminFeed':
+      return <AdminFeedMain navigateTo={navigateTo} />;
     case 'dashboard': 
     default:
       return <AdminDashboard navigateTo={navigateTo} />;
