@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { mockPosts, categories } from '../../data/Feed/mockFeedData';
 import './FeedMain.css';
 
-export default function FeedMain({ navigateTo }) {
+export default function FeedMain({ navigateTo, isAdmin = false }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [sortBy, setSortBy] = useState('Latest');
@@ -187,30 +187,52 @@ export default function FeedMain({ navigateTo }) {
             </div>
 
             <div className="feed-post-actions">
-              <button 
-                className="feed-post-action-button"
-                onClick={() => navigateTo('comments', post.id)}
-              >
-                💬 {post.commentCount}
-              </button>
-              <button className="feed-post-action-button">
-                ❤️ {post.likes}
-              </button>
-              <button
-                className="feed-post-action-button"
-                onClick={() => {
-                  const key = 'savedPostIds';
-                  const current = JSON.parse(localStorage.getItem(key) || '[]');
-                  const exists = current.includes(post.id);
-                  const next = exists ? current.filter(id => id !== post.id) : [...current, post.id];
-                  localStorage.setItem(key, JSON.stringify(next));
-                  // force re-render subtly by updating searchTerm noop
-                  setSearchTerm(s => s);
-                }}
-              >
-                {JSON.parse(localStorage.getItem('savedPostIds') || '[]').includes(post.id) ? '✓ Saved' : 'Save'}
-              </button>
-            </div>
+  {!isAdmin && (
+    <>
+      <button 
+        className="feed-post-action-button"
+        onClick={() => navigateTo('comments', post.id)}
+      >
+        💬 {post.commentCount}
+      </button>
+      <button className="feed-post-action-button">
+        ❤️ {post.likes}
+      </button>
+      <button
+        className="feed-post-action-button"
+        onClick={() => {
+          const key = 'savedPostIds';
+          const current = JSON.parse(localStorage.getItem(key) || '[]');
+          const exists = current.includes(post.id);
+          const next = exists ? current.filter(id => id !== post.id) : [...current, post.id];
+          localStorage.setItem(key, JSON.stringify(next));
+          setSearchTerm(s => s);
+        }}
+      >
+        {JSON.parse(localStorage.getItem('savedPostIds') || '[]').includes(post.id) ? '✓ Saved' : 'Save'}
+      </button>
+    </>
+  )}
+
+  {isAdmin && (
+    <>
+    {/* sprint 2: add functionality to these buttons */}
+      <button 
+        className="feed-post-action-button"
+        onClick={() => console.log('Delete post', post.id)}
+      >
+        🗑 Delete
+      </button>
+      <button 
+        className="feed-post-action-button"
+        onClick={() => console.log('Report user', post.author.name)}
+      >
+        ⚠️ Report User
+      </button>
+    </>
+  )}
+</div>
+
           </div>
         ))}
       </div>

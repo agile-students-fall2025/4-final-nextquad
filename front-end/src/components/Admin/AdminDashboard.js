@@ -14,7 +14,7 @@ export default function AdminDashboard({ navigateTo }) {
 
   const handleFeed = () => {
     console.log('Navigate to Feed');
-    navigateTo('feed');
+    navigateTo('adminFeed');
   };
 
   const handleEmergencyAlert = () => {
@@ -23,7 +23,7 @@ export default function AdminDashboard({ navigateTo }) {
   };
   const handleLogOut = () => {
     console.log('Logging out');
-    navigateTo('adminSignIn');
+    navigateTo('auth');
   }
 
   return (
