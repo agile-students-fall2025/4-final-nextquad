@@ -58,10 +58,41 @@ npm start
 
 The application will open automatically at `http://localhost:3000`
 
-**Running Tests: (Not completed yet)**
+### Sprint 2 - Backend Development
+
+**Backend Prerequisites:**
+- Node.js (v16 or higher)
+- npm
+
+**Backend Setup and Run:**
 ```bash
-# Run test suite [This will be completed after sprint 2]
+# Navigate to backend directory
+cd back-end
+
+# Install dependencies
+npm install
+
+# Create .env file with configuration
+# See INTEGRATION-GUIDE.md for details
+
+# Start development server with auto-reload
+npm run dev
+
+# Or start in production mode
+npm start
+```
+
+The backend API will be available at `http://localhost:3000`
+
+**Running Backend Tests:**
+```bash
+cd back-end
+
+# Run all tests with coverage
 npm test
+
+# Run tests with detailed HTML coverage report
+npm run test:coverage
 ```
 
 ## Additional Documentation
