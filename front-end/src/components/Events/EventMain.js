@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { mockEvents, categories } from '../../data/Events/mockEventData';
+import { getAllEvents, categories } from '../../services/api';
 import './EventMain.css';
 
 export default function EventMain({ navigateTo }) {
@@ -8,6 +8,55 @@ export default function EventMain({ navigateTo }) {
   const [sortBy, setSortBy] = useState('Latest');
   const [showSortMenu, setShowSortMenu] = useState(false);
   const [showCategoryMenu, setShowCategoryMenu] = useState(false);
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  // Add manual refresh function that can be called from outside
+  useEffect(() => {
+    // Listen for custom refresh event
+    const handleRefresh = () => {
+      console.log('🔄 Refreshing events list...');
+      setRefreshKey(prev => prev + 1);
+    };
+    
+    window.addEventListener('refreshEvents', handleRefresh);
+    return () => window.removeEventListener('refreshEvents', handleRefresh);
+  }, []);
+
+  // Fetch events from backend
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        setLoading(true);
+        console.log('🔍 Fetching events from backend...');
+        console.log('🔍 API URL:', process.env.REACT_APP_API_URL || 'http://localhost:3000/api');
+        
+        const sortParam = sortBy === 'Latest' ? 'latest' : sortBy === 'Oldest' ? 'oldest' : 'engagement';
+        const response = await getAllEvents({
+          category: selectedCategory !== 'All' ? selectedCategory : undefined,
+          search: searchTerm || undefined,
+          sort: sortParam,
+          showPast: 'false'
+        });
+        
+        console.log('✅ Response received:', response);
+        console.log('✅ Events count:', response.data?.length || 0);
+        
+        setEvents(response.data || []);
+        setError(null);
+      } catch (err) {
+        console.error('❌ Error fetching events:', err);
+        console.error('❌ Error details:', err.message);
+        setError(`Failed to load events: ${err.message}`);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEvents();
+  }, [searchTerm, selectedCategory, sortBy, refreshKey]);
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -21,24 +70,6 @@ export default function EventMain({ navigateTo }) {
       return () => document.removeEventListener('click', handleClickOutside);
     }
   }, [showSortMenu, showCategoryMenu]);
-
-  const filteredEvents = mockEvents.filter(event => {
-    const matchesSearch = event.title.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'All' || event.category.includes(selectedCategory);
-    // Filter out past events (only show upcoming events)
-    const eventDate = new Date(event.date);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // Reset time to compare only dates
-    const isUpcoming = eventDate >= today;
-    return matchesSearch && matchesCategory && isUpcoming;
-  });
-
-  const sortedEvents = [...filteredEvents].sort((a, b) => {
-    if (sortBy === 'Latest') return new Date(b.date) - new Date(a.date);
-    if (sortBy === 'Oldest') return new Date(a.date) - new Date(b.date);
-    if (sortBy === 'Engagement') return b.rsvpCount - a.rsvpCount;
-    return 0;
-  });
 
   return (
     <div className="event-main-container">
@@ -139,28 +170,48 @@ export default function EventMain({ navigateTo }) {
         </button>
       </div>
 
-      <div className="event-list">
-        {sortedEvents.map(event => (
-          <div 
-            key={event.id} 
-            className="event-card"
-            onClick={() => navigateTo('detail', event.id)}
-          >
-            <img src={event.image} alt={event.title} className="event-card-image" />
-            <div className="event-card-content">
-              <h3 className="event-card-title">{event.title}</h3>
-              <p className="event-card-info"> {event.date} • {event.time}</p>
-              <p className="event-card-info"> {event.location}</p>
-              <p className="event-card-rsvp"> {event.rsvpCount} going</p>
-              <div className="event-card-tags">
-                {event.category.map(cat => (
-                  <span key={cat} className="event-card-tag">#{cat}</span>
-                ))}
+      {loading && (
+        <div style={{ textAlign: 'center', padding: '40px', color: '#888' }}>
+          Loading events...
+        </div>
+      )}
+
+      {error && (
+        <div style={{ textAlign: 'center', padding: '40px', color: '#d32f2f' }}>
+          {error}
+        </div>
+      )}
+
+      {!loading && !error && events.length === 0 && (
+        <div style={{ textAlign: 'center', padding: '40px', color: '#888' }}>
+          No events found
+        </div>
+      )}
+
+      {!loading && !error && events.length > 0 && (
+        <div className="event-list">
+          {events.map(event => (
+            <div 
+              key={event.id} 
+              className="event-card"
+              onClick={() => navigateTo('detail', event.id)}
+            >
+              <img src={event.image} alt={event.title} className="event-card-image" />
+              <div className="event-card-content">
+                <h3 className="event-card-title">{event.title}</h3>
+                <p className="event-card-info"> {event.date} • {event.time}</p>
+                <p className="event-card-info"> {event.location}</p>
+                <p className="event-card-rsvp"> {event.rsvpCount} going</p>
+                <div className="event-card-tags">
+                  {event.category.map(cat => (
+                    <span key={cat} className="event-card-tag">#{cat}</span>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

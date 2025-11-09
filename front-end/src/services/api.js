@@ -1,0 +1,169 @@
+// API Service for Events
+// This file centralizes all backend API calls
+
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000/api';
+
+/**
+ * Generic fetch wrapper with error handling
+ */
+const fetchAPI = async (endpoint, options = {}) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+      ...options,
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'API request failed');
+    }
+
+    return data;
+  } catch (error) {
+    console.error('API Error:', error);
+    throw error;
+  }
+};
+
+// ============================================
+// Events APIs
+// ============================================
+
+/**
+ * Get all events with optional filters
+ * @param {Object} params - Query parameters (category, search, sort, showPast)
+ */
+export const getAllEvents = async (params = {}) => {
+  // Filter out undefined values to avoid sending "undefined" as string
+  const cleanParams = Object.entries(params).reduce((acc, [key, value]) => {
+    if (value !== undefined && value !== null && value !== '') {
+      acc[key] = value;
+    }
+    return acc;
+  }, {});
+  
+  const queryString = new URLSearchParams(cleanParams).toString();
+  const endpoint = `/events${queryString ? `?${queryString}` : ''}`;
+  return fetchAPI(endpoint);
+};
+
+/**
+ * Get a single event by ID
+ * @param {number} eventId - Event ID
+ */
+export const getEventById = async (eventId) => {
+  return fetchAPI(`/events/${eventId}`);
+};
+
+/**
+ * Create a new event
+ * @param {Object} eventData - Event data (title, date, time, location, description, category)
+ */
+export const createEvent = async (eventData) => {
+  return fetchAPI('/events', {
+    method: 'POST',
+    body: JSON.stringify(eventData),
+  });
+};
+
+/**
+ * Update an event
+ * @param {number} eventId - Event ID
+ * @param {Object} eventData - Updated event data
+ */
+export const updateEvent = async (eventId, eventData) => {
+  return fetchAPI(`/events/${eventId}`, {
+    method: 'PUT',
+    body: JSON.stringify(eventData),
+  });
+};
+
+/**
+ * Delete an event
+ * @param {number} eventId - Event ID
+ */
+export const deleteEvent = async (eventId) => {
+  return fetchAPI(`/events/${eventId}`, {
+    method: 'DELETE',
+  });
+};
+
+// ============================================
+// User Events APIs
+// ============================================
+
+/**
+ * Get events user has RSVP'd to (attending)
+ */
+export const getUserRSVPedEvents = async () => {
+  return fetchAPI('/events/user/rsvps');
+};
+
+/**
+ * Get events user is hosting
+ */
+export const getUserHostedEvents = async () => {
+  return fetchAPI('/events/user/hosting');
+};
+
+/**
+ * Get events needing user attention (check-in or survey)
+ */
+export const getEventsNeedingAttention = async () => {
+  return fetchAPI('/events/user/needs-attention');
+};
+
+/**
+ * Get user's past events
+ */
+export const getUserPastEvents = async () => {
+  return fetchAPI('/events/user/past');
+};
+
+// ============================================
+// RSVP APIs
+// ============================================
+
+/**
+ * RSVP to an event
+ * @param {number} eventId - Event ID
+ */
+export const rsvpToEvent = async (eventId) => {
+  return fetchAPI(`/events/${eventId}/rsvp`, {
+    method: 'POST',
+  });
+};
+
+/**
+ * Cancel RSVP to an event
+ * @param {number} eventId - Event ID
+ */
+export const cancelRSVP = async (eventId) => {
+  return fetchAPI(`/events/${eventId}/rsvp`, {
+    method: 'DELETE',
+  });
+};
+
+/**
+ * Get all RSVPs for an event (host only)
+ * @param {number} eventId - Event ID
+ */
+export const getEventRSVPs = async (eventId) => {
+  return fetchAPI(`/events/${eventId}/rsvps`);
+};
+
+/**
+ * Check RSVP status for an event
+ * @param {number} eventId - Event ID
+ */
+export const checkRSVPStatus = async (eventId) => {
+  return fetchAPI(`/events/${eventId}/rsvp-status`);
+};
+
+// Export categories (could be fetched from backend in the future)
+export const categories = ['All', 'Music', 'Social', 'Study', 'Career', 'Wellness', 'Tech', 'Party'];
+

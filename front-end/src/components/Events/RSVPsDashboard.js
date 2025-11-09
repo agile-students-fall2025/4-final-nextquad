@@ -1,13 +1,34 @@
-import { getUserHostedEvents, getEventsNeedingAttention } from '../../data/Events/mockEventData';
+import { useState, useEffect } from 'react';
+import { getUserHostedEvents, getEventsNeedingAttention } from '../../services/api';
 import './RSVPsDashboard.css';
 
 export default function RSVPsDashboard({ navigateTo }) {
-  // TODO Sprint 2: Replace with backend API call
-  // GET /api/events/user/hosting - Get events user is hosting
-  const hostedEvents = getUserHostedEvents();
-  
-  // GET /api/events/user/needs-attention - Get events needing attention
-  const needsAttentionEvents = getEventsNeedingAttention();
+  const [hostedEvents, setHostedEvents] = useState([]);
+  const [needsAttentionEvents, setNeedsAttentionEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchRSVPData = async () => {
+      try {
+        setLoading(true);
+        const [hostedResponse, attentionResponse] = await Promise.all([
+          getUserHostedEvents(),
+          getEventsNeedingAttention()
+        ]);
+        setHostedEvents(hostedResponse.data || []);
+        setNeedsAttentionEvents(attentionResponse.data || []);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching RSVP data:', err);
+        setError('Failed to load RSVP data. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRSVPData();
+  }, []);
 
   return (
     <div className="rsvps-container">
@@ -30,9 +51,22 @@ export default function RSVPsDashboard({ navigateTo }) {
         </button>
       </div>
 
-      <div className="rsvps-content">
-        {/* Needs Attention Section */}
-        <div className="rsvps-attention-section">
+      {loading && (
+        <div style={{ textAlign: 'center', padding: '40px', color: '#888' }}>
+          Loading RSVP data...
+        </div>
+      )}
+
+      {error && (
+        <div style={{ textAlign: 'center', padding: '40px', color: '#d32f2f' }}>
+          {error}
+        </div>
+      )}
+
+      {!loading && !error && (
+        <div className="rsvps-content">
+          {/* Needs Attention Section */}
+          <div className="rsvps-attention-section">
           <h2 className="rsvps-attention-header">Needs Attention</h2>
           
           {needsAttentionEvents.length > 0 ? (
@@ -92,7 +126,8 @@ export default function RSVPsDashboard({ navigateTo }) {
             <p className="rsvps-empty">No hosted events</p>
           )}
         </div>
-      </div>
+        </div>
+      )}
     </div>
   );
 }

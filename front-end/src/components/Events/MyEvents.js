@@ -1,13 +1,34 @@
-import { getUserRSVPedEvents, getUserPastEvents } from '../../data/Events/mockEventData';
+import { useState, useEffect } from 'react';
+import { getUserRSVPedEvents, getUserPastEvents } from '../../services/api';
 import './MyEvents.css';
 
 export default function MyEvents({ navigateTo }) {
-  // TODO Sprint 2: Replace with backend API call
-  // GET /api/events/user/rsvps - Get events user has RSVP'd to (attending)
-  const rsvpedEvents = getUserRSVPedEvents();
-  
-  // GET /api/events/user/past - Get user's past events
-  const pastEvents = getUserPastEvents();
+  const [rsvpedEvents, setRsvpedEvents] = useState([]);
+  const [pastEvents, setPastEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchUserEvents = async () => {
+      try {
+        setLoading(true);
+        const [rsvpsResponse, pastResponse] = await Promise.all([
+          getUserRSVPedEvents(),
+          getUserPastEvents()
+        ]);
+        setRsvpedEvents(rsvpsResponse.data || []);
+        setPastEvents(pastResponse.data || []);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching user events:', err);
+        setError('Failed to load your events. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserEvents();
+  }, []);
 
   return (
     <div className="my-events-container">
@@ -30,9 +51,22 @@ export default function MyEvents({ navigateTo }) {
         </button>
       </div>
 
-      <div className="my-events-content">
-        {/* Upcoming Events - Shows events user has RSVP'd to (ATTENDING) */}
-        <div className="my-events-section">
+      {loading && (
+        <div style={{ textAlign: 'center', padding: '40px', color: '#888' }}>
+          Loading your events...
+        </div>
+      )}
+
+      {error && (
+        <div style={{ textAlign: 'center', padding: '40px', color: '#d32f2f' }}>
+          {error}
+        </div>
+      )}
+
+      {!loading && !error && (
+        <div className="my-events-content">
+          {/* Upcoming Events - Shows events user has RSVP'd to (ATTENDING) */}
+          <div className="my-events-section">
           <h2 className="my-events-section-header">Upcoming Events (Attending)</h2>
           {rsvpedEvents.length > 0 ? (
             rsvpedEvents.map(event => (
@@ -73,7 +107,8 @@ export default function MyEvents({ navigateTo }) {
             <p className="my-events-empty">No past events</p>
           )}
         </div>
-      </div>
+        </div>
+      )}
     </div>
   );
 }
