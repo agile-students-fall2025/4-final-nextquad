@@ -1,6 +1,48 @@
 // import and instantiate express
-const express = require("express") // CommonJS import style!
-const app = express() // instantiate an Express object
-// we will put some server logic here later...
+const express = require("express"); // CommonJS import style!
+const cors = require("cors");
+require("dotenv").config(); // Load environment variables
+
+const app = express(); // instantiate an Express object
+
+// Middleware
+app.use(cors()); // Enable CORS for all routes
+app.use(express.json()); // Parse JSON request bodies
+app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
+
+// Import routes
+const eventsRoutes = require("./routes/events");
+
+// API Routes
+app.use("/api/events", eventsRoutes);
+
+// Root route
+app.get("/", (req, res) => {
+  res.json({
+    message: "NextQuad Backend API",
+    version: "1.0.0",
+    endpoints: {
+      events: "/api/events"
+    }
+  });
+});
+
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    error: "Route not found"
+  });
+});
+
+// Error handler
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({
+    success: false,
+    error: "Internal server error"
+  });
+});
+
 // export the express app we created to make it available to other modules
-module.exports = app
+module.exports = app;
