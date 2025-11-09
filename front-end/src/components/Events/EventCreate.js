@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { categories } from '../../data/Events/mockEventData';
+import { categories, createEvent } from '../../services/api';
 import './EventCreate.css';
 
 export default function EventCreate({ navigateTo }) {
@@ -11,15 +11,39 @@ export default function EventCreate({ navigateTo }) {
     description: '',
     categories: []
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // TODO Sprint 2: Send to backend
-    // POST /api/events - Create new event
-    // Body: { title, date, time, location, description, categories, image }
-    console.log('Sprint 2: POST /api/events with data:', formData);
-    alert('Event created successfully!');
-    navigateTo('main');
+    
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Call backend API
+      await createEvent({
+        title: formData.title,
+        date: formData.date,
+        time: formData.time,
+        location: formData.location,
+        description: formData.description,
+        category: formData.categories
+      });
+      
+      alert('Event created successfully!');
+      // Navigate back to main page
+      navigateTo('main');
+      // Trigger event list refresh
+      setTimeout(() => {
+        window.dispatchEvent(new Event('refreshEvents'));
+      }, 100);
+    } catch (err) {
+      console.error('Error creating event:', err);
+      setError(err.message || 'Failed to create event. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const toggleCategory = (cat) => {
@@ -43,6 +67,18 @@ export default function EventCreate({ navigateTo }) {
       </div>
 
       <form className="event-create-form" onSubmit={handleSubmit}>
+        {error && (
+          <div style={{ 
+            padding: '12px', 
+            backgroundColor: '#ffebee', 
+            color: '#d32f2f', 
+            borderRadius: '4px',
+            marginBottom: '16px'
+          }}>
+            {error}
+          </div>
+        )}
+
         <div className="event-create-image-upload">
           <span style={{fontSize: '48px'}}>+</span>
           <p>Upload Event Photo</p>
@@ -109,8 +145,12 @@ export default function EventCreate({ navigateTo }) {
           </div>
         </div>
 
-        <button type="submit" className="event-create-submit-button">
-          Publish Event
+        <button 
+          type="submit" 
+          className="event-create-submit-button"
+          disabled={loading}
+        >
+          {loading ? 'Creating...' : 'Publish Event'}
         </button>
       </form>
     </div>

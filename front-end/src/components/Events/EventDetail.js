@@ -1,12 +1,32 @@
+import { useState, useEffect } from 'react';
+import { checkRSVPStatus } from '../../services/api';
 import './EventDetail.css';
 
 export default function EventDetail({ event, navigateTo, onRSVP, previousPage = 'main' }) {
-  if (!event) return null;
+  const [rsvpStatus, setRsvpStatus] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // TODO Sprint 2: Backend should handle RSVP logic
-  // POST /api/events/:id/rsvp - RSVP to an event
-  // DELETE /api/events/:id/rsvp - Cancel RSVP
-  // GET /api/events/:id/rsvp-status - Check if user has RSVP'd
+  // Fetch RSVP status from backend
+  useEffect(() => {
+    const fetchRSVPStatus = async () => {
+      if (!event) return;
+      
+      try {
+        setLoading(true);
+        const response = await checkRSVPStatus(event.id);
+        setRsvpStatus(response.data);
+      } catch (error) {
+        console.error('Error fetching RSVP status:', error);
+        setRsvpStatus({ hasRSVPd: false, isHost: false, canRSVP: true });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRSVPStatus();
+  }, [event]);
+
+  if (!event) return null;
   
   return (
     <div className="event-detail-container">
@@ -55,11 +75,14 @@ export default function EventDetail({ event, navigateTo, onRSVP, previousPage = 
             </div>
           </div>
 
-          {/* Always show RSVP status */}
-          {/* TODO Sprint 2: Check hasUserRSVPed and isUserHost from backend */}
-          {event.hasUserRSVPed || event.isUserHost ? (
+          {/* RSVP Button based on backend status */}
+          {loading ? (
             <button className="event-detail-rsvp-button-disabled" disabled>
-              Already RSVP'd
+              Loading...
+            </button>
+          ) : rsvpStatus && (rsvpStatus.hasRSVPd || rsvpStatus.isHost) ? (
+            <button className="event-detail-rsvp-button-disabled" disabled>
+              {rsvpStatus.isHost ? "You're Hosting" : "Already RSVP'd"}
             </button>
           ) : (
             <button 

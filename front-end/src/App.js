@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { mockEvents } from './data/Events/mockEventData';
+import { useMemo, useState, useEffect } from 'react';
+import { getEventById } from './services/api';
 import { getPostById } from './data/Feed/mockFeedData';
 import './App.css';
 import './index.css';
@@ -50,6 +50,7 @@ export default function App() {
   const [activeModule, setActiveModule] = useState('auth');
   const [currentPage, setCurrentPage] = useState('hellowindow');
   const [selectedEventId, setSelectedEventId] = useState(null);
+  const [selectedEvent, setSelectedEvent] = useState(null);
   const [selectedPostId, setSelectedPostId] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [previousPage, setPreviousPage] = useState('main'); // Track where user came from
@@ -65,10 +66,24 @@ export default function App() {
     setMapSearchQuery(v.trim().length >= 2 ? v.trim() : "");
   };
   
-  const selectedEvent = useMemo(
-    () => mockEvents.find((event) => event.id === selectedEventId) || null,
-    [selectedEventId]
-  );
+  // Fetch event details from backend when selectedEventId changes
+  useEffect(() => {
+    const fetchEventDetails = async () => {
+      if (selectedEventId) {
+        try {
+          const response = await getEventById(selectedEventId);
+          setSelectedEvent(response.data);
+        } catch (error) {
+          console.error('Error fetching event details:', error);
+          setSelectedEvent(null);
+        }
+      } else {
+        setSelectedEvent(null);
+      }
+    };
+    
+    fetchEventDetails();
+  }, [selectedEventId]);
   const selectedPost = useMemo(
     () => (selectedPostId != null ? getPostById(selectedPostId) : null),
     [selectedPostId]
@@ -106,22 +121,21 @@ export default function App() {
     }
   };
 
-  const handleRSVP = (eventId) => {
-    // TODO Sprint 2: Call backend API
-    // POST /api/events/:id/rsvp
-    console.log(`Sprint 2: POST /api/events/${eventId}/rsvp`);
-
-    if (!rsvpedEventIds.includes(eventId)) {
-      setRsvpedEventIds((prev) => [...prev, eventId]);
-
-      // Update the mock event data to reflect RSVP
-      const event = mockEvents.find((e) => e.id === eventId);
-      if (event) {
-        event.hasUserRSVPed = true;
+  const handleRSVP = async (eventId) => {
+    // Call backend API to RSVP
+    try {
+      const { rsvpToEvent } = await import('./services/api');
+      await rsvpToEvent(eventId);
+      
+      if (!rsvpedEventIds.includes(eventId)) {
+        setRsvpedEventIds((prev) => [...prev, eventId]);
       }
+      
+      navigateTo('rsvp-confirm', eventId);
+    } catch (error) {
+      console.error('Error RSVPing to event:', error);
+      alert('Failed to RSVP. Please try again.');
     }
-
-    navigateTo('rsvp-confirm', eventId);
   };
 
 
