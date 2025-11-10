@@ -12,13 +12,13 @@ const {
   getUserHostedEvents,
   getEventsNeedingAttention,
   getUserPastEvents
-} = require('../../controllers/userEventsController');
+} = require('../../controllers/events/userEventsController');
 const {
   rsvpToEvent,
   cancelRSVP,
   getEventRSVPs,
   checkRSVPStatus
-} = require('../../controllers/rsvpController');
+} = require('../../controllers/events/rsvpController');
 
 // User-specific event routes (must come before /:id route)
 router.get('/user/rsvps', getUserRSVPedEvents);
