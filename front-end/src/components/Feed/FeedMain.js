@@ -281,7 +281,7 @@ export default function FeedMain({ navigateTo, isAdmin = false }) {
     <>
       <button 
         className="feed-post-action-button"
-        onClick={() => navigateTo('comments', post.id)}
+        onClick={() => navigateTo('comments', post.id, 'main')}
       >
         💬 {post.commentCount}
       </button>

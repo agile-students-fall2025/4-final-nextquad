@@ -1,6 +1,6 @@
 import './FeedSavedPosts.css';
 import { useState, useEffect } from 'react';
-import { getPostById } from '../../services/api';
+import { getPostById, togglePostLike } from '../../services/api';
 
 export default function FeedSavedPosts({ navigateTo }) {
   const [savedIds, setSavedIds] = useState(() => JSON.parse(localStorage.getItem('savedPostIds') || '[]'));
@@ -41,6 +41,23 @@ export default function FeedSavedPosts({ navigateTo }) {
     }
   }, [savedIds]);
 
+  const handleLike = async (postId) => {
+    try {
+      const response = await togglePostLike(postId);
+      
+      // Update the post in the local state
+      setSavedPosts(prevPosts => 
+        prevPosts.map(post => 
+          post.id === postId 
+            ? { ...post, likes: response.data.likes, isLikedByUser: response.data.isLikedByUser }
+            : post
+        )
+      );
+    } catch (err) {
+      console.error('Error liking post:', err);
+    }
+  };
+
   return (
     <div className="feed-saved-container">
       <div className="feed-saved-header">
@@ -73,8 +90,13 @@ export default function FeedSavedPosts({ navigateTo }) {
               <img src={post.image} alt={post.title} className="feed-saved-image" />
             )}
             <div className="feed-saved-actions">
-              <button className="feed-post-action-button" onClick={() => navigateTo('comments', post.id)}>💬 {post.commentCount}</button>
-              <button className="feed-post-action-button">❤️ {post.likes}</button>
+              <button className="feed-post-action-button" onClick={() => navigateTo('comments', post.id, 'saved')}>💬 {post.commentCount}</button>
+              <button 
+                className="feed-post-action-button"
+                onClick={() => handleLike(post.id)}
+              >
+                {post.isLikedByUser ? '❤️' : '🤍'} {post.likes}
+              </button>
               <button className="feed-post-action-button" onClick={() => {
                 const key = 'savedPostIds';
                 const next = savedIds.filter(id => id !== post.id);
