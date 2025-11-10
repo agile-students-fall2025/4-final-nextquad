@@ -1,18 +1,49 @@
 import { useState } from 'react';
+import { submitSurvey } from '../../services/api';
 import './EventSurvey.css';
 
 export default function EventSurvey({ navigateTo, event }) {
   const [rating, setRating] = useState(0);
   const [feedback, setFeedback] = useState('');
+  const [enjoyedAspects, setEnjoyedAspects] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const handleSubmit = (e) => {
+  const toggleAspect = (aspect) => {
+    if (enjoyedAspects.includes(aspect)) {
+      setEnjoyedAspects(enjoyedAspects.filter(a => a !== aspect));
+    } else {
+      setEnjoyedAspects([...enjoyedAspects, aspect]);
+    }
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // TODO Sprint 2: Send survey to backend
-    // POST /api/events/:id/survey
-    // Body: { rating, enjoyedAspects, feedback }
-    console.log('Sprint 2: POST survey data:', { rating, feedback });
-    alert('Thank you for your feedback!');
-    navigateTo('rsvps');
+    
+    if (rating === 0) {
+      setError('Please select a rating');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Call backend API
+      await submitSurvey(event.id, {
+        rating,
+        enjoyedAspects,
+        feedback
+      });
+      
+      alert('Thank you for your feedback!');
+      navigateTo('rsvps');
+    } catch (err) {
+      console.error('Error submitting survey:', err);
+      setError(err.message || 'Failed to submit survey. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   // If no event is provided, show a fallback
@@ -46,6 +77,18 @@ export default function EventSurvey({ navigateTo, event }) {
           How was {event.title}?
         </h2>
 
+        {error && (
+          <div style={{ 
+            padding: '12px', 
+            backgroundColor: '#ffebee', 
+            color: '#d32f2f', 
+            borderRadius: '4px',
+            marginBottom: '16px'
+          }}>
+            {error}
+          </div>
+        )}
+
         <div className="event-survey-section">
           <label className="event-survey-label">
             Overall Rating
@@ -71,7 +114,12 @@ export default function EventSurvey({ navigateTo, event }) {
           <div className="event-survey-checkboxes">
             {['Networking', 'Food', 'Venue', 'Activities'].map(option => (
               <label key={option} className="event-survey-checkbox-label">
-                <input type="checkbox" className="event-survey-checkbox" />
+                <input 
+                  type="checkbox" 
+                  className="event-survey-checkbox"
+                  checked={enjoyedAspects.includes(option)}
+                  onChange={() => toggleAspect(option)}
+                />
                 {option}
               </label>
             ))}
@@ -90,10 +138,19 @@ export default function EventSurvey({ navigateTo, event }) {
           />
         </div>
 
-        <button type="submit" className="event-survey-submit-button">
-          Submit Feedback
+        <button 
+          type="submit" 
+          className="event-survey-submit-button"
+          disabled={loading}
+        >
+          {loading ? 'Submitting...' : 'Submit Feedback'}
         </button>
-        <button type="button" className="event-survey-skip-button" onClick={() => navigateTo('rsvps')}>
+        <button 
+          type="button" 
+          className="event-survey-skip-button" 
+          onClick={() => navigateTo('rsvps')}
+          disabled={loading}
+        >
           Skip for now
         </button>
       </form>

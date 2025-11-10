@@ -164,6 +164,52 @@ export const checkRSVPStatus = async (eventId) => {
   return fetchAPI(`/events/${eventId}/rsvp-status`);
 };
 
+// ============================================
+// Survey APIs
+// ============================================
+
+/**
+ * Submit survey feedback for an event
+ * @param {number} eventId - Event ID
+ * @param {Object} surveyData - Survey data (rating, enjoyedAspects, feedback)
+ */
+export const submitSurvey = async (eventId, surveyData) => {
+  return fetchAPI(`/events/${eventId}/survey`, {
+    method: 'POST',
+    body: JSON.stringify(surveyData),
+  });
+};
+
+/**
+ * Get all survey responses for an event (host only)
+ * @param {number} eventId - Event ID
+ */
+export const getEventSurveys = async (eventId) => {
+  return fetchAPI(`/events/${eventId}/surveys`);
+};
+
+// ============================================
+// Analytics APIs
+// ============================================
+
+/**
+ * Get analytics data for an event (host only)
+ * @param {number} eventId - Event ID
+ */
+export const getEventAnalytics = async (eventId) => {
+  return fetchAPI(`/events/${eventId}/analytics`);
+};
+
+/**
+ * Check in to an event
+ * @param {number} eventId - Event ID
+ */
+export const checkInToEvent = async (eventId) => {
+  return fetchAPI(`/events/${eventId}/checkin`, {
+    method: 'POST',
+  });
+};
+
 // Export categories (could be fetched from backend in the future)
 export const categories = ['All', 'Music', 'Social', 'Study', 'Career', 'Wellness', 'Tech', 'Party'];
 
