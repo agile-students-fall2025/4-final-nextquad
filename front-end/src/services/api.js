@@ -188,6 +188,14 @@ export const getEventSurveys = async (eventId) => {
   return fetchAPI(`/events/${eventId}/surveys`);
 };
 
+/**
+ * Check if user has submitted survey for an event
+ * @param {number} eventId - Event ID
+ */
+export const checkSurveyStatus = async (eventId) => {
+  return fetchAPI(`/events/${eventId}/survey-status`);
+};
+
 // ============================================
 // Analytics APIs
 // ============================================

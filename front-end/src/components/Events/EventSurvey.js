@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { submitSurvey } from '../../services/api';
+import { useState, useEffect } from 'react';
+import { submitSurvey, checkSurveyStatus } from '../../services/api';
 import './EventSurvey.css';
 
 export default function EventSurvey({ navigateTo, event }) {
@@ -8,6 +8,27 @@ export default function EventSurvey({ navigateTo, event }) {
   const [enjoyedAspects, setEnjoyedAspects] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [checkingStatus, setCheckingStatus] = useState(true);
+
+  // Check if user has already submitted survey
+  useEffect(() => {
+    const checkStatus = async () => {
+      if (!event) return;
+      
+      try {
+        setCheckingStatus(true);
+        const response = await checkSurveyStatus(event.id);
+        setHasSubmitted(response.data.hasSubmitted);
+      } catch (err) {
+        console.error('Error checking survey status:', err);
+      } finally {
+        setCheckingStatus(false);
+      }
+    };
+
+    checkStatus();
+  }, [event]);
 
   const toggleAspect = (aspect) => {
     if (enjoyedAspects.includes(aspect)) {
@@ -58,6 +79,50 @@ export default function EventSurvey({ navigateTo, event }) {
         </div>
         <div className="event-survey-form">
           <p>No event selected for survey</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show loading while checking status
+  if (checkingStatus) {
+    return (
+      <div className="event-survey-container">
+        <div className="event-survey-header">
+          <button className="event-survey-back-button" onClick={() => navigateTo('rsvps')}>
+            ← Back
+          </button>
+          <h1 className="event-survey-title">Event Feedback</h1>
+        </div>
+        <div className="event-survey-form">
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show "already submitted" message
+  if (hasSubmitted) {
+    return (
+      <div className="event-survey-container">
+        <div className="event-survey-header">
+          <button className="event-survey-back-button" onClick={() => navigateTo('rsvps')}>
+            ← Back
+          </button>
+          <h1 className="event-survey-title">Event Feedback</h1>
+        </div>
+        <div className="event-survey-form">
+          <h2 className="event-survey-heading">Thank you!</h2>
+          <p style={{ textAlign: 'center', color: '#666', marginTop: '20px' }}>
+            You have already submitted feedback for {event.title}.
+          </p>
+          <button 
+            className="event-survey-submit-button"
+            onClick={() => navigateTo('rsvps')}
+            style={{ marginTop: '30px' }}
+          >
+            Back to My Events
+          </button>
         </div>
       </div>
     );
