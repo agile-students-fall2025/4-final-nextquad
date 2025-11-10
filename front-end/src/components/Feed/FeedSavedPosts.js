@@ -35,6 +35,8 @@ export default function FeedSavedPosts({ navigateTo }) {
     if (savedIds.length > 0) {
       fetchSavedPosts();
     } else {
+      // Clear the list when there are no saved IDs to reflect immediately in UI
+      setSavedPosts([]);
       setLoading(false);
     }
   }, [savedIds]);
@@ -77,7 +79,9 @@ export default function FeedSavedPosts({ navigateTo }) {
                 const key = 'savedPostIds';
                 const next = savedIds.filter(id => id !== post.id);
                 localStorage.setItem(key, JSON.stringify(next));
+                // Update both the savedIds (source of truth) and the rendered list immediately
                 setSavedIds(next);
+                setSavedPosts(prev => prev.filter(p => p.id !== post.id));
               }}>Remove</button>
             </div>
           </div>
