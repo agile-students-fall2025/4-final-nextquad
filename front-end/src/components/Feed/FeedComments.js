@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { getPostComments, addComment, toggleCommentLike } from '../../services/api';
 import './FeedComments.css';
 
-export default function FeedComments({ post, navigateTo }) {
+export default function FeedComments({ post, navigateTo, returnToPage = 'main' }) {
   const [commentText, setCommentText] = useState('');
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -66,7 +66,7 @@ export default function FeedComments({ post, navigateTo }) {
       <div className="feed-comments-header">
         <button
           className="feed-comments-back-button"
-          onClick={() => navigateTo('main')}
+          onClick={() => navigateTo(returnToPage)}
         >
           ← Back
         </button>
