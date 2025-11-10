@@ -1,4 +1,4 @@
-const { mockEvents, mockRSVPs } = require('../data/events/mockEvents');
+const { mockEvents, mockRSVPs } = require('../../data/events/mockEvents');
 
 // Mock user ID (in real app, this would come from authentication)
 const MOCK_USER_ID = process.env.MOCK_USER_ID || 'user123';

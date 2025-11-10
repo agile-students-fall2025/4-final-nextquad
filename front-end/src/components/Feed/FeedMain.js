@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { mockPosts, categories } from '../../data/Feed/mockFeedData';
+import { getAllPosts, togglePostLike, feedCategories } from '../../services/api';
 import './FeedMain.css';
 
 export default function FeedMain({ navigateTo, isAdmin = false }) {
@@ -8,6 +8,57 @@ export default function FeedMain({ navigateTo, isAdmin = false }) {
   const [sortBy, setSortBy] = useState('Latest');
   const [showSortMenu, setShowSortMenu] = useState(false);
   const [showCategoryMenu, setShowCategoryMenu] = useState(false);
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Fetch posts from backend
+  useEffect(() => {
+    fetchPosts();
+  }, [selectedCategory, sortBy]);
+
+  const fetchPosts = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Map sortBy to backend parameter
+      const sortParam = sortBy === 'Latest' ? 'latest' 
+        : sortBy === 'Oldest' ? 'oldest' 
+        : sortBy === 'Most Liked' ? 'popular' 
+        : 'latest';
+      
+      const params = {
+        category: selectedCategory !== 'All' ? selectedCategory : undefined,
+        sort: sortParam
+      };
+      
+      const response = await getAllPosts(params);
+      setPosts(response.data || []);
+    } catch (err) {
+      console.error('Error fetching posts:', err);
+      setError('Failed to load posts. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLike = async (postId) => {
+    try {
+      const response = await togglePostLike(postId);
+      
+      // Update the post in the local state
+      setPosts(prevPosts => 
+        prevPosts.map(post => 
+          post.id === postId 
+            ? { ...post, likes: response.data.likes, isLikedByUser: response.data.isLikedByUser }
+            : post
+        )
+      );
+    } catch (err) {
+      console.error('Error liking post:', err);
+    }
+  };
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -22,23 +73,19 @@ export default function FeedMain({ navigateTo, isAdmin = false }) {
     }
   }, [showSortMenu, showCategoryMenu]);
 
-  const filteredPosts = mockPosts.filter(post => {
+  // Client-side search filter
+  const filteredPosts = posts.filter(post => {
+    if (!searchTerm) return true;
     const term = searchTerm.toLowerCase();
-    const matchesSearch =
-      post.title.toLowerCase().includes(term) ||
+    return post.title.toLowerCase().includes(term) ||
       post.content.toLowerCase().includes(term) ||
       post.author.name.toLowerCase().includes(term);
-    const matchesCategory = selectedCategory === 'All' || post.category === selectedCategory;
-    return matchesSearch && matchesCategory;
   });
 
-  const sortedPosts = [...filteredPosts].sort((a, b) => {
-    if (sortBy === 'Latest') return (b.createdAt || 0) - (a.createdAt || 0);
-    if (sortBy === 'Oldest') return (a.createdAt || 0) - (b.createdAt || 0);
-    if (sortBy === 'Most Liked') return b.likes - a.likes;
-    if (sortBy === 'Most Comments') return b.commentCount - a.commentCount;
-    return 0;
-  });
+  // Sort by comment count (since backend doesn't support this yet)
+  const sortedPosts = sortBy === 'Most Comments' 
+    ? [...filteredPosts].sort((a, b) => b.commentCount - a.commentCount)
+    : filteredPosts;
 
   return (
     <div className="feed-main-container">
@@ -85,7 +132,7 @@ export default function FeedMain({ navigateTo, isAdmin = false }) {
             </button>
             {showCategoryMenu && (
               <div className="feed-main-sort-menu">
-                {categories.map(cat => (
+                {feedCategories.map(cat => (
                   <div 
                     key={cat} 
                     className="feed-main-sort-option"
@@ -155,6 +202,24 @@ export default function FeedMain({ navigateTo, isAdmin = false }) {
         </button>
       </div>
 
+      {loading && (
+        <div style={{ padding: '40px', textAlign: 'center', color: '#666' }}>
+          Loading posts...
+        </div>
+      )}
+
+      {error && (
+        <div style={{ padding: '40px', textAlign: 'center', color: '#dc2626' }}>
+          {error}
+        </div>
+      )}
+
+      {!loading && !error && sortedPosts.length === 0 && (
+        <div style={{ padding: '40px', textAlign: 'center', color: '#666' }}>
+          No posts found. {searchTerm && 'Try a different search term.'}
+        </div>
+      )}
+
       <div className="feed-post-list">
         {sortedPosts.map(post => (
           <div 
@@ -195,8 +260,11 @@ export default function FeedMain({ navigateTo, isAdmin = false }) {
       >
         💬 {post.commentCount}
       </button>
-      <button className="feed-post-action-button">
-        ❤️ {post.likes}
+      <button 
+        className="feed-post-action-button"
+        onClick={() => handleLike(post.id)}
+      >
+        {post.isLikedByUser ? '❤️' : '🤍'} {post.likes}
       </button>
       <button
         className="feed-post-action-button"

@@ -1,21 +1,42 @@
 import { useState } from 'react';
+import { createPost } from '../../services/api';
 import './FeedCreatePost.css';
 
 export default function FeedCreatePost({ navigateTo }) {
   const [formData, setFormData] = useState({
     title: '',
     content: '',
-    category: ''
+    category: '',
+    image: ''
   });
+  const [submitting, setSubmitting] = useState(false);
 
   const categories = ['All','General','Marketplace','Lost and Found','Roommate Request','Safety Alerts'];
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // TODO: Send to backend
-    console.log('Creating post with data:', formData);
-    alert('Post created successfully!');
-    navigateTo('main');
+    
+    if (!formData.category) {
+      alert('Please select a category');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await createPost({
+        title: formData.title,
+        content: formData.content,
+        category: formData.category,
+        image: formData.image || null
+      });
+      alert('Post created successfully!');
+      navigateTo('main');
+    } catch (err) {
+      console.error('Error creating post:', err);
+      alert('Failed to create post. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const selectCategory = (cat) => {
@@ -74,8 +95,8 @@ export default function FeedCreatePost({ navigateTo }) {
           </div>
         </div>
 
-        <button type="submit" className="event-create-submit-button">
-          Publish Post
+        <button type="submit" className="event-create-submit-button" disabled={submitting}>
+          {submitting ? 'Publishing...' : 'Publish Post'}
         </button>
       </form>
     </div>

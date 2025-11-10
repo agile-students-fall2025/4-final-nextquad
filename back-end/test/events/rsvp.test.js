@@ -1,11 +1,11 @@
 const { expect } = require('chai');
-const { mockEvents, mockRSVPs } = require('../data/mockEvents');
+const { mockEvents, mockRSVPs } = require('../../data/events/mockEvents');
 const {
   rsvpToEvent,
   cancelRSVP,
   getEventRSVPs,
   checkRSVPStatus
-} = require('../controllers/rsvpController');
+} = require('../../controllers/events/rsvpController');
 
 describe('RSVP Controller', () => {
 

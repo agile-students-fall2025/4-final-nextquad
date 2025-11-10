@@ -167,3 +167,126 @@ export const checkRSVPStatus = async (eventId) => {
 // Export categories (could be fetched from backend in the future)
 export const categories = ['All', 'Music', 'Social', 'Study', 'Career', 'Wellness', 'Tech', 'Party'];
 
+// ============================================
+// Feed APIs
+// ============================================
+
+/**
+ * Get all feed posts with optional filters
+ * @param {Object} params - Query parameters (category, search, sort)
+ */
+export const getAllPosts = async (params = {}) => {
+  // Filter out undefined values to avoid sending "undefined" as string
+  const cleanParams = Object.entries(params).reduce((acc, [key, value]) => {
+    if (value !== undefined && value !== null && value !== '') {
+      acc[key] = value;
+    }
+    return acc;
+  }, {});
+  
+  const queryString = new URLSearchParams(cleanParams).toString();
+  const endpoint = `/feed/posts${queryString ? `?${queryString}` : ''}`;
+  return fetchAPI(endpoint);
+};
+
+/**
+ * Get a single post by ID
+ * @param {number} postId - Post ID
+ */
+export const getPostById = async (postId) => {
+  return fetchAPI(`/feed/posts/${postId}`);
+};
+
+/**
+ * Create a new post
+ * @param {Object} postData - Post data (title, content, category, image)
+ */
+export const createPost = async (postData) => {
+  return fetchAPI('/feed/posts', {
+    method: 'POST',
+    body: JSON.stringify(postData),
+  });
+};
+
+/**
+ * Update a post
+ * @param {number} postId - Post ID
+ * @param {Object} postData - Updated post data
+ */
+export const updatePost = async (postId, postData) => {
+  return fetchAPI(`/feed/posts/${postId}`, {
+    method: 'PUT',
+    body: JSON.stringify(postData),
+  });
+};
+
+/**
+ * Delete a post
+ * @param {number} postId - Post ID
+ */
+export const deletePost = async (postId) => {
+  return fetchAPI(`/feed/posts/${postId}`, {
+    method: 'DELETE',
+  });
+};
+
+/**
+ * Like or unlike a post
+ * @param {number} postId - Post ID
+ */
+export const togglePostLike = async (postId) => {
+  return fetchAPI(`/feed/posts/${postId}/like`, {
+    method: 'POST',
+  });
+};
+
+/**
+ * Get all comments for a post
+ * @param {number} postId - Post ID
+ */
+export const getPostComments = async (postId) => {
+  return fetchAPI(`/feed/posts/${postId}/comments`);
+};
+
+/**
+ * Add a comment to a post
+ * @param {number} postId - Post ID
+ * @param {string} text - Comment text
+ */
+export const addComment = async (postId, text) => {
+  return fetchAPI(`/feed/posts/${postId}/comments`, {
+    method: 'POST',
+    body: JSON.stringify({ text }),
+  });
+};
+
+/**
+ * Delete a comment
+ * @param {number} commentId - Comment ID
+ */
+export const deleteComment = async (commentId) => {
+  return fetchAPI(`/feed/comments/${commentId}`, {
+    method: 'DELETE',
+  });
+};
+
+/**
+ * Like or unlike a comment
+ * @param {number} commentId - Comment ID
+ */
+export const toggleCommentLike = async (commentId) => {
+  return fetchAPI(`/feed/comments/${commentId}/like`, {
+    method: 'POST',
+  });
+};
+
+/**
+ * Get all feed categories
+ */
+export const getFeedCategories = async () => {
+  return fetchAPI('/feed/categories');
+};
+
+// Export feed categories (could be fetched from backend in the future)
+export const feedCategories = ['All', 'General', 'Marketplace', 'Lost and Found', 'Roommate Request', 'Safety Alerts'];
+
