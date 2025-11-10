@@ -21,19 +21,29 @@ export default function EventCreate({ navigateTo }) {
       setLoading(true);
       setError(null);
       
+      // Convert 24-hour time to 12-hour format
+      let displayTime = formData.time;
+      if (formData.time && formData.time.includes(':')) {
+        const [hours, minutes] = formData.time.split(':');
+        const h = parseInt(hours, 10);
+        const ampm = h >= 12 ? 'PM' : 'AM';
+        const h12 = h % 12 || 12;
+        displayTime = `${h12}:${minutes} ${ampm}`;
+      }
+      
       // Call backend API
       await createEvent({
         title: formData.title,
         date: formData.date,
-        time: formData.time,
+        time: displayTime,
         location: formData.location,
         description: formData.description,
         category: formData.categories
       });
       
       alert('Event created successfully!');
-      // Navigate back to main page
       navigateTo('main');
+      
       // Trigger event list refresh
       setTimeout(() => {
         window.dispatchEvent(new Event('refreshEvents'));

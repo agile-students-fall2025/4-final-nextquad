@@ -37,7 +37,7 @@ const rsvpToEvent = (req, res) => {
     if (event.host.userId === userId) {
       return res.status(400).json({
         success: false,
-        error: 'You cannot RSVP to your own event'
+        error: 'Cannot RSVP to event as host'
       });
     }
 
@@ -62,10 +62,11 @@ const rsvpToEvent = (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: 'Successfully RSVP\'d to event',
+      message: 'RSVP successful',
       data: {
         eventId,
-        rsvpCount: event.rsvpCount
+        userId,
+        rsvpedAt: new Date()
       }
     });
   } catch (error) {

@@ -49,9 +49,8 @@ export default function EventMain({ navigateTo }) {
     }
   }, [searchTerm, selectedCategory, sortBy]);
 
-  // Add manual refresh function that can be called from outside
+  // Listen for refresh events
   useEffect(() => {
-    // Listen for custom refresh event
     const handleRefresh = () => {
       console.log('🔄 Refreshing events list...');
       fetchEvents();

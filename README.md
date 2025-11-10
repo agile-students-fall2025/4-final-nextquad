@@ -72,8 +72,9 @@ cd back-end
 # Install dependencies
 npm install
 
-# Create .env file with configuration
-# See INTEGRATION-GUIDE.md for details
+# Create .env file with configuration (for both frontend and backend)
+# /back-end/.env (PORT, NODE_ENV, API_VERSION, MOCK_USER_ID)
+# /front-end/.env (REACT_APP_API_URL)
 
 # Start development server with auto-reload
 npm run dev

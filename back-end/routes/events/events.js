@@ -19,6 +19,15 @@ const {
   getEventRSVPs,
   checkRSVPStatus
 } = require('../../controllers/events/rsvpController');
+const {
+  submitSurvey,
+  getEventSurveys,
+  checkSurveyStatus
+} = require('../../controllers/events/surveyController');
+const {
+  getEventAnalytics,
+  checkInToEvent
+} = require('../../controllers/events/analyticsController');
 
 // User-specific event routes (must come before /:id route)
 router.get('/user/rsvps', getUserRSVPedEvents);
@@ -38,6 +47,15 @@ router.post('/:id/rsvp', rsvpToEvent);
 router.delete('/:id/rsvp', cancelRSVP);
 router.get('/:id/rsvps', getEventRSVPs);
 router.get('/:id/rsvp-status', checkRSVPStatus);
+
+// Survey routes
+router.post('/:id/survey', submitSurvey);
+router.get('/:id/surveys', getEventSurveys);
+router.get('/:id/survey-status', checkSurveyStatus);
+
+// Analytics routes
+router.get('/:id/analytics', getEventAnalytics);
+router.post('/:id/checkin', checkInToEvent);
 
 module.exports = router;
 
