@@ -1,12 +1,12 @@
 const { expect } = require('chai');
-const { mockEvents, getNextEventId } = require('../data/mockEvents');
+const { mockEvents, getNextEventId } = require('../../data/events/mockEvents');
 const {
   getAllEvents,
   getEventById,
   createEvent,
   updateEvent,
   deleteEvent
-} = require('../controllers/eventsController');
+} = require('../../controllers/events/eventsController');
 
 describe('Events Controller', () => {
   
