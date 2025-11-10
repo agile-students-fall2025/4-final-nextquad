@@ -122,12 +122,17 @@ const pastEvents = Array.from({ length: 1 }, (_, index) => {
 // Combine all events
 let mockEvents = [...upcomingEvents, ...pastEvents];
 
-// Make event 2 happen tomorrow (for check-in demo)
-const tomorrow = new Date();
-tomorrow.setDate(tomorrow.getDate() + 1);
+// Make event 2 happen in 18 hours (for check-in demo - always within 24hr window)
+const soon = new Date();
+soon.setHours(soon.getHours() + 18);
 if (mockEvents.length > 1) {
-  mockEvents[1].date = tomorrow.toISOString().split('T')[0];
-  mockEvents[1].time = '6:00 PM';
+  mockEvents[1].date = soon.toISOString().split('T')[0];
+  // Format time to 12-hour format
+  const hours = soon.getHours();
+  const minutes = soon.getMinutes();
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  const displayHour = hours > 12 ? hours - 12 : hours === 0 ? 12 : hours;
+  mockEvents[1].time = `${displayHour}:${minutes.toString().padStart(2, '0')} ${ampm}`;
 }
 
 // Mock RSVP data (stores which user RSVP'd to which events)

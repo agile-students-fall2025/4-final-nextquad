@@ -17,7 +17,14 @@ export default function RSVPsDashboard({ navigateTo }) {
           getEventsNeedingAttention()
         ]);
         setHostedEvents(hostedResponse.data || []);
-        setNeedsAttentionEvents(attentionResponse.data || []);
+        
+        // Backend returns {needsCheckIn: [...], needsSurvey: [...]}
+        // Combine them into one array with flags
+        const needsCheckIn = attentionResponse.needsCheckIn || [];
+        const needsSurvey = attentionResponse.needsSurvey || [];
+        const combined = [...needsCheckIn, ...needsSurvey];
+        setNeedsAttentionEvents(combined);
+        
         setError(null);
       } catch (err) {
         console.error('Error fetching RSVP data:', err);

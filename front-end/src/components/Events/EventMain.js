@@ -13,9 +13,8 @@ export default function EventMain({ navigateTo }) {
   const [error, setError] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  // Add manual refresh function that can be called from outside
+  // Listen for refresh events
   useEffect(() => {
-    // Listen for custom refresh event
     const handleRefresh = () => {
       console.log('🔄 Refreshing events list...');
       setRefreshKey(prev => prev + 1);
@@ -30,8 +29,8 @@ export default function EventMain({ navigateTo }) {
     const fetchEvents = async () => {
       try {
         setLoading(true);
-        console.log('🔍 Fetching events from backend...');
-        console.log('🔍 API URL:', process.env.REACT_APP_API_URL || 'http://localhost:3000/api');
+        console.log('🔍 [EventMain] Fetching events from backend... (refreshKey:', refreshKey, ')');
+        console.log('🔍 [EventMain] API URL:', process.env.REACT_APP_API_URL || 'http://localhost:3000/api');
         
         const sortParam = sortBy === 'Latest' ? 'latest' : sortBy === 'Oldest' ? 'oldest' : 'engagement';
         const response = await getAllEvents({
@@ -41,8 +40,11 @@ export default function EventMain({ navigateTo }) {
           showPast: 'false'
         });
         
-        console.log('✅ Response received:', response);
-        console.log('✅ Events count:', response.data?.length || 0);
+        console.log('✅ [EventMain] Response received:', response);
+        console.log('✅ [EventMain] Events count:', response.data?.length || 0);
+        if (response.data && response.data.length > 0) {
+          console.log('✅ [EventMain] First 3 event IDs:', response.data.slice(0, 3).map(e => e.id));
+        }
         
         setEvents(response.data || []);
         setError(null);

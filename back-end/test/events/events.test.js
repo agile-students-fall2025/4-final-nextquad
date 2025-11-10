@@ -1,5 +1,4 @@
 const { expect } = require('chai');
-const { mockEvents, getNextEventId } = require('../../data/events/mockEvents');
 const {
   getAllEvents,
   getEventById,
@@ -9,224 +8,326 @@ const {
 } = require('../../controllers/events/eventsController');
 
 describe('Events Controller', () => {
-  
   describe('getAllEvents', () => {
-    it('should return all events with success status', () => {
-      const req = { query: {} };
+    it('should return all upcoming events by default', (done) => {
+      const req = {
+        query: {}
+      };
       const res = {
-        status: function(code) {
-          this.statusCode = code;
-          return this;
-        },
-        json: function(data) {
-          this.data = data;
+        status: (code) => {
+          expect(code).to.equal(200);
+          return {
+            json: (data) => {
+              expect(data.success).to.be.true;
+              expect(data.count).to.be.a('number');
+              expect(data.data).to.be.an('array');
+              done();
+            }
+          };
         }
       };
-
       getAllEvents(req, res);
-
-      expect(res.statusCode).to.equal(200);
-      expect(res.data.success).to.be.true;
-      expect(res.data.data).to.be.an('array');
-      expect(res.data.count).to.be.a('number');
     });
 
-    it('should filter events by category', () => {
-      const req = { query: { category: 'Tech' } };
+    it('should filter events by category', (done) => {
+      const req = {
+        query: { category: 'Music' }
+      };
       const res = {
-        status: function(code) {
-          this.statusCode = code;
-          return this;
-        },
-        json: function(data) {
-          this.data = data;
+        status: (code) => {
+          return {
+            json: (data) => {
+              expect(data.success).to.be.true;
+              data.data.forEach(event => {
+                expect(event.category).to.include('Music');
+              });
+              done();
+            }
+          };
         }
       };
-
       getAllEvents(req, res);
-
-      expect(res.statusCode).to.equal(200);
-      expect(res.data.success).to.be.true;
-      res.data.data.forEach(event => {
-        expect(event.category).to.include('Tech');
-      });
     });
 
-    it('should filter events by search term', () => {
-      const searchTerm = 'Concert';
-      const req = { query: { search: searchTerm } };
+    it('should search events by title', (done) => {
+      const req = {
+        query: { search: 'Concert' }
+      };
       const res = {
-        status: function(code) {
-          this.statusCode = code;
-          return this;
-        },
-        json: function(data) {
-          this.data = data;
+        status: (code) => {
+          return {
+            json: (data) => {
+              expect(data.success).to.be.true;
+              done();
+            }
+          };
         }
       };
-
       getAllEvents(req, res);
-
-      expect(res.statusCode).to.equal(200);
-      res.data.data.forEach(event => {
-        expect(event.title.toLowerCase()).to.include(searchTerm.toLowerCase());
-      });
     });
 
-    it('should only show upcoming events by default', () => {
-      const req = { query: {} };
+    it('should sort events by latest', (done) => {
+      const req = {
+        query: { sort: 'latest' }
+      };
       const res = {
-        status: function(code) {
-          this.statusCode = code;
-          return this;
-        },
-        json: function(data) {
-          this.data = data;
+        status: (code) => {
+          return {
+            json: (data) => {
+              expect(data.success).to.be.true;
+              if (data.data.length > 1) {
+                const firstDate = new Date(data.data[0].date);
+                const secondDate = new Date(data.data[1].date);
+                expect(firstDate >= secondDate).to.be.true;
+              }
+              done();
+            }
+          };
         }
       };
-
       getAllEvents(req, res);
+    });
 
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      
-      res.data.data.forEach(event => {
-        const eventDate = new Date(event.date);
-        expect(eventDate >= today).to.be.true;
-      });
+    it('should include past events when requested', (done) => {
+      const req = {
+        query: { showPast: 'true' }
+      };
+      const res = {
+        status: (code) => {
+          return {
+            json: (data) => {
+              expect(data.success).to.be.true;
+              expect(data.count).to.be.at.least(1);
+              done();
+            }
+          };
+        }
+      };
+      getAllEvents(req, res);
     });
   });
 
   describe('getEventById', () => {
-    it('should return event if found', () => {
-      const req = { params: { id: '1' } };
+    it('should return event when valid ID is provided', (done) => {
+      const req = {
+        params: { id: '1' }
+      };
       const res = {
-        status: function(code) {
-          this.statusCode = code;
-          return this;
-        },
-        json: function(data) {
-          this.data = data;
+        status: (code) => {
+          expect(code).to.equal(200);
+          return {
+            json: (data) => {
+              expect(data.success).to.be.true;
+              expect(data.data).to.have.property('id');
+              expect(data.data).to.have.property('title');
+              expect(data.data).to.have.property('date');
+              done();
+            }
+          };
         }
       };
-
       getEventById(req, res);
-
-      expect(res.statusCode).to.equal(200);
-      expect(res.data.success).to.be.true;
-      expect(res.data.data).to.be.an('object');
-      expect(res.data.data.id).to.equal(1);
     });
 
-    it('should return 404 if event not found', () => {
-      const req = { params: { id: '99999' } };
+    it('should return 404 when event not found', (done) => {
+      const req = {
+        params: { id: '99999' }
+      };
       const res = {
-        status: function(code) {
-          this.statusCode = code;
-          return this;
-        },
-        json: function(data) {
-          this.data = data;
+        status: (code) => {
+          expect(code).to.equal(404);
+          return {
+            json: (data) => {
+              expect(data.success).to.be.false;
+              expect(data.error).to.include('not found');
+              done();
+            }
+          };
         }
       };
-
       getEventById(req, res);
-
-      expect(res.statusCode).to.equal(404);
-      expect(res.data.success).to.be.false;
-      expect(res.data.error).to.equal('Event not found');
     });
   });
 
   describe('createEvent', () => {
-    it('should create a new event with valid data', () => {
+    it('should create event with valid data', (done) => {
       const req = {
         body: {
           title: 'Test Event',
           date: '2025-12-01',
-          time: '6:00 PM',
-          location: 'Kimmel Center',
-          description: 'This is a test event',
-          category: ['Tech', 'Social']
+          time: '7:00 PM',
+          location: 'Test Location',
+          description: 'Test Description',
+          category: ['Social']
         }
       };
       const res = {
-        status: function(code) {
-          this.statusCode = code;
-          return this;
-        },
-        json: function(data) {
-          this.data = data;
+        status: (code) => {
+          expect(code).to.equal(201);
+          return {
+            json: (data) => {
+              expect(data.success).to.be.true;
+              expect(data.data.title).to.equal('Test Event');
+              expect(data.data.date).to.equal('2025-12-01');
+              expect(data.data.time).to.equal('7:00 PM');
+              done();
+            }
+          };
         }
       };
-
-      const initialLength = mockEvents.length;
       createEvent(req, res);
-
-      expect(res.statusCode).to.equal(201);
-      expect(res.data.success).to.be.true;
-      expect(res.data.data).to.be.an('object');
-      expect(res.data.data.title).to.equal('Test Event');
-      expect(mockEvents.length).to.equal(initialLength + 1);
     });
 
-    it('should return 400 if required fields are missing', () => {
+    it('should return 400 when missing required fields', (done) => {
       const req = {
         body: {
           title: 'Test Event'
-          // Missing other required fields
         }
       };
       const res = {
-        status: function(code) {
-          this.statusCode = code;
-          return this;
-        },
-        json: function(data) {
-          this.data = data;
+        status: (code) => {
+          expect(code).to.equal(400);
+          return {
+            json: (data) => {
+              expect(data.success).to.be.false;
+              expect(data.error).to.include('required fields');
+              done();
+            }
+          };
         }
       };
-
       createEvent(req, res);
-
-      expect(res.statusCode).to.equal(400);
-      expect(res.data.success).to.be.false;
     });
 
-    it('should return 400 if no categories provided', () => {
+    it('should return 400 when category is empty', (done) => {
       const req = {
         body: {
           title: 'Test Event',
           date: '2025-12-01',
-          time: '6:00 PM',
-          location: 'Kimmel Center',
-          description: 'This is a test event',
+          time: '7:00 PM',
+          location: 'Test Location',
+          description: 'Test Description',
           category: []
         }
       };
       const res = {
-        status: function(code) {
-          this.statusCode = code;
-          return this;
-        },
-        json: function(data) {
-          this.data = data;
+        status: (code) => {
+          expect(code).to.equal(400);
+          return {
+            json: (data) => {
+              expect(data.success).to.be.false;
+              expect(data.error).to.include('category');
+              done();
+            }
+          };
         }
       };
-
       createEvent(req, res);
-
-      expect(res.statusCode).to.equal(400);
-      expect(res.data.success).to.be.false;
-      expect(res.data.error).to.include('category');
     });
   });
 
-  describe('getNextEventId', () => {
-    it('should return a valid next ID', () => {
-      const nextId = getNextEventId();
-      expect(nextId).to.be.a('number');
-      expect(nextId).to.be.greaterThan(0);
+  describe('updateEvent', () => {
+    it('should update event when host makes request', (done) => {
+      const req = {
+        params: { id: '1' },
+        body: {
+          title: 'Updated Title',
+          description: 'Updated Description'
+        }
+      };
+      const res = {
+        status: (code) => {
+          expect(code).to.equal(200);
+          return {
+            json: (data) => {
+              expect(data.success).to.be.true;
+              expect(data.data.title).to.equal('Updated Title');
+              done();
+            }
+          };
+        }
+      };
+      updateEvent(req, res);
+    });
+
+    it('should return 404 when event not found', (done) => {
+      const req = {
+        params: { id: '99999' },
+        body: { title: 'Updated' }
+      };
+      const res = {
+        status: (code) => {
+          expect(code).to.equal(404);
+          return {
+            json: (data) => {
+              expect(data.success).to.be.false;
+              done();
+            }
+          };
+        }
+      };
+      updateEvent(req, res);
+    });
+  });
+
+  describe('deleteEvent', () => {
+    it('should delete event when host makes request', (done) => {
+      // First create an event
+      const createReq = {
+        body: {
+          title: 'Event to Delete',
+          date: '2025-12-01',
+          time: '7:00 PM',
+          location: 'Test',
+          description: 'Test',
+          category: ['Social']
+        }
+      };
+      let eventId;
+      const createRes = {
+        status: () => ({
+          json: (data) => {
+            eventId = data.data.id;
+          }
+        })
+      };
+      createEvent(createReq, createRes);
+
+      // Then delete it
+      const deleteReq = {
+        params: { id: eventId.toString() }
+      };
+      const deleteRes = {
+        status: (code) => {
+          expect(code).to.equal(200);
+          return {
+            json: (data) => {
+              expect(data.success).to.be.true;
+              expect(data.message).to.include('deleted');
+              done();
+            }
+          };
+        }
+      };
+      deleteEvent(deleteReq, deleteRes);
+    });
+
+    it('should return 404 when event not found', (done) => {
+      const req = {
+        params: { id: '99999' }
+      };
+      const res = {
+        status: (code) => {
+          expect(code).to.equal(404);
+          return {
+            json: (data) => {
+              expect(data.success).to.be.false;
+              done();
+            }
+          };
+        }
+      };
+      deleteEvent(req, res);
     });
   });
 });

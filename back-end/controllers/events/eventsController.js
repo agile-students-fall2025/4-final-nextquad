@@ -112,15 +112,16 @@ const createEvent = (req, res) => {
     }
 
     // Create new event
+    const eventId = getNextEventId();
     const newEvent = {
-      id: getNextEventId(),
+      id: eventId,
       title,
       date,
       time,
       location,
       description,
       category: Array.isArray(category) ? category : [category],
-      image: image || `https://picsum.photos/seed/event${getNextEventId()}/400/300`,
+      image: image || `https://picsum.photos/seed/event${eventId}/400/300`,
       rsvpCount: 0,
       host: {
         name: 'Current User', // TODO: Get from auth

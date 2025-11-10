@@ -1,4 +1,4 @@
-const { mockEvents, mockRSVPs } = require('../data/events/mockEvents');
+const { mockEvents, mockRSVPs } = require('../../data/events/mockEvents');
 
 // Mock user ID (in real app, this would come from authentication)
 const MOCK_USER_ID = process.env.MOCK_USER_ID || 'user123';
@@ -89,8 +89,9 @@ const getEventsNeedingAttention = (req, res) => {
     // TODO: Get userId from authentication middleware
     const userId = MOCK_USER_ID;
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const now = new Date();
+    const todayMidnight = new Date();
+    todayMidnight.setHours(0, 0, 0, 0);
 
     // Find events where user has RSVP'd and needs to take action
     const needsAttentionEvents = mockEvents.filter(event => {
@@ -99,12 +100,12 @@ const getEventsNeedingAttention = (req, res) => {
       if (!hasRSVPd) return false;
 
       const eventDate = new Date(event.date);
-      const isUpcoming = eventDate >= today;
-      const isPast = eventDate < today;
+      const isPast = eventDate < todayMidnight;
 
       // For upcoming events: check if it's within 24 hours (needs check-in)
-      const hoursDiff = (eventDate - today) / (1000 * 60 * 60);
-      const needsCheckIn = isUpcoming && hoursDiff <= 24;
+      // Calculate from current time, not midnight
+      const hoursDiff = (eventDate - now) / (1000 * 60 * 60);
+      const needsCheckIn = !isPast && hoursDiff <= 24 && hoursDiff >= 0;
 
       // For past events: check if survey hasn't been completed
       // In this mock, we'll assume all past RSVP'd events need surveys
@@ -118,32 +119,24 @@ const getEventsNeedingAttention = (req, res) => {
       return false;
     }).map(event => {
       const eventDate = new Date(event.date);
-      const isPast = eventDate < today;
-      const hoursDiff = (eventDate - today) / (1000 * 60 * 60);
+      const isPast = eventDate < todayMidnight;
+      const hoursDiff = (eventDate - now) / (1000 * 60 * 60);
       
       return {
         ...event,
-        needsCheckIn: !isPast && hoursDiff <= 24,
+        needsCheckIn: !isPast && hoursDiff <= 24 && hoursDiff >= 0,
         needsSurvey: isPast
       };
     });
 
-    // Sort: upcoming events first (by date), then past events
-    needsAttentionEvents.sort((a, b) => {
-      const aDate = new Date(a.date);
-      const bDate = new Date(b.date);
-      const aIsPast = aDate < today;
-      const bIsPast = bDate < today;
-
-      if (aIsPast && !bIsPast) return 1;
-      if (!aIsPast && bIsPast) return -1;
-      return aDate - bDate;
-    });
+    // Separate into two arrays: needsCheckIn and needsSurvey
+    const needsCheckIn = needsAttentionEvents.filter(e => e.needsCheckIn);
+    const needsSurvey = needsAttentionEvents.filter(e => e.needsSurvey);
 
     res.status(200).json({
       success: true,
-      count: needsAttentionEvents.length,
-      data: needsAttentionEvents
+      needsCheckIn,
+      needsSurvey
     });
   } catch (error) {
     res.status(500).json({
