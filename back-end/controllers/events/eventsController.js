@@ -1,4 +1,4 @@
-const { mockEvents, getNextEventId } = require('../data/mockEvents');
+const { mockEvents, getNextEventId } = require('../../data/events/mockEvents');
 
 /**
  * GET /api/events

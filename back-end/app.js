@@ -11,7 +11,7 @@ app.use(express.json()); // Parse JSON request bodies
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
 
 // Import routes
-const eventsRoutes = require("./routes/events");
+const eventsRoutes = require("./routes/events/events");
 
 // API Routes
 app.use("/api/events", eventsRoutes);
