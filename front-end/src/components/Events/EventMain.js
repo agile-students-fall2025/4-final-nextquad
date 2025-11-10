@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { getAllEvents, categories } from '../../services/api';
 import './EventMain.css';
 
@@ -11,52 +11,59 @@ export default function EventMain({ navigateTo }) {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [refreshKey, setRefreshKey] = useState(0);
+  const isFetchingRef = useRef(false);
+
+  // Fetch events from backend - wrapped in useCallback
+  const fetchEvents = useCallback(async () => {
+    if (isFetchingRef.current) {
+      console.log('⏭️ Skipping fetch - already in progress');
+      return;
+    }
+
+    try {
+      isFetchingRef.current = true;
+      setLoading(true);
+      console.log('🔍 Fetching events from backend...');
+      console.log('🔍 API URL:', process.env.REACT_APP_API_URL || 'http://localhost:3000/api');
+      
+      const sortParam = sortBy === 'Latest' ? 'latest' : sortBy === 'Oldest' ? 'oldest' : 'engagement';
+      const response = await getAllEvents({
+        category: selectedCategory !== 'All' ? selectedCategory : undefined,
+        search: searchTerm || undefined,
+        sort: sortParam,
+        showPast: 'false'
+      });
+      
+      console.log('✅ Response received:', response);
+      console.log('✅ Events count:', response.data?.length || 0);
+      
+      setEvents(response.data || []);
+      setError(null);
+    } catch (err) {
+      console.error('❌ Error fetching events:', err);
+      console.error('❌ Error details:', err.message);
+      setError(`Failed to load events: ${err.message}`);
+    } finally {
+      setLoading(false);
+      isFetchingRef.current = false;
+    }
+  }, [searchTerm, selectedCategory, sortBy]);
 
   // Add manual refresh function that can be called from outside
   useEffect(() => {
     // Listen for custom refresh event
     const handleRefresh = () => {
       console.log('🔄 Refreshing events list...');
-      setRefreshKey(prev => prev + 1);
+      fetchEvents();
     };
     
     window.addEventListener('refreshEvents', handleRefresh);
     return () => window.removeEventListener('refreshEvents', handleRefresh);
-  }, []);
+  }, [fetchEvents]);
 
-  // Fetch events from backend
   useEffect(() => {
-    const fetchEvents = async () => {
-      try {
-        setLoading(true);
-        console.log('🔍 Fetching events from backend...');
-        console.log('🔍 API URL:', process.env.REACT_APP_API_URL || 'http://localhost:3000/api');
-        
-        const sortParam = sortBy === 'Latest' ? 'latest' : sortBy === 'Oldest' ? 'oldest' : 'engagement';
-        const response = await getAllEvents({
-          category: selectedCategory !== 'All' ? selectedCategory : undefined,
-          search: searchTerm || undefined,
-          sort: sortParam,
-          showPast: 'false'
-        });
-        
-        console.log('✅ Response received:', response);
-        console.log('✅ Events count:', response.data?.length || 0);
-        
-        setEvents(response.data || []);
-        setError(null);
-      } catch (err) {
-        console.error('❌ Error fetching events:', err);
-        console.error('❌ Error details:', err.message);
-        setError(`Failed to load events: ${err.message}`);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchEvents();
-  }, [searchTerm, selectedCategory, sortBy, refreshKey]);
+  }, [fetchEvents]);
 
   // Close dropdowns when clicking outside
   useEffect(() => {

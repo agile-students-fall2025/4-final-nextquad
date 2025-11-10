@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { getAllPosts, togglePostLike, feedCategories } from '../../services/api';
 import './FeedMain.css';
 
@@ -11,14 +11,17 @@ export default function FeedMain({ navigateTo, isAdmin = false }) {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const isFetchingRef = useRef(false);
 
-  // Fetch posts from backend
-  useEffect(() => {
-    fetchPosts();
-  }, [selectedCategory, sortBy]);
+  // Fetch posts from backend - wrapped in useCallback
+  const fetchPosts = useCallback(async () => {
+    if (isFetchingRef.current) {
+      console.log('⏭️ Skipping fetch - already in progress');
+      return;
+    }
 
-  const fetchPosts = async () => {
     try {
+      isFetchingRef.current = true;
       setLoading(true);
       setError(null);
       
@@ -40,8 +43,13 @@ export default function FeedMain({ navigateTo, isAdmin = false }) {
       setError('Failed to load posts. Please try again.');
     } finally {
       setLoading(false);
+      isFetchingRef.current = false;
     }
-  };
+  }, [selectedCategory, sortBy]);
+
+  useEffect(() => {
+    fetchPosts();
+  }, [fetchPosts]);
 
   const handleLike = async (postId) => {
     try {
