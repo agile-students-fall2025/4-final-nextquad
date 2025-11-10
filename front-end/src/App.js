@@ -1,6 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
-import { getEventById } from './services/api';
-import { getPostById } from './data/Feed/mockFeedData';
+import { getEventById, getPostById } from './services/api';
 import './App.css';
 import './index.css';
 
@@ -84,10 +83,26 @@ export default function App() {
     
     fetchEventDetails();
   }, [selectedEventId]);
-  const selectedPost = useMemo(
-    () => (selectedPostId != null ? getPostById(selectedPostId) : null),
-    [selectedPostId]
-  );
+
+  // Fetch selected post details for Feed comments
+  const [selectedPost, setSelectedPost] = useState(null);
+  useEffect(() => {
+    const fetchPostDetails = async () => {
+      if (selectedPostId) {
+        try {
+          const response = await getPostById(selectedPostId);
+          setSelectedPost(response.data);
+        } catch (error) {
+          console.error('Error fetching post details:', error);
+          setSelectedPost(null);
+        }
+      } else {
+        setSelectedPost(null);
+      }
+    };
+    
+    fetchPostDetails();
+  }, [selectedPostId]);
 
   const navigateTo = (page, entityId = null) => {
     // Handle module switches (auth, events, map, settings)

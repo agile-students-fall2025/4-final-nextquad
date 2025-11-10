@@ -1,10 +1,43 @@
 import './FeedSavedPosts.css';
-import { useState, useMemo } from 'react';
-import { mockPosts } from '../../data/Feed/mockFeedData';
+import { useState, useEffect } from 'react';
+import { getPostById } from '../../services/api';
 
 export default function FeedSavedPosts({ navigateTo }) {
   const [savedIds, setSavedIds] = useState(() => JSON.parse(localStorage.getItem('savedPostIds') || '[]'));
-  const savedPosts = useMemo(() => mockPosts.filter(p => savedIds.includes(p.id)), [savedIds]);
+  const [savedPosts, setSavedPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchSavedPosts = async () => {
+      setLoading(true);
+      try {
+        // Fetch each saved post from backend
+        const posts = await Promise.all(
+          savedIds.map(async (id) => {
+            try {
+              const response = await getPostById(id);
+              return response.data;
+            } catch (err) {
+              console.error(`Error fetching post ${id}:`, err);
+              return null;
+            }
+          })
+        );
+        // Filter out null values (posts that failed to fetch)
+        setSavedPosts(posts.filter(p => p !== null));
+      } catch (err) {
+        console.error('Error fetching saved posts:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (savedIds.length > 0) {
+      fetchSavedPosts();
+    } else {
+      setLoading(false);
+    }
+  }, [savedIds]);
 
   return (
     <div className="feed-saved-container">
@@ -13,8 +46,14 @@ export default function FeedSavedPosts({ navigateTo }) {
         <h1 className="feed-saved-title">Saved Posts</h1>
       </div>
 
+      {loading && (
+        <div style={{ padding: '40px', textAlign: 'center', color: '#666' }}>
+          Loading saved posts...
+        </div>
+      )}
+
       <div className="feed-saved-list">
-        {savedPosts.length === 0 && (
+        {!loading && savedPosts.length === 0 && (
           <div className="feed-saved-empty">No saved posts yet.</div>
         )}
         {savedPosts.map(post => (
