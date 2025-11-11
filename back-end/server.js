@@ -9,6 +9,7 @@ const listener = server.listen(port, function () {
   console.log(`Available APIs:`);
   console.log(`  - Events: http://localhost:${port}/api/events`);
   console.log(`  - Feed:   http://localhost:${port}/api/feed`);
+  console.log(`  - Settings:   http://localhost:${port}/api/settings`);
 });
 
 // a function to stop listening to the port
