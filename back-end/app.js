@@ -13,10 +13,12 @@ app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
 // Import routes
 const eventsRoutes = require("./routes/events/events");
 const feedRoutes = require("./routes/feed/feed");
+const settingsRoutes = require("./routes/settings/settings");
 
 // API Routes
 app.use("/api/events", eventsRoutes);
 app.use("/api/feed", feedRoutes);
+app.use("/api/settings", settingsRoutes);
 
 // Root route
 app.get("/", (req, res) => {
@@ -25,7 +27,8 @@ app.get("/", (req, res) => {
     version: "1.0.0",
     endpoints: {
       events: "/api/events",
-      feed: "/api/feed"
+      feed: "/api/feed",
+      settings: "/api/settings"
     }
   });
 });

@@ -344,3 +344,13 @@ export const getFeedCategories = async () => {
 // Export feed categories (could be fetched from backend in the future)
 export const feedCategories = ['All', 'General', 'Marketplace', 'Lost and Found', 'Roommate Request', 'Safety Alerts'];
 
+// ============================================
+// Settings / Privacy Policy APIs
+// ============================================
+
+/**
+ * Get the privacy policy
+ */
+export const getPrivacyPolicy = async () => {
+  return fetchAPI('/settings/privacy-policy');
+};
