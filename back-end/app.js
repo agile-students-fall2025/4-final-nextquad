@@ -14,11 +14,13 @@ app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
 const eventsRoutes = require("./routes/events/events");
 const feedRoutes = require("./routes/feed/feed");
 const settingsRoutes = require("./routes/settings/settings");
+const mapRoutes = require("./routes/campus_map/campus_map");
 
 // API Routes
 app.use("/api/events", eventsRoutes);
 app.use("/api/feed", feedRoutes);
 app.use("/api/settings", settingsRoutes);
+app.use("/api/map", mapRoutes);
 
 // Root route
 app.get("/", (req, res) => {
@@ -28,7 +30,8 @@ app.get("/", (req, res) => {
     endpoints: {
       events: "/api/events",
       feed: "/api/feed",
-      settings: "/api/settings"
+      settings: "/api/settings",
+      map: "/api/map"
     }
   });
 });
