@@ -1,11 +1,25 @@
 import { useEffect, useRef, useState } from "react";
-import { CATEGORIES } from "../../data/campus_map/mapPoints";
+import { getMapCategories } from "../../services/api";
 import "./FilterDropdown.css";
 
 export default function FilterDropdown({ value, onSave }) {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState(new Set(value));
+  const [categories, setCategories] = useState([]);
   const wrapRef = useRef(null);
+
+  // Load categories from backend
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await getMapCategories();
+        const arr = Array.isArray(data) ? data : (data?.data ?? []);
+        setCategories(arr);
+      } catch (e) {
+        console.error("Failed to load map categories", e);
+      }
+    })();
+  }, []);
 
   //Close when clicking outside
   useEffect(() => {
@@ -48,7 +62,7 @@ export default function FilterDropdown({ value, onSave }) {
       {open && (
         <div className="filter-panel">
           <div className="filter-list">
-            {CATEGORIES.map(c => (
+            {categories.map(c => (
               <label key={c.id} className="filter-item">
                 <input
                   type="checkbox"

@@ -21,7 +21,7 @@ import FeedCreatePost from './components/Feed/FeedCreatePost';
 import FeedComments from './components/Feed/FeedComments';
 import FeedSavedPosts from './components/Feed/FeedSavedPosts';
 import FilterDropdown from './components/campus_map/FilterDropdown';
-import { CATEGORIES } from './data/campus_map/mapPoints';
+import { getMapCategories } from './services/api';
 import './components/campus_map/FilterDropdown.css';
 import Settings from './components/Settings/Settings';
 import ChangePasswordForm from './components/Settings/ChangePassword';
@@ -58,9 +58,20 @@ export default function App() {
   // TODO Sprint 2: This will be managed by backend session/auth
   // For now, we track RSVP'd events in local state
   const [rsvpedEventIds, setRsvpedEventIds] = useState([2, 3]); // Mock: user has RSVP'd to events 2 and 3
-  const allIds = useMemo(() => CATEGORIES.map(c => c.id), []);
-  const [activeCats, setActiveCats] = useState(new Set(allIds));
+  const [activeCats, setActiveCats] = useState(new Set());
 
+  // Load categories once and set all selected by default
+  useEffect(() => {
+    (async () => {
+      try {
+        const cats = await getMapCategories();        // [{id, label}]
+        setActiveCats(new Set(cats.map(c => c.id)));  // select all
+      } catch (e) {
+        console.error('Failed to load map categories', e);
+      }
+    })();
+  }, []);
+  
   const onMapSearchChange = (e) => {
     const v = e.target.value;
     setMapSearchTerm(v);

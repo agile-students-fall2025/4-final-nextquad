@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState, useMemo } from "react";
 import "./MapCanvas.css";
 import pinPng from "../../assets/campus_map/mapPin.png";
-import { POINTS } from "../../data/campus_map/mapPoints";
+import { getMapPoints } from "../../services/api";
 
 export default function MapCanvas({ activeCategories, searchQuery }) {
   const [openId, setOpenId] = useState(null);
   const [zoom, setZoom] = useState(1);
+  const [points, setPoints] = useState([]);
   const canvasRef = useRef(null);
 
   const Z_MIN = 0.55;
@@ -18,45 +19,66 @@ export default function MapCanvas({ activeCategories, searchQuery }) {
   const zoomOut = () => setZoom((z) => clamp(z - Z_STEP));
   const zoomReset = () => setZoom(1);
 
-  // filter search
-  const findBestMatch = (term) => {
-    if (!term) return null;
-    const q = term.toLowerCase();
+  // // filter search
+  // const findBestMatch = (term) => {
+  //   if (!term) return null;
+  //   const q = term.toLowerCase();
 
-    const pool = (activeCategories instanceof Set)
-      ? POINTS.filter(p => p.categories?.some(c => activeCategories.has(c)))
-      : POINTS;
+  //   const pool = (activeCategories instanceof Set)
+  //     ? POINTS.filter(p => p.categories?.some(c => activeCategories.has(c)))
+  //     : POINTS;
 
-    const score = (p) => {
-      const title = (p.title || "").toLowerCase();
-      const desc  = (p.desc  || "").toLowerCase();
-      const keys  = (p.keywords || []).map(k => (k || "").toLowerCase());
+  //   const score = (p) => {
+  //     const title = (p.title || "").toLowerCase();
+  //     const desc  = (p.desc  || "").toLowerCase();
+  //     const keys  = (p.keywords || []).map(k => (k || "").toLowerCase());
 
-      if (title.startsWith(q)) return 100;
-      if (title.includes(q))   return 80;
-      if (keys.includes(q))    return 70;
-      if (keys.some(k => k.includes(q))) return 60;
-      if (desc.includes(q))    return 40;
-      return 0;
-    };
+  //     if (title.startsWith(q)) return 100;
+  //     if (title.includes(q))   return 80;
+  //     if (keys.includes(q))    return 70;
+  //     if (keys.some(k => k.includes(q))) return 60;
+  //     if (desc.includes(q))    return 40;
+  //     return 0;
+  //   };
 
-    let best = null, bestScore = 0;
-    for (const p of pool) {
-      const s = score(p);
-      if (s > bestScore) { best = p; bestScore = s; }
-    }
-    return best;
-  };
+  //   let best = null, bestScore = 0;
+  //   for (const p of pool) {
+  //     const s = score(p);
+  //     if (s > bestScore) { best = p; bestScore = s; }
+  //   }
+  //   return best;
+  // };
 
-  // open the info card 
+  // // open the info card 
+  // useEffect(() => {
+  //   if (!searchQuery) {
+  //     setOpenId(null);
+  //     return;
+  //   }
+  //   const match = findBestMatch(searchQuery);
+  //   if (match) setOpenId(match.id);
+  // }, [searchQuery, activeCategories]);
+
+  // Load points from backend when filters/search change
   useEffect(() => {
-    if (!searchQuery) {
-      setOpenId(null);
-      return;
-    }
-    const match = findBestMatch(searchQuery);
-    if (match) setOpenId(match.id);
-  }, [searchQuery, activeCategories]);
+    (async () => {
+      try {
+        const params = {};
+        if (activeCategories instanceof Set && activeCategories.size > 0) {
+          // backend expects comma-separated list
+          params.categories = [...activeCategories].join(',');
+        }
+        if (searchQuery) params.search = searchQuery;
+        const data = await getMapPoints(params); // expect array of points
+        setPoints(data.data || data);
+        // Auto-open first matching result when searching
+        if (searchQuery) setOpenId(data?.[0]?.id ?? null);
+        else setOpenId(null);
+      } catch (e) {
+        console.error('Failed to load map points', e);
+      }
+    })();
+  }, [activeCategories, searchQuery]);
 
   // Close the info card when clicking outside the canvas
   useEffect(() => {
@@ -81,10 +103,7 @@ export default function MapCanvas({ activeCategories, searchQuery }) {
 
   const onDoubleClick = () => zoomIn();
 
-  const visible = useMemo(() => {
-    if (!(activeCategories instanceof Set)) return POINTS;
-    return POINTS.filter((p) => p.categories?.some((c) => activeCategories.has(c)));
-  }, [activeCategories]);
+  const visible = useMemo(() => points, [points]);
 
   const onPinClick = (id) => {
     setOpenId((cur) => (cur === id ? null : id));
