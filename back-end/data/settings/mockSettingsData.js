@@ -9,4 +9,18 @@ export const mockPrivacyPolicy = {
   lastUpdated: new Date().toISOString()
 };
 
-// Mock user settings-- will be filled in in next task 
+// Mock user settings 
+
+export const mockUserSettings = {
+  id: faker.string.uuid(),
+  notifications: {
+    all: true,
+    emergencyAlerts: true,
+    roomReservations: false,
+    commentReplies: true,
+    lostAndFound: false,
+    marketplace: true,
+  },
+  updatedAt: new Date().toISOString(),
+};
+
