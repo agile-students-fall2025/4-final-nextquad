@@ -1,6 +1,6 @@
 import './FeedSavedPosts.css';
 import { useState, useEffect } from 'react';
-import { getPostById } from '../../services/api';
+import { getPostById, togglePostLike } from '../../services/api';
 
 export default function FeedSavedPosts({ navigateTo }) {
   const [savedIds, setSavedIds] = useState(() => JSON.parse(localStorage.getItem('savedPostIds') || '[]'));
@@ -35,9 +35,28 @@ export default function FeedSavedPosts({ navigateTo }) {
     if (savedIds.length > 0) {
       fetchSavedPosts();
     } else {
+      // Clear the list when there are no saved IDs to reflect immediately in UI
+      setSavedPosts([]);
       setLoading(false);
     }
   }, [savedIds]);
+
+  const handleLike = async (postId) => {
+    try {
+      const response = await togglePostLike(postId);
+      
+      // Update the post in the local state
+      setSavedPosts(prevPosts => 
+        prevPosts.map(post => 
+          post.id === postId 
+            ? { ...post, likes: response.data.likes, isLikedByUser: response.data.isLikedByUser }
+            : post
+        )
+      );
+    } catch (err) {
+      console.error('Error liking post:', err);
+    }
+  };
 
   return (
     <div className="feed-saved-container">
@@ -71,13 +90,20 @@ export default function FeedSavedPosts({ navigateTo }) {
               <img src={post.image} alt={post.title} className="feed-saved-image" />
             )}
             <div className="feed-saved-actions">
-              <button className="feed-post-action-button" onClick={() => navigateTo('comments', post.id)}>💬 {post.commentCount}</button>
-              <button className="feed-post-action-button">❤️ {post.likes}</button>
+              <button className="feed-post-action-button" onClick={() => navigateTo('comments', post.id, 'saved')}>💬 {post.commentCount}</button>
+              <button 
+                className="feed-post-action-button"
+                onClick={() => handleLike(post.id)}
+              >
+                {post.isLikedByUser ? '❤️' : '🤍'} {post.likes}
+              </button>
               <button className="feed-post-action-button" onClick={() => {
                 const key = 'savedPostIds';
                 const next = savedIds.filter(id => id !== post.id);
                 localStorage.setItem(key, JSON.stringify(next));
+                // Update both the savedIds (source of truth) and the rendered list immediately
                 setSavedIds(next);
+                setSavedPosts(prev => prev.filter(p => p.id !== post.id));
               }}>Remove</button>
             </div>
           </div>

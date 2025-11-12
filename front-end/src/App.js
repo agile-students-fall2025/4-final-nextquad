@@ -21,7 +21,7 @@ import FeedCreatePost from './components/Feed/FeedCreatePost';
 import FeedComments from './components/Feed/FeedComments';
 import FeedSavedPosts from './components/Feed/FeedSavedPosts';
 import FilterDropdown from './components/campus_map/FilterDropdown';
-import { CATEGORIES } from './data/campus_map/mapPoints';
+import { getMapCategories } from './services/api';
 import './components/campus_map/FilterDropdown.css';
 import Settings from './components/Settings/Settings';
 import ChangePasswordForm from './components/Settings/ChangePassword';
@@ -51,14 +51,27 @@ export default function App() {
   const [selectedEventId, setSelectedEventId] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [selectedPostId, setSelectedPostId] = useState(null);
+  const [selectedPost, setSelectedPost] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [previousPage, setPreviousPage] = useState('main'); // Track where user came from
+  const [returnToPage, setReturnToPage] = useState('main'); // Track where to return from comments
   // TODO Sprint 2: This will be managed by backend session/auth
   // For now, we track RSVP'd events in local state
   const [rsvpedEventIds, setRsvpedEventIds] = useState([2, 3]); // Mock: user has RSVP'd to events 2 and 3
-  const allIds = useMemo(() => CATEGORIES.map(c => c.id), []);
-  const [activeCats, setActiveCats] = useState(new Set(allIds));
+  const [activeCats, setActiveCats] = useState(new Set());
 
+  // Load categories once and set all selected by default
+  useEffect(() => {
+    (async () => {
+      try {
+        const cats = await getMapCategories();        // [{id, label}]
+        setActiveCats(new Set(cats.map(c => c.id)));  // select all
+      } catch (e) {
+        console.error('Failed to load map categories', e);
+      }
+    })();
+  }, []);
+  
   const onMapSearchChange = (e) => {
     const v = e.target.value;
     setMapSearchTerm(v);
@@ -85,7 +98,6 @@ export default function App() {
   }, [selectedEventId]);
 
   // Fetch selected post details for Feed comments
-  const [selectedPost, setSelectedPost] = useState(null);
   useEffect(() => {
     const fetchPostDetails = async () => {
       if (selectedPostId) {
@@ -104,7 +116,7 @@ export default function App() {
     fetchPostDetails();
   }, [selectedPostId]);
 
-  const navigateTo = (page, entityId = null) => {
+  const navigateTo = (page, entityId = null, returnTo = null) => {
     // Handle module switches (auth, events, map, settings)
     if (['auth', 'events', 'map', 'settings', 'feed', 'changePassword', 'privacyPolicy', 'notificationSettings'].includes(page)) {
       setActiveModule(page);
@@ -125,6 +137,11 @@ export default function App() {
     // If navigating to 'detail', store the previous page for back navigation
     if (page === 'detail') {
       setPreviousPage(currentPage);
+    }
+
+    // If navigating to 'comments', store returnTo page for back navigation
+    if (page === 'comments' && returnTo) {
+      setReturnToPage(returnTo);
     }
   
     // Default page navigation within a module
@@ -265,6 +282,7 @@ export default function App() {
           <FeedComments
             post={selectedPost}
             navigateTo={navigateTo}
+            returnToPage={returnToPage}
           />
         );
       case 'create':

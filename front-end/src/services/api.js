@@ -385,3 +385,38 @@ export const updateUserSettings = async (updates) => {
 //     }),
 //   });
 // };
+// ============================================
+// Campus Map APIs
+// ============================================
+
+// Get map categories
+export const getMapCategories = async () => {
+  return fetchAPI('/map/categories');
+};
+
+// Get all map points with optional filters
+export const getMapPoints = async (params = {}) => {
+  const cleanParams = Object.entries(params).reduce((acc, [key, value]) => {
+    if (value !== undefined && value !== null && value !== '') {
+      acc[key] = value;
+    }
+    return acc;
+  }, {});
+
+  const queryString = new URLSearchParams(cleanParams).toString();
+  const endpoint = `/map/points${queryString ? `?${queryString}` : ''}`;
+  return fetchAPI(endpoint);
+};
+
+// Get a single map point by ID
+export const getMapPointById = async (pointId) => {
+  return fetchAPI(`/map/points/${pointId}`);
+};
+
+// Search map points by text query
+export const searchMapPoints = async (query) => {
+  return fetchAPI(`/map/search?q=${encodeURIComponent(query)}`);
+};
+
+// Export default categories 
+export const mapCategories = ['All', 'Food', 'Accessibility', 'Study', 'Services', 'Buildings'];

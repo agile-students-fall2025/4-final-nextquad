@@ -99,12 +99,14 @@ const getEventsNeedingAttention = (req, res) => {
       
       if (!hasRSVPd) return false;
 
-      const eventDate = new Date(event.date);
-      const isPast = eventDate < todayMidnight;
+      // Parse date with time for accurate check-in window calculation
+      const eventDateTime = new Date(`${event.date} ${event.time}`);
+      const eventDateOnly = new Date(event.date);
+      const isPast = eventDateOnly < todayMidnight;
 
       // For upcoming events: check if it's within 24 hours (needs check-in)
       // Calculate from current time, not midnight
-      const hoursDiff = (eventDate - now) / (1000 * 60 * 60);
+      const hoursDiff = (eventDateTime - now) / (1000 * 60 * 60);
       const needsCheckIn = !isPast && hoursDiff <= 24 && hoursDiff >= 0;
 
       // For past events: check if survey hasn't been completed
@@ -118,9 +120,11 @@ const getEventsNeedingAttention = (req, res) => {
 
       return false;
     }).map(event => {
-      const eventDate = new Date(event.date);
-      const isPast = eventDate < todayMidnight;
-      const hoursDiff = (eventDate - now) / (1000 * 60 * 60);
+      // Parse date with time for accurate check-in window calculation
+      const eventDateTime = new Date(`${event.date} ${event.time}`);
+      const eventDateOnly = new Date(event.date);
+      const isPast = eventDateOnly < todayMidnight;
+      const hoursDiff = (eventDateTime - now) / (1000 * 60 * 60);
       
       return {
         ...event,

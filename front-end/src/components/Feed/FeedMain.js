@@ -11,6 +11,14 @@ export default function FeedMain({ navigateTo, isAdmin = false }) {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  // Track saved post ids locally and persist to localStorage
+  const [savedIds, setSavedIds] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('savedPostIds') || '[]');
+    } catch {
+      return [];
+    }
+  });
   const isFetchingRef = useRef(false);
 
   // Fetch posts from backend - wrapped in useCallback
@@ -50,6 +58,15 @@ export default function FeedMain({ navigateTo, isAdmin = false }) {
   useEffect(() => {
     fetchPosts();
   }, [fetchPosts]);
+
+  // Persist savedIds to localStorage when they change
+  useEffect(() => {
+    try {
+      localStorage.setItem('savedPostIds', JSON.stringify(savedIds));
+    } catch (e) {
+      console.error('Failed to persist saved posts:', e);
+    }
+  }, [savedIds]);
 
   const handleLike = async (postId) => {
     try {
@@ -264,7 +281,7 @@ export default function FeedMain({ navigateTo, isAdmin = false }) {
     <>
       <button 
         className="feed-post-action-button"
-        onClick={() => navigateTo('comments', post.id)}
+        onClick={() => navigateTo('comments', post.id, 'main')}
       >
         💬 {post.commentCount}
       </button>
@@ -277,15 +294,15 @@ export default function FeedMain({ navigateTo, isAdmin = false }) {
       <button
         className="feed-post-action-button"
         onClick={() => {
-          const key = 'savedPostIds';
-          const current = JSON.parse(localStorage.getItem(key) || '[]');
-          const exists = current.includes(post.id);
-          const next = exists ? current.filter(id => id !== post.id) : [...current, post.id];
-          localStorage.setItem(key, JSON.stringify(next));
-          setSearchTerm(s => s);
+          setSavedIds(prev => {
+            const exists = prev.includes(post.id);
+            return exists ? prev.filter(id => id !== post.id) : [...prev, post.id];
+          });
+          // Also optimistically update the post's saved flag locally (optional)
+          setPosts(prevPosts => prevPosts.map(p => p.id === post.id ? { ...p, isSavedByUser: !savedIds.includes(post.id) } : p));
         }}
       >
-        {JSON.parse(localStorage.getItem('savedPostIds') || '[]').includes(post.id) ? '✓ Saved' : 'Save'}
+        {savedIds.includes(post.id) ? '✓ Saved' : 'Save'}
       </button>
     </>
   )}
