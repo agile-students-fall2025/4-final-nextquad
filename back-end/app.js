@@ -15,12 +15,14 @@ const eventsRoutes = require("./routes/events/events");
 const feedRoutes = require("./routes/feed/feed");
 const settingsRoutes = require("./routes/settings/settings");
 const mapRoutes = require("./routes/campus_map/campus_map");
+const loginRoutes = require("./routes/login/login");
 
 // API Routes
 app.use("/api/events", eventsRoutes);
 app.use("/api/feed", feedRoutes);
 app.use("/api/settings", settingsRoutes);
 app.use("/api/map", mapRoutes);
+app.use("/api/auth", loginRoutes);
 
 // Root route
 app.get("/", (req, res) => {
@@ -31,7 +33,8 @@ app.get("/", (req, res) => {
       events: "/api/events",
       feed: "/api/feed",
       settings: "/api/settings",
-      map: "/api/map"
+      map: "/api/map",
+      auth: "/api/auth" 
     }
   });
 });

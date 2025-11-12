@@ -3,6 +3,8 @@ import './VerifyCode.css';
 
 export default function VerifyCode({ setCurrentPage }) {
   const [code, setCode] = useState(["", "", "", ""]);
+  const [loading, setLoading] = useState(false);
+  const email = localStorage.getItem("resetEmail"); 
 
   const updateDigit = (value, index) => {
     const updated = [...code];
@@ -10,18 +12,41 @@ export default function VerifyCode({ setCurrentPage }) {
     setCode(updated);
   };
 
-  const handleVerify = () => {
+  const handleVerify = async () => {
     const enteredCode = code.join("");
 
-    if (enteredCode.length < 4 || code.some(digit => digit.trim() === "")) {
+    if (enteredCode.length < 4 || code.some((digit) => digit.trim() === "")) {
       alert("Please enter the 4-digit verification code.");
       return;
     }
 
-    // TODO Sprint 2: Verify the code with backend API
-    console.log("Verification code entered:", enteredCode);
+    if (!email) {
+      alert("Missing email. Please restart the password reset process.");
+      return;
+    }
 
-    setCurrentPage('reset');
+    try {
+      setLoading(true);
+
+      const res = await fetch("http://localhost:3000/api/auth/verify-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, code: enteredCode }), 
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || data.message || "Verification failed.");
+      }
+
+      alert("Verification successful!");
+      setCurrentPage("reset");
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -40,12 +65,13 @@ export default function VerifyCode({ setCurrentPage }) {
             maxLength={1}
             value={digit}
             onChange={(e) => updateDigit(e.target.value, index)}
+            disabled={loading}
           />
         ))}
       </div>
 
-      <button className="auth-btn" onClick={handleVerify}>
-        Verify
+      <button className="auth-btn" onClick={handleVerify} disabled={loading}>
+        {loading ? "Verifying..." : "Verify"}
       </button>
     </div>
   );

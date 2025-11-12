@@ -3,9 +3,10 @@ import './ForgotPassword.css';
 
 export default function ForgotPassword({ setCurrentPage }) {
   const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSendCode = () => {
-    if (!email) {
+  const handleSendCode = async () => {
+    if (!email.trim()) {
       alert("Please enter your email.");
       return;
     }
@@ -15,10 +16,29 @@ export default function ForgotPassword({ setCurrentPage }) {
       return;
     }
 
-    // TODO Sprint 2: Send verification code through backend API
-    console.log("Sending reset code to:", email);
+    try {
+      setLoading(true);
 
-    setCurrentPage('verify');
+      const res = await fetch("http://localhost:3000/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || data.message || "Failed to send code.");
+      }
+
+      alert("Verification code sent to your email!");
+      localStorage.setItem("resetEmail", email);
+      setCurrentPage("verify");
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -34,10 +54,15 @@ export default function ForgotPassword({ setCurrentPage }) {
         placeholder="Email address"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
+        disabled={loading}
       />
 
-      <button className="auth-btn" onClick={handleSendCode}>
-        Send
+      <button
+        className="auth-btn"
+        onClick={handleSendCode}
+        disabled={loading}
+      >
+        {loading ? "Sending..." : "Send"}
       </button>
     </div>
   );
