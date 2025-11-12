@@ -385,6 +385,21 @@ export const updateUserSettings = async (updates) => {
 //     }),
 //   });
 // };
+
+// ============================================
+// Admin APIs
+// ============================================
+export const getAdminSettings = async () => {
+  return fetchAPI("/admin");
+};
+
+export const updateAdminSettings = async (updates) => {
+  return fetchAPI("/admin", {
+    method: "POST",
+    body: JSON.stringify(updates),
+  });
+};
+
 // ============================================
 // Campus Map APIs
 // ============================================

@@ -11,6 +11,7 @@ const listener = server.listen(port, function () {
   console.log(`  - Feed:   http://localhost:${port}/api/feed`);
   console.log(`  - Settings:   http://localhost:${port}/api/settings`);
   console.log(`  - Map:       http://localhost:${port}/api/map`);
+  console.log(`  - Admin:     http://localhost:${port}/api/admin`);
 });
 
 // a function to stop listening to the port
