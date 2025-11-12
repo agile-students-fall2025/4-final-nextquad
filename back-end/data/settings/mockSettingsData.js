@@ -1,17 +1,15 @@
-import { faker } from '@faker-js/faker';
+const { faker } = require('@faker-js/faker');
 
-
-// Mock privacy policy-- will be replaced with real one later
-export const mockPrivacyPolicy = {
+// Mock privacy policy — will be replaced with real one later
+const mockPrivacyPolicy = {
   id: 1,
   title: "Privacy Policy",
   content: faker.lorem.paragraphs(5),
-  lastUpdated: new Date().toISOString()
+  lastUpdated: new Date().toISOString(),
 };
 
-// Mock user settings 
-
-export const mockUserSettings = {
+// Mock user settings
+const mockUserSettings = {
   id: faker.string.uuid(),
   notifications: {
     all: true,
@@ -24,3 +22,4 @@ export const mockUserSettings = {
   updatedAt: new Date().toISOString(),
 };
 
+module.exports = { mockPrivacyPolicy, mockUserSettings };

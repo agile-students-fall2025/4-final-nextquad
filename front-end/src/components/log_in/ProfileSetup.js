@@ -9,6 +9,7 @@ export default function ProfileSetup({ setActiveModule }) {
   const [profileImage, setProfileImage] = useState(null);
 
   const fileInputRef = useRef(null);
+  const [loading, setLoading] = useState(false);
 
   const handleImageClick = () => {
     fileInputRef.current.click();
@@ -19,13 +20,13 @@ export default function ProfileSetup({ setActiveModule }) {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setProfileImage(reader.result); // base64 url for preview
+        setProfileImage(reader.result); // base64 URL
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (!first || !last || !nyuEmail || !gradYear) {
       alert("Please fill in all the fields.");
       return;
@@ -42,16 +43,33 @@ export default function ProfileSetup({ setActiveModule }) {
       return;
     }
 
-    // TODO Sprint 2: Replace with backend API request
-    console.log("Profile Setup:", {
-      first,
-      last,
-      nyuEmail,
-      gradYear,
-      profileImage, // preview URL
-    });
+    try {
+      setLoading(true);
 
-    setActiveModule('events');
+      const res = await fetch("http://localhost:3000/api/auth/profile-setup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          firstName: first,
+          lastName: last,
+          nyuEmail,
+          graduationYear: gradYear
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || data.message || "Profile setup failed.");
+      }
+
+      alert("Profile setup complete!");
+      setActiveModule("events");
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -79,28 +97,32 @@ export default function ProfileSetup({ setActiveModule }) {
         placeholder="First name"
         value={first}
         onChange={(e) => setFirst(e.target.value)}
+        disabled={loading}
       />
       <input
         className="profile-input"
         placeholder="Last name"
         value={last}
         onChange={(e) => setLast(e.target.value)}
+        disabled={loading}
       />
       <input
         className="profile-input"
         placeholder="NYU email"
         value={nyuEmail}
         onChange={(e) => setNyuEmail(e.target.value)}
+        disabled={loading}
       />
       <input
         className="profile-input"
         placeholder="Graduation Year"
         value={gradYear}
         onChange={(e) => setGradYear(e.target.value)}
+        disabled={loading}
       />
 
-      <button className="profile-btn" onClick={handleContinue}>
-        Continue
+      <button className="profile-btn" onClick={handleContinue} disabled={loading}>
+        {loading ? "Saving..." : "Continue"}
       </button>
     </div>
   );
