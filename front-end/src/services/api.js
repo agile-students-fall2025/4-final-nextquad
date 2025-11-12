@@ -354,3 +354,34 @@ export const feedCategories = ['All', 'General', 'Marketplace', 'Lost and Found'
 export const getPrivacyPolicy = async () => {
   return fetchAPI('/settings/privacy-policy');
 };
+
+/**
+ * Get user's current notification settings
+ */
+export const getUserSettings = async () => {
+  return fetchAPI('/settings');
+};
+
+/**
+ * Update user's notification settings
+ */
+export const updateUserSettings = async (updates) => {
+  return fetchAPI('/settings', {
+    method: 'POST',
+    body: JSON.stringify(updates),
+  });
+};
+
+/**
+ * Change user password
+ */
+// export const changeUserPassword = async (currentPassword, newPassword, confirmPassword) => {
+//   return fetchAPI('/settings/change-password', {
+//     method: 'POST',
+//     body: JSON.stringify({
+//       currentPassword,
+//       newPassword,
+//       confirmPassword,
+//     }),
+//   });
+// };
