@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { faker } from '@faker-js/faker'; 
+import { faker } from '@faker-js/faker';
 import './SignUp.css';
 import googleIcon from '../../assets/log_in/google_icon.png';
 
@@ -8,10 +8,11 @@ export default function SignUp({ setActiveModule, setCurrentPage }) {
   const [password, setPassword] = useState("");
   const [agree, setAgree] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const fakeTerms = faker.lorem.paragraphs(4);
 
-  const handleCreateAccount = () => {
+  const handleCreateAccount = async () => {
     if (!email.trim() || !password.trim()) {
       alert("Please enter both email and password.");
       return;
@@ -22,18 +23,36 @@ export default function SignUp({ setActiveModule, setCurrentPage }) {
       return;
     }
 
-    // TODO Sprint 2: replace with backend API call
-    console.log("Creating account:", email, password);
+    try {
+      setLoading(true);
 
-    setActiveModule('auth');
-    setCurrentPage('profilesetup');
+      const res = await fetch("http://localhost:3000/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || data.message || "Signup failed.");
+      }
+
+      alert("Account created successfully!");
+      setActiveModule("auth");
+      setCurrentPage("profilesetup");
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="auth-container">
       <h2 className="auth-title signup-title">Create Your Account</h2>
 
-      <button className="google-btn">
+      <button className="google-btn" disabled={loading}>
         <img src={googleIcon} alt="Google" className="google-icon" />
         Continue with Google
       </button>
@@ -50,6 +69,7 @@ export default function SignUp({ setActiveModule, setCurrentPage }) {
         placeholder="Email address"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
+        disabled={loading}
       />
 
       <input
@@ -58,6 +78,7 @@ export default function SignUp({ setActiveModule, setCurrentPage }) {
         placeholder="Password"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
+        disabled={loading}
       />
 
       <label className="checkbox-box">
@@ -65,18 +86,32 @@ export default function SignUp({ setActiveModule, setCurrentPage }) {
           type="checkbox"
           checked={agree}
           onChange={() => setAgree(!agree)}
+          disabled={loading}
         />
         <span>
           I agree to the
-          <span className="terms-link" onClick={() => setShowModal(true)}> Terms & Privacy Policy</span>
+          <span
+            className="terms-link"
+            onClick={() => !loading && setShowModal(true)}
+          >
+            {" "}
+            Terms & Privacy Policy
+          </span>
         </span>
       </label>
 
-      <button className="auth-btn" onClick={handleCreateAccount}>
-        Create Account
+      <button
+        className="auth-btn"
+        onClick={handleCreateAccount}
+        disabled={loading}
+      >
+        {loading ? "Creating..." : "Create Account"}
       </button>
 
-      <p className="auth-link small" onClick={() => setCurrentPage('signin')}>
+      <p
+        className="auth-link small"
+        onClick={() => !loading && setCurrentPage("signin")}
+      >
         Already have an account? Log in here.
       </p>
 
@@ -84,8 +119,13 @@ export default function SignUp({ setActiveModule, setCurrentPage }) {
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <h3>Terms & Privacy Policy</h3>
-            <p>{fakeTerms}</p> 
-            <button className="close-modal" onClick={() => setShowModal(false)}>Close</button>
+            <p>{fakeTerms}</p>
+            <button
+              className="close-modal"
+              onClick={() => setShowModal(false)}
+            >
+              Close
+            </button>
           </div>
         </div>
       )}

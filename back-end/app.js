@@ -16,12 +16,14 @@ const feedRoutes = require("./routes/feed/feed");
 const settingsRoutes = require("./routes/settings/settings");
 const adminRoutes = require("./routes/admin/admin");
 const mapRoutes = require("./routes/campus_map/campus_map");
+const loginRoutes = require("./routes/login/login");
 
 // API Routes
 app.use("/api/events", eventsRoutes);
 app.use("/api/feed", feedRoutes);
 app.use("/api/settings", settingsRoutes);
 app.use("/api/map", mapRoutes);
+app.use("/api/auth", loginRoutes);
 app.use("/api/admin", adminRoutes);
 
 // Root route
@@ -33,6 +35,8 @@ app.get("/", (req, res) => {
       events: "/api/events",
       feed: "/api/feed",
       settings: "/api/settings",
+      map: "/api/map",
+      auth: "/api/auth" 
       map: "/api/map",
       admin: "/api/admin",
     }
