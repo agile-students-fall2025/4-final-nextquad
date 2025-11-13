@@ -36,7 +36,7 @@ app.get("/", (req, res) => {
       feed: "/api/feed",
       settings: "/api/settings",
       map: "/api/map",
-      auth: "/api/auth" 
+      auth: "/api/auth", 
       map: "/api/map",
       admin: "/api/admin",
     }
