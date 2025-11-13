@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { getAllPosts, togglePostLike, feedCategories } from '../../services/api';
+import { createReport } from '../../services/api'; 
 import './FeedMain.css';
 
 export default function FeedMain({ navigateTo, isAdmin = false }) {
@@ -111,6 +112,29 @@ export default function FeedMain({ navigateTo, isAdmin = false }) {
   const sortedPosts = sortBy === 'Most Comments' 
     ? [...filteredPosts].sort((a, b) => b.commentCount - a.commentCount)
     : filteredPosts;
+  
+  //report a user (admin feature)
+  const handleReportUser = async (username) => {
+  const reason = prompt(`Enter reason for reporting ${username}:`);
+
+  if (!reason || !reason.trim()) {
+    alert("Report cancelled — reason required.");
+    return;
+  }
+
+  try {
+    const response = await createReport({ username, reason });
+
+    if (response && response.success) {
+      alert(`Report for ${username} submitted successfully.`);
+    } else {
+      alert("Failed to submit report. Please try again.");
+    }
+  } catch (error) {
+    console.error("Error reporting user:", error);
+    alert("Server error. Please try again later.");
+  }
+};
 
   return (
     <div className="feed-main-container">
@@ -211,21 +235,29 @@ export default function FeedMain({ navigateTo, isAdmin = false }) {
           value={searchTerm} 
           onChange={(e) => setSearchTerm(e.target.value)} 
         />
-        <button 
-          className="feed-main-create-button"
-          onClick={() => navigateTo('create')}
-        >
-          + Create New Post
-        </button>
-        <div style={{ height: '12px' }} />
-        <button 
-          className="feed-main-create-button"
-          onClick={() => navigateTo('saved')}
-          style={{ backgroundColor: 'white', color: '#6B46C1', border: '1px solid #6B46C1' }}
-        >
-          Saved Posts
-        </button>
+        {/* admin cannot create or save posts  */}
+        {!isAdmin && (
+        <>
+          <button 
+            className="feed-main-create-button"
+            onClick={() => navigateTo('create')}
+          >
+            + Create New Post
+          </button>
+
+          <div style={{ height: '12px' }} />
+
+          <button 
+            className="feed-main-create-button"
+            onClick={() => navigateTo('saved')}
+            style={{ backgroundColor: 'white', color: '#6B46C1', border: '1px solid #6B46C1' }}
+          >
+            Saved Posts
+          </button>
+        </>
+      )}
       </div>
+        
 
       {loading && (
         <div style={{ padding: '40px', textAlign: 'center', color: '#666' }}>
@@ -308,22 +340,25 @@ export default function FeedMain({ navigateTo, isAdmin = false }) {
   )}
 
   {isAdmin && (
-    <>
-    {/* sprint 2: add functionality to these buttons */}
-      <button 
-        className="feed-post-action-button"
-        onClick={() => console.log('Delete post', post.id)}
-      >
-        🗑 Delete
-      </button>
-      <button 
-        className="feed-post-action-button"
-        onClick={() => console.log('Report user', post.author.name)}
-      >
-        ⚠️ Report User
-      </button>
-    </>
-  )}
+  <>
+    {/* Delete Post */}
+    <button 
+      className="feed-post-action-button"
+      onClick={() => console.log('Delete post', post.id)}
+    >
+      🗑 Delete
+    </button>
+
+    {/* Report User */}
+    <button 
+      className="feed-post-action-button"
+      onClick={() => handleReportUser(post.author.name)}
+    >
+      ⚠️ Report User
+    </button>
+  </>
+)}
+
 </div>
 
           </div>
