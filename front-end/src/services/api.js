@@ -411,6 +411,17 @@ export const getAllReports = async () => {
   return fetchAPI("/admin/reports");
 };
 
+export const getEmergencyAlerts = async () => {
+  return fetchAPI("/admin/alerts");
+};
+
+export const createEmergencyAlert = async (alertData) => {
+  return fetchAPI("/admin/alerts", {
+    method: "POST",
+    body: JSON.stringify(alertData),
+  });
+};
+
 // ============================================
 // Campus Map APIs
 // ============================================

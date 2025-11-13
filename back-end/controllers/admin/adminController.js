@@ -1,7 +1,9 @@
 const { faker } = require("@faker-js/faker");
 const { mockAdminSettings } = require("../../data/admin/mockAdminData");
 const { mockReports } = require("../../data/admin/mockReportData");
+const { mockAlerts } = require("../../data/admin/mockAlertData");
 
+//settings
 
 // get request for admin
 const getAdminSettings = (req, res) => {
@@ -108,9 +110,65 @@ const createReport = (req, res) => {
   }
 };
 
+
+//emergency alerts
+// get all emergency alerts
+const getEmergencyAlerts = (req, res) => {
+  try {
+    res.status(200).json({
+      success: true,
+      data: mockAlerts,
+    });
+  } catch (error) {
+    console.error("Error fetching emergency alerts:", error);
+    res.status(500).json({
+      success: false,
+      error: "Server error while fetching emergency alerts.",
+    });
+  }
+};
+
+// post create emergency alert
+const createEmergencyAlert = (req, res) => {
+  const { message, sentBy = "Admin" } = req.body;
+
+  if (!message || !message.trim()) {
+    return res.status(400).json({
+      success: false,
+      error: "Message is required to send an alert.",
+    });
+  }
+
+  try {
+    const newAlert = {
+      id: faker.string.uuid(),
+      message: message.trim(),
+      sentAt: new Date().toISOString(),
+      sentBy,
+    };
+
+    mockAlerts.unshift(newAlert); 
+
+    res.status(201).json({
+      success: true,
+      message: "Emergency alert sent successfully.",
+      data: newAlert,
+    });
+  } catch (error) {
+    console.error("Error creating alert:", error);
+    res.status(500).json({
+      success: false,
+      error: "Server error while sending alert.",
+    });
+  }
+};
+
+
 module.exports = {
   getAdminSettings,
   updateAdminSettings,
   getAllReports,
   createReport,
+  getEmergencyAlerts,
+  createEmergencyAlert,
 };

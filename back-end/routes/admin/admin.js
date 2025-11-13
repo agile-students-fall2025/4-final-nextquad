@@ -6,6 +6,8 @@ const {
   updateAdminSettings,
   getAllReports,
   createReport,
+  getEmergencyAlerts,
+  createEmergencyAlert,
 } = require("../../controllers/admin/adminController");
 
 
@@ -14,6 +16,10 @@ router.post("/", updateAdminSettings);
 
 router.get("/reports", getAllReports);
 router.post("/reports", createReport);
+
+
+router.get("/alerts", getEmergencyAlerts);
+router.post("/alerts", createEmergencyAlert);
 
 module.exports = router;
 
