@@ -400,6 +400,17 @@ export const updateAdminSettings = async (updates) => {
   });
 };
 
+export const createReport = async (reportData) => {
+  return fetchAPI("/admin/reports", {
+    method: "POST",
+    body: JSON.stringify(reportData),
+  });
+};
+
+export const getAllReports = async () => {
+  return fetchAPI("/admin/reports");
+};
+
 // ============================================
 // Campus Map APIs
 // ============================================

@@ -1,4 +1,7 @@
+const { faker } = require("@faker-js/faker");
 const { mockAdminSettings } = require("../../data/admin/mockAdminData");
+const { mockReports } = require("../../data/admin/mockReportData");
+
 
 // get request for admin
 const getAdminSettings = (req, res) => {
@@ -51,8 +54,63 @@ const updateAdminSettings = (req, res) => {
   }
 };
 
+//admin user reports
+
+// GET all reports
+const getAllReports = (req, res) => {
+  try {
+    res.status(200).json({
+      success: true,
+      data: mockReports,
+    });
+  } catch (error) {
+    console.error("Error fetching reports:", error);
+    res.status(500).json({
+      success: false,
+      error: "Server error while fetching reports",
+    });
+  }
+};
+
+// POST create a new report
+const createReport = (req, res) => {
+  const { username, reason } = req.body;
+
+  if (!username || !reason) {
+    return res.status(400).json({
+      success: false,
+      error: "Username and reason are required to submit a report.",
+    });
+  }
+
+  try {
+    const newReport = {
+      id: faker.string.uuid(),
+      username,
+      reason,
+      reportedAt: new Date().toISOString(),
+    };
+
+    // Push into mock data
+    mockReports.push(newReport);
+
+    res.status(201).json({
+      success: true,
+      message: "User report submitted successfully.",
+      data: newReport,
+    });
+  } catch (error) {
+    console.error("Error submitting report:", error);
+    res.status(500).json({
+      success: false,
+      error: "Server error while submitting report.",
+    });
+  }
+};
 
 module.exports = {
   getAdminSettings,
   updateAdminSettings,
+  getAllReports,
+  createReport,
 };
