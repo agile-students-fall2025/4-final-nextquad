@@ -1,6 +1,6 @@
 const { mockAdminSettings } = require("../../data/admin/mockAdminData");
 
-// GET admin notification settings
+// get request for admin
 const getAdminSettings = (req, res) => {
   try {
     res.status(200).json({
@@ -51,7 +51,7 @@ const updateAdminSettings = (req, res) => {
   }
 };
 
-// ✅ Export properly
+
 module.exports = {
   getAdminSettings,
   updateAdminSettings,
