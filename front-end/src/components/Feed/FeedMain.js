@@ -254,6 +254,16 @@ export default function FeedMain({ navigateTo, isAdmin = false }) {
           >
             Saved Posts
           </button>
+
+          <div style={{ height: '12px' }} />
+
+          <button 
+            className="feed-main-create-button"
+            onClick={() => navigateTo('myposts')}
+            style={{ backgroundColor: 'white', color: '#6B46C1', border: '1px solid #6B46C1' }}
+          >
+            My Posts
+          </button>
         </>
       )}
       </div>

@@ -20,6 +20,7 @@ import FeedMain from './components/Feed/FeedMain';
 import FeedCreatePost from './components/Feed/FeedCreatePost';
 import FeedComments from './components/Feed/FeedComments';
 import FeedSavedPosts from './components/Feed/FeedSavedPosts';
+import FeedMyPosts from './components/Feed/FeedMyPosts';
 import FilterDropdown from './components/campus_map/FilterDropdown';
 import { getMapCategories } from './services/api';
 import './components/campus_map/FilterDropdown.css';
@@ -277,6 +278,8 @@ export default function App() {
     switch (currentPage) {
       case 'saved':
         return <FeedSavedPosts navigateTo={navigateTo} />;
+      case 'myposts':
+        return <FeedMyPosts navigateTo={navigateTo} />;
       case 'comments':
         return (
           <FeedComments

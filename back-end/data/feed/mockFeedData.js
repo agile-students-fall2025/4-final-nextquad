@@ -99,6 +99,14 @@ const generateMockComment = (id, postId) => {
 // Generate mock posts (10 posts)
 let mockPosts = Array.from({ length: 10 }, (_, index) => generateMockPost(index + 1));
 
+// Ensure user123 owns some posts (posts 1, 4, and 7 for testing)
+mockPosts[0].author.userId = 'user123';
+mockPosts[0].author.name = 'Test User';
+mockPosts[3].author.userId = 'user123';
+mockPosts[3].author.name = 'Test User';
+mockPosts[6].author.userId = 'user123';
+mockPosts[6].author.name = 'Test User';
+
 // Generate mock comments (5 comments for each post)
 let mockComments = [];
 mockPosts.forEach((post, postIndex) => {
