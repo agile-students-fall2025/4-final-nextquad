@@ -191,5 +191,10 @@
   min-height: 60vh;
 }
 
+/* Lock background scroll when modals are open */
+body.modal-open {
+  overflow: hidden;
+}
+
 
 

@@ -57,7 +57,10 @@ export default function FeedCreatePost({ navigateTo }) {
       </div>
 
       <form className="event-create-form" onSubmit={handleSubmit}>
-        <div className="event-create-image-upload">
+        <div
+          className="event-create-image-upload"
+          onClick={() => alert('Photo uploads not supported yet.')}
+        >
           <span style={{ fontSize: '48px' }}>+</span>
           <p>Upload Photo (Optional)</p>
         </div>
