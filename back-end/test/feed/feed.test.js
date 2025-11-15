@@ -178,6 +178,31 @@ describe('Feed Posts Controller', () => {
       expect(mockPosts.length).to.equal(initialPostCount + 1);
     });
 
+    it('should create a new post with resolved and editCount initialized', () => {
+      const req = {
+        body: {
+          title: 'Test Post with Resolved',
+          content: 'Testing resolved field',
+          category: 'Marketplace'
+        }
+      };
+      const res = {
+        status: function(code) {
+          this.statusCode = code;
+          return this;
+        },
+        json: function(data) {
+          this.data = data;
+        }
+      };
+
+      createPost(req, res);
+
+      expect(res.statusCode).to.equal(201);
+      expect(res.data.data.resolved).to.equal(false);
+      expect(res.data.data.editCount).to.equal(0);
+    });
+
     it('should return 400 if title is missing', () => {
       const req = {
         body: {
@@ -198,6 +223,220 @@ describe('Feed Posts Controller', () => {
       createPost(req, res);
 
       expect(res.statusCode).to.equal(400);
+      expect(res.data.success).to.be.false;
+    });
+
+    it('should return 400 if category is invalid', () => {
+      const req = {
+        body: {
+          title: 'Test Post',
+          content: 'Test content',
+          category: 'InvalidCategory'
+        }
+      };
+      const res = {
+        status: function(code) {
+          this.statusCode = code;
+          return this;
+        },
+        json: function(data) {
+          this.data = data;
+        }
+      };
+
+      createPost(req, res);
+
+      expect(res.statusCode).to.equal(400);
+      expect(res.data.success).to.be.false;
+    });
+  });
+
+  describe('updatePost', () => {
+    it('should update a post with new title and content', () => {
+      const testPostId = mockPosts.find(p => p.author.userId === 'user123')?.id || mockPosts[0].id;
+      const req = {
+        params: { id: testPostId },
+        body: {
+          title: 'Updated Title',
+          content: 'Updated content'
+        }
+      };
+      const res = {
+        status: function(code) {
+          this.statusCode = code;
+          return this;
+        },
+        json: function(data) {
+          this.data = data;
+        }
+      };
+
+      updatePost(req, res);
+
+      expect(res.statusCode).to.equal(200);
+      expect(res.data.success).to.be.true;
+      expect(res.data.data.title).to.equal('Updated Title');
+      expect(res.data.data.editCount).to.be.at.least(1);
+    });
+
+    it('should update post category', () => {
+      const testPostId = mockPosts.find(p => p.author.userId === 'user123')?.id || mockPosts[0].id;
+      const req = {
+        params: { id: testPostId },
+        body: {
+          category: 'Marketplace'
+        }
+      };
+      const res = {
+        status: function(code) {
+          this.statusCode = code;
+          return this;
+        },
+        json: function(data) {
+          this.data = data;
+        }
+      };
+
+      updatePost(req, res);
+
+      expect(res.statusCode).to.equal(200);
+      expect(res.data.data.category).to.equal('Marketplace');
+    });
+
+    it('should update post resolved status to true', () => {
+      const testPostId = mockPosts.find(p => p.author.userId === 'user123')?.id || mockPosts[0].id;
+      const req = {
+        params: { id: testPostId },
+        body: {
+          resolved: true
+        }
+      };
+      const res = {
+        status: function(code) {
+          this.statusCode = code;
+          return this;
+        },
+        json: function(data) {
+          this.data = data;
+        }
+      };
+
+      updatePost(req, res);
+
+      expect(res.statusCode).to.equal(200);
+      expect(res.data.success).to.be.true;
+      expect(res.data.data.resolved).to.be.true;
+    });
+
+    it('should update post resolved status to false', () => {
+      const testPostId = mockPosts.find(p => p.author.userId === 'user123')?.id || mockPosts[0].id;
+      const req = {
+        params: { id: testPostId },
+        body: {
+          resolved: false
+        }
+      };
+      const res = {
+        status: function(code) {
+          this.statusCode = code;
+          return this;
+        },
+        json: function(data) {
+          this.data = data;
+        }
+      };
+
+      updatePost(req, res);
+
+      expect(res.statusCode).to.equal(200);
+      expect(res.data.data.resolved).to.be.false;
+    });
+
+    it('should increment editCount when post is updated', () => {
+      const testPostId = mockPosts.find(p => p.author.userId === 'user123')?.id || mockPosts[0].id;
+      const initialEditCount = mockPosts.find(p => p.id === testPostId).editCount || 0;
+      
+      const req = {
+        params: { id: testPostId },
+        body: {
+          title: 'Another Update'
+        }
+      };
+      const res = {
+        status: function(code) {
+          this.statusCode = code;
+          return this;
+        },
+        json: function(data) {
+          this.data = data;
+        }
+      };
+
+      updatePost(req, res);
+
+      expect(res.data.data.editCount).to.equal(initialEditCount + 1);
+    });
+
+    it('should return 404 for non-existent post', () => {
+      const req = {
+        params: { id: 99999 },
+        body: { title: 'Test' }
+      };
+      const res = {
+        status: function(code) {
+          this.statusCode = code;
+          return this;
+        },
+        json: function(data) {
+          this.data = data;
+        }
+      };
+
+      updatePost(req, res);
+
+      expect(res.statusCode).to.equal(404);
+      expect(res.data.success).to.be.false;
+    });
+  });
+
+  describe('deletePost', () => {
+    it('should delete a post by ID', () => {
+      const testPostId = mockPosts.find(p => p.author.userId === 'user123')?.id || mockPosts[0].id;
+      const initialPostCount = mockPosts.length;
+      
+      const req = { params: { id: testPostId } };
+      const res = {
+        status: function(code) {
+          this.statusCode = code;
+          return this;
+        },
+        json: function(data) {
+          this.data = data;
+        }
+      };
+
+      deletePost(req, res);
+
+      expect(res.statusCode).to.equal(200);
+      expect(res.data.success).to.be.true;
+      expect(mockPosts.length).to.equal(initialPostCount - 1);
+    });
+
+    it('should return 404 when deleting non-existent post', () => {
+      const req = { params: { id: 99999 } };
+      const res = {
+        status: function(code) {
+          this.statusCode = code;
+          return this;
+        },
+        json: function(data) {
+          this.data = data;
+        }
+      };
+
+      deletePost(req, res);
+
+      expect(res.statusCode).to.equal(404);
       expect(res.data.success).to.be.false;
     });
   });

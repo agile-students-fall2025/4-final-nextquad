@@ -122,10 +122,7 @@ export default function FeedMyPosts({ navigateTo }) {
         category: editForm.category,
         resolved: editForm.resolved
       };
-      console.log('Sending update payload:', payload);
       const updated = await updatePost(editingPost.id, payload);
-      console.log('Received updated post:', updated.data);
-      console.log('Updated post resolved field:', updated.data.resolved, 'Type:', typeof updated.data.resolved);
       setMyPosts(prevPosts => prevPosts.map(post => post.id === editingPost.id ? updated.data : post));
       // Also update main feed if available
       if (window.updateFeedMainPost) {
@@ -133,7 +130,6 @@ export default function FeedMyPosts({ navigateTo }) {
       }
       setEditingPost(null);
     } catch (err) {
-      console.error('Update error:', err);
       alert('Failed to update post.');
     } finally {
       setSavingEdit(false);
