@@ -170,6 +170,7 @@
   align-items: center;
   gap: 12px;
   margin-bottom: 8px;
+  position: relative;
 }
 
 .feed-comment-author {
@@ -183,6 +184,7 @@
   margin: 0;
   font-size: 13px;
   color: #999;
+  margin-right: auto;
 }
 
 .feed-comment-text {
@@ -190,6 +192,18 @@
   font-size: 15px;
   color: #666;
   line-height: 1.5;
+}
+
+.feed-comment-edit-tag {
+  display: inline-block;
+  padding: 4px 10px;
+  background: #f3f3f3;
+  color: #666;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  margin-right: 8px;
+  margin-bottom: 8px;
 }
 
 .feed-comment-like-button {

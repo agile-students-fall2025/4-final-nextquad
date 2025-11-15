@@ -44,11 +44,14 @@ const getAllPosts = (req, res) => {
       filteredPosts.sort((a, b) => b.createdAt - a.createdAt);
     }
 
-    // Update isLikedByUser status based on mock user
+    // Update isLikedByUser status based on mock user and ensure accurate commentCount
     const currentUserId = 'user123'; // Mock user ID
+    // Lazy-require to avoid circular import issues
+    const { mockComments } = require('../../data/feed/mockFeedData');
     filteredPosts = filteredPosts.map(post => ({
       ...post,
-      isLikedByUser: mockPostLikes[post.id]?.includes(currentUserId) || false
+      isLikedByUser: mockPostLikes[post.id]?.includes(currentUserId) || false,
+      commentCount: mockComments.filter(c => c.postId === post.id).length
     }));
 
     res.status(200).json({
@@ -80,11 +83,13 @@ const getPostById = (req, res) => {
       });
     }
 
-    // Update isLikedByUser status
+    // Update isLikedByUser status and ensure accurate commentCount
     const currentUserId = 'user123'; // Mock user ID
+    const { mockComments } = require('../../data/feed/mockFeedData');
     const postWithLikeStatus = {
       ...post,
-      isLikedByUser: mockPostLikes[post.id]?.includes(currentUserId) || false
+      isLikedByUser: mockPostLikes[post.id]?.includes(currentUserId) || false,
+      commentCount: mockComments.filter(c => c.postId === post.id).length
     };
 
     res.status(200).json({

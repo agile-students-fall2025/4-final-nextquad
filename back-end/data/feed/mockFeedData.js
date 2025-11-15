@@ -94,7 +94,8 @@ const generateMockComment = (id, postId) => {
       avatar: `https://picsum.photos/seed/comment${id}/50/50`,
       userId: authorUserId
     },
-    isLikedByUser: false
+    isLikedByUser: false,
+    editCount: 0
   };
 };
 
@@ -118,6 +119,14 @@ mockPosts.forEach((post, postIndex) => {
   });
   mockComments.push(...commentsForPost);
 });
+
+// Ensure user123 owns some comments (comments 1, 6, and 11 for testing)
+mockComments[0].author.userId = 'user123';
+mockComments[0].author.name = 'Test User';
+mockComments[5].author.userId = 'user123';
+mockComments[5].author.name = 'Test User';
+mockComments[10].author.userId = 'user123';
+mockComments[10].author.name = 'Test User';
 
 // Mock likes data (stores which user liked which posts/comments)
 // Key: postId or commentId, Value: array of userIds who liked

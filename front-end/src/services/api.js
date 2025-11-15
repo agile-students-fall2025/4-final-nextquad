@@ -315,6 +315,18 @@ export const addComment = async (postId, text) => {
 };
 
 /**
+ * Update a comment
+ * @param {number} commentId - Comment ID
+ * @param {string} text - Updated comment text
+ */
+export const updateComment = async (commentId, text) => {
+  return fetchAPI(`/feed/comments/${commentId}`, {
+    method: 'PUT',
+    body: JSON.stringify({ text }),
+  });
+};
+
+/**
  * Delete a comment
  * @param {number} commentId - Comment ID
  */
