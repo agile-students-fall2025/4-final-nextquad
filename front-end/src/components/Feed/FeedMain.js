@@ -153,30 +153,26 @@ export default function FeedMain({ navigateTo, isAdmin = false }) {
   return (
     <div className="feed-main-container">
       {/* Quick Navigation Bar (consistent with Events) */}
-      <div
-        className="feed-main-header"
-        style={{
-          display: 'flex',
-          gap: '12px',
-          padding: '20px 24px',
-          backgroundColor: '#fff',
-          borderBottom: '1px solid #e5e7eb',
-          flexWrap: 'wrap',
-          alignItems: 'center'
-        }}
-      >
-        <h2
-          className="feed-main-header-title"
-          style={{
-            margin: 0,
-            fontSize: '24px',
-            fontWeight: '700',
-            color: '#333',
-            marginRight: 'auto'
-          }}
-        >
+      <div className="feed-main-header">
+        <h2 className="feed-main-header-title">
           Browse Feed
         </h2>
+        {!isAdmin && (
+          <>
+            <button 
+              className="feed-main-nav-button"
+              onClick={() => navigateTo('saved')}
+            >
+              Saved Posts
+            </button>
+            <button 
+              className="feed-main-nav-button"
+              onClick={() => navigateTo('myposts')}
+            >
+              My Posts
+            </button>
+          </>
+        )}
       </div>
 
       <div className="feed-main-controls">
@@ -249,35 +245,15 @@ export default function FeedMain({ navigateTo, isAdmin = false }) {
           value={searchTerm} 
           onChange={(e) => setSearchTerm(e.target.value)} 
         />
-        {/* admin cannot create or save posts  */}
+        
         {!isAdmin && (
-        <>
           <button 
             className="feed-main-create-button"
             onClick={() => navigateTo('create')}
           >
             + Create New Post
           </button>
-
-          <div style={{ height: '12px' }} />
-
-          <div className="feed-main-secondary-buttons">
-            <button 
-              className="feed-main-secondary-button"
-              onClick={() => navigateTo('saved')}
-            >
-              Saved Posts
-            </button>
-
-            <button 
-              className="feed-main-secondary-button"
-              onClick={() => navigateTo('myposts')}
-            >
-              My Posts
-            </button>
-          </div>
-        </>
-      )}
+        )}
       </div>
         
 
