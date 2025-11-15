@@ -169,7 +169,7 @@ export default function FeedMyPosts({ navigateTo }) {
           Saved Posts
         </button>
       </div>
-      <div className="feed-main-controls" style={{ marginBottom: '0px' }}>
+      <div className="feed-main-controls">
         <input
           type="text"
           placeholder="Search posts..."

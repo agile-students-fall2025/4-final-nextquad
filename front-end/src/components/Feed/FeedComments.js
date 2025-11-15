@@ -63,7 +63,7 @@ export default function FeedComments({ post, navigateTo, returnToPage = 'main' }
 
   return (
     <div className="feed-comments-container">
-      <div className="feed-comments-header">
+      <div className="feed-comments-nav-bar">
         <button
           className="feed-comments-back-button"
           onClick={() => navigateTo(returnToPage)}
