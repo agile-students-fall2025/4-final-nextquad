@@ -100,6 +100,35 @@
   transition: background-color 0.2s ease;
 }
 
+.feed-main-secondary-buttons {
+  display: flex;
+  gap: 12px;
+  flex-direction: column;
+}
+
+.feed-main-secondary-button {
+  flex: 1;
+  padding: 14px 20px;
+  background-color: white;
+  color: #6B46C1;
+  border: 1px solid #6B46C1;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.feed-main-secondary-button:hover {
+  background-color: #f5f3ff;
+}
+
+@media (min-width: 768px) {
+  .feed-main-secondary-buttons {
+    flex-direction: row;
+  }
+}
+
 .feed-main-create-button:hover {
   background-color: #5a3ba1;
 }
