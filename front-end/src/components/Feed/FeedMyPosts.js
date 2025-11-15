@@ -1,12 +1,19 @@
 import './FeedSavedPosts.css'; // Reuse the same styles
 import { useState, useEffect, useRef } from 'react';
 import { getAllPosts, togglePostLike, deletePost } from '../../services/api';
+import { updatePost } from '../../services/api';
 
 export default function FeedMyPosts({ navigateTo }) {
+    const [editingPost, setEditingPost] = useState(null);
+    const [editForm, setEditForm] = useState({ title: '', content: '', image: '', category: '', resolved: false });
+    const [savingEdit, setSavingEdit] = useState(false);
   const [myPosts, setMyPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [openMenuId, setOpenMenuId] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
   const menuRef = useRef(null);
+  const feedCategories = ['General','Marketplace','Lost and Found','Roommate Request','Safety Alerts'];
+  const [editCategory, setEditCategory] = useState('');
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -67,8 +74,6 @@ export default function FeedMyPosts({ navigateTo }) {
     if (window.confirm('Are you sure you want to delete this post? This action cannot be undone.')) {
       try {
         await deletePost(postId);
-        
-        // Remove the post from the local state
         setMyPosts(prevPosts => prevPosts.filter(post => post.id !== postId));
         setOpenMenuId(null);
       } catch (err) {
@@ -78,9 +83,67 @@ export default function FeedMyPosts({ navigateTo }) {
     }
   };
 
+  // Edit handlers (moved to top-level)
+  const handleEditPost = (post) => {
+    setEditingPost(post);
+    setEditForm({
+      title: post.title,
+      content: post.content,
+      image: post.image || '',
+      category: post.category,
+      resolved: post.resolved || false
+    });
+    setEditCategory(post.category);
+    setOpenMenuId(null);
+  };
+
+  const handleEditFormChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setEditForm(form => ({
+      ...form,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+    if (name === 'category') setEditCategory(value);
+  };
+  const handleEditCategoryClick = (cat) => {
+    setEditForm(form => ({ ...form, category: cat }));
+    setEditCategory(cat);
+  };
+
+  const handleEditFormSubmit = async (e) => {
+    e.preventDefault();
+    if (!editingPost) return;
+    setSavingEdit(true);
+    try {
+      const updated = await updatePost(editingPost.id, {
+        title: editForm.title,
+        content: editForm.content,
+        image: editForm.image,
+        category: editForm.category,
+        resolved: editForm.resolved
+      });
+      setMyPosts(prevPosts => prevPosts.map(post => post.id === editingPost.id ? updated.data : post));
+      setEditingPost(null);
+    } catch (err) {
+      alert('Failed to update post.');
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
+  const handleEditModalClose = () => {
+    setEditingPost(null);
+  };
+
   const toggleMenu = (postId) => {
     setOpenMenuId(openMenuId === postId ? null : postId);
   };
+
+  // Filter posts by search term
+  const filteredPosts = myPosts.filter(post =>
+    post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    post.content.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="feed-saved-container">
@@ -93,6 +156,15 @@ export default function FeedMyPosts({ navigateTo }) {
         </button>
         <h1 className="feed-saved-title">My Posts</h1>
       </div>
+      <div className="feed-main-controls" style={{ marginBottom: '0px' }}>
+        <input
+          type="text"
+          placeholder="Search posts..."
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
+          className="feed-main-search-input"
+        />
+      </div>
 
       {loading && (
         <div style={{ padding: '40px', textAlign: 'center', color: '#666' }}>
@@ -101,53 +173,115 @@ export default function FeedMyPosts({ navigateTo }) {
       )}
 
       <div className="feed-saved-list">
-        {!loading && myPosts.length === 0 && (
-          <div className="feed-saved-empty">You haven't created any posts yet.</div>
+        {!loading && filteredPosts.length === 0 && (
+          <div className="feed-saved-empty">No posts found.</div>
         )}
-        {myPosts.map(post => (
-          <div key={post.id} className="feed-saved-card" style={{ position: 'relative' }}>
-            <div className="feed-saved-headerline">
-              <img src={post.author.avatar} alt={post.author.name} className="feed-saved-avatar" />
-              <div style={{ flex: 1 }}>
-                <p className="feed-saved-author">{post.author.name}</p>
-                <p className="feed-saved-time">{post.timestamp}</p>
+        {filteredPosts.map(post => (
+          <div key={post.id} className="feed-post-card" style={{ position: 'relative' }}>
+            <div className="feed-post-header">
+              <img src={post.author.avatar} alt={post.author.name} className="feed-post-avatar" />
+              <div className="feed-post-author-info">
+                <p className="feed-post-author-name">{post.author.name}</p>
+                <p className="feed-post-timestamp">{post.timestamp}</p>
               </div>
-              <div ref={openMenuId === post.id ? menuRef : null}>
-                <button 
-                  className="feed-post-menu-button"
-                  onClick={() => toggleMenu(post.id)}
-                >
+              <div ref={openMenuId === post.id ? menuRef : null} style={{ position: 'relative', marginLeft: 'auto' }}>
+                <button className="feed-post-menu-button" onClick={() => toggleMenu(post.id)}>
                   ⋮
                 </button>
                 {openMenuId === post.id && (
-                  <div className="feed-post-menu-dropdown">
-                    <button 
-                      className="feed-post-menu-item"
-                      onClick={() => handleDeletePost(post.id)}
-                    >
-                      🗑️ Delete Post
-                    </button>
+                  <div className="feed-post-menu-dropdown" style={{ right: 0, left: 'auto', top: '36px' }}>
+                    <button className="feed-post-menu-item" onClick={() => handleEditPost(post)}>✏️ Edit Post</button>
+                    <button className="feed-post-menu-item" onClick={() => handleDeletePost(post.id)}>🗑️ Delete Post</button>
                   </div>
                 )}
               </div>
             </div>
-            <h3 className="feed-saved-titleline">{post.title}</h3>
-            <p className="feed-saved-content">{post.content}</p>
+            <h3 className="feed-post-title">{post.title}</h3>
+            <p className="feed-post-content">{post.content}</p>
             {post.image && (
-              <img src={post.image} alt={post.title} className="feed-saved-image" />
+              <img src={post.image} alt={post.title} className="feed-post-image" />
             )}
-            <div className="feed-saved-actions">
+            <div className="feed-post-tags">
+              {post.category && (
+                <span className="feed-post-tag">#{post.category}</span>
+              )}
+              {typeof post.editCount === 'number' && post.editCount > 0 && (
+                <span className="feed-post-tag" style={{ background: '#f3f3f3', color: '#666' }}>Edited {post.editCount} {post.editCount === 1 ? 'time' : 'times'}</span>
+              )}
+              <span className="feed-post-tag" style={{ background: post.resolved ? '#c6f6d5' : '#fed7d7', color: post.resolved ? '#276749' : '#c53030' }}>{post.resolved ? 'Resolved' : 'Unresolved'}</span>
+            </div>
+            <div className="feed-post-actions">
               <button className="feed-post-action-button" onClick={() => navigateTo('comments', post.id, 'myposts')}>💬 {post.commentCount}</button>
-              <button 
-                className="feed-post-action-button"
-                onClick={() => handleLike(post.id)}
-              >
-                {post.isLikedByUser ? '❤️' : '🤍'} {post.likes}
-              </button>
+              <button className="feed-post-action-button" onClick={() => handleLike(post.id)}>{post.isLikedByUser ? '❤️' : '🤍'} {post.likes}</button>
             </div>
           </div>
         ))}
       </div>
+      {/* Edit Post Modal (rendered once, outside the map loop) */}
+      {editingPost && (
+        <div className="feed-edit-modal-overlay">
+          <div className="feed-edit-modal">
+            <h2>Edit Post</h2>
+            <form onSubmit={handleEditFormSubmit}>
+              <div className="event-create-image-upload" style={{ marginBottom: '18px' }}>
+                <span style={{ fontSize: '48px' }}>+</span>
+                <p>Upload Photo (Optional)</p>
+                {editForm.image && (
+                  <div style={{ marginTop: '10px' }}>
+                    <img src={editForm.image} alt="Post" style={{ maxWidth: '100%', maxHeight: '180px', borderRadius: '8px' }} />
+                    <button type="button" className="feed-edit-cancel" style={{ marginTop: '8px' }} onClick={() => setEditForm(f => ({ ...f, image: '' }))}>Remove Image</button>
+                  </div>
+                )}
+              </div>
+              <input
+                type="text"
+                placeholder="Post Title"
+                name="title"
+                value={editForm.title}
+                onChange={handleEditFormChange}
+                required
+                className="event-create-input"
+              />
+              <textarea
+                placeholder="What's on your mind?"
+                name="content"
+                value={editForm.content}
+                onChange={handleEditFormChange}
+                required
+                className="event-create-textarea"
+              />
+              <div className="event-create-categories">
+                <p className="event-create-categories-title">Category</p>
+                <div className="event-create-categories-list">
+                  {feedCategories.map(cat => (
+                    <button
+                      key={cat}
+                      type="button"
+                      className={editCategory === cat ? 'event-create-category-button-active' : 'event-create-category-button'}
+                      onClick={() => handleEditCategoryClick(cat)}
+                    >
+                      #{cat}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <label className="feed-edit-checkbox-label" style={{ marginTop: '18px' }}>
+                <input
+                  type="checkbox"
+                  name="resolved"
+                  checked={editForm.resolved}
+                  onChange={handleEditFormChange}
+                />
+                Is this post resolved?
+              </label>
+              <div className="feed-edit-modal-actions">
+                <button type="button" onClick={handleEditModalClose} className="feed-edit-cancel">Cancel</button>
+                <button type="submit" disabled={savingEdit} className="feed-edit-save">{savingEdit ? 'Saving...' : 'Save Changes'}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
