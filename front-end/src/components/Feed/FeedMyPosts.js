@@ -91,7 +91,7 @@ export default function FeedMyPosts({ navigateTo }) {
       content: post.content,
       image: post.image || '',
       category: post.category,
-      resolved: post.resolved || false
+      resolved: !!post.resolved // Always boolean
     });
     setEditCategory(post.category);
     setOpenMenuId(null);
@@ -101,7 +101,7 @@ export default function FeedMyPosts({ navigateTo }) {
     const { name, value, type, checked } = e.target;
     setEditForm(form => ({
       ...form,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: name === 'resolved' ? checked : value
     }));
     if (name === 'category') setEditCategory(value);
   };
@@ -115,16 +115,25 @@ export default function FeedMyPosts({ navigateTo }) {
     if (!editingPost) return;
     setSavingEdit(true);
     try {
-      const updated = await updatePost(editingPost.id, {
+      const payload = {
         title: editForm.title,
         content: editForm.content,
         image: editForm.image,
         category: editForm.category,
         resolved: editForm.resolved
-      });
+      };
+      console.log('Sending update payload:', payload);
+      const updated = await updatePost(editingPost.id, payload);
+      console.log('Received updated post:', updated.data);
+      console.log('Updated post resolved field:', updated.data.resolved, 'Type:', typeof updated.data.resolved);
       setMyPosts(prevPosts => prevPosts.map(post => post.id === editingPost.id ? updated.data : post));
+      // Also update main feed if available
+      if (window.updateFeedMainPost) {
+        window.updateFeedMainPost(updated.data);
+      }
       setEditingPost(null);
     } catch (err) {
+      console.error('Update error:', err);
       alert('Failed to update post.');
     } finally {
       setSavingEdit(false);
@@ -208,7 +217,12 @@ export default function FeedMyPosts({ navigateTo }) {
               {typeof post.editCount === 'number' && post.editCount > 0 && (
                 <span className="feed-post-tag" style={{ background: '#f3f3f3', color: '#666' }}>Edited {post.editCount} {post.editCount === 1 ? 'time' : 'times'}</span>
               )}
-              <span className="feed-post-tag" style={{ background: post.resolved ? '#c6f6d5' : '#fed7d7', color: post.resolved ? '#276749' : '#c53030' }}>{post.resolved ? 'Resolved' : 'Unresolved'}</span>
+              {/* Resolved/Unresolved tag for relevant categories */}
+              {['Marketplace', 'Roommate Request', 'Lost and Found'].includes(post.category) && (
+                <span className="feed-post-tag" style={{ background: post.resolved ? '#c6f6d5' : '#fed7d7', color: post.resolved ? '#276749' : '#c53030', marginLeft: '6px' }}>
+                  {post.resolved ? 'Resolved' : 'Unresolved'}
+                </span>
+              )}
             </div>
             <div className="feed-post-actions">
               <button className="feed-post-action-button" onClick={() => navigateTo('comments', post.id, 'myposts')}>💬 {post.commentCount}</button>
@@ -265,15 +279,28 @@ export default function FeedMyPosts({ navigateTo }) {
                   ))}
                 </div>
               </div>
-              <label className="feed-edit-checkbox-label" style={{ marginTop: '18px' }}>
-                <input
-                  type="checkbox"
-                  name="resolved"
-                  checked={editForm.resolved}
-                  onChange={handleEditFormChange}
-                />
-                Is this post resolved?
-              </label>
+              {/* Resolved state selector */}
+              <div style={{ margin: '18px 0' }}>
+                <p style={{ fontWeight: 500, marginBottom: '8px' }}>Resolved Status</p>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <button
+                    type="button"
+                    className={editForm.resolved ? 'event-create-category-button-active' : 'event-create-category-button'}
+                    style={{ minWidth: 120 }}
+                    onClick={() => setEditForm(form => ({ ...form, resolved: true }))}
+                  >
+                    Mark as Resolved
+                  </button>
+                  <button
+                    type="button"
+                    className={!editForm.resolved ? 'event-create-category-button-active' : 'event-create-category-button'}
+                    style={{ minWidth: 120 }}
+                    onClick={() => setEditForm(form => ({ ...form, resolved: false }))}
+                  >
+                    Mark as Unresolved
+                  </button>
+                </div>
+              </div>
               <div className="feed-edit-modal-actions">
                 <button type="button" onClick={handleEditModalClose} className="feed-edit-cancel">Cancel</button>
                 <button type="submit" disabled={savingEdit} className="feed-edit-save">{savingEdit ? 'Saving...' : 'Save Changes'}</button>
