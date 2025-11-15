@@ -40,7 +40,8 @@
 .feed-comments-post-preview {
   background-color: white;
   padding: 24px;
-  margin: 24px;
+  margin-top: 24px;
+  margin-bottom: 24px;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
@@ -91,9 +92,7 @@
 }
 
 .feed-comments-section {
-  padding: 24px;
-  max-width: 900px;
-  margin: 0 auto;
+  padding: 24px 0;
 }
 
 .feed-comments-section-title {
