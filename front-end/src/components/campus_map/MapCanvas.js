@@ -8,6 +8,9 @@ export default function MapCanvas({ activeCategories, searchQuery }) {
   const [zoom, setZoom] = useState(1);
   const [points, setPoints] = useState([]);
   const canvasRef = useRef(null);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartRef = useRef({ x: 0, y: 0 });
 
   const Z_MIN = 0.55;
   const Z_MAX = 2.0;
@@ -17,47 +20,31 @@ export default function MapCanvas({ activeCategories, searchQuery }) {
 
   const zoomIn = () => setZoom((z) => clamp(z + Z_STEP));
   const zoomOut = () => setZoom((z) => clamp(z - Z_STEP));
-  const zoomReset = () => setZoom(1);
+  const zoomReset = () => {
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
+  };
 
-  // // filter search
-  // const findBestMatch = (term) => {
-  //   if (!term) return null;
-  //   const q = term.toLowerCase();
-
-  //   const pool = (activeCategories instanceof Set)
-  //     ? POINTS.filter(p => p.categories?.some(c => activeCategories.has(c)))
-  //     : POINTS;
-
-  //   const score = (p) => {
-  //     const title = (p.title || "").toLowerCase();
-  //     const desc  = (p.desc  || "").toLowerCase();
-  //     const keys  = (p.keywords || []).map(k => (k || "").toLowerCase());
-
-  //     if (title.startsWith(q)) return 100;
-  //     if (title.includes(q))   return 80;
-  //     if (keys.includes(q))    return 70;
-  //     if (keys.some(k => k.includes(q))) return 60;
-  //     if (desc.includes(q))    return 40;
-  //     return 0;
-  //   };
-
-  //   let best = null, bestScore = 0;
-  //   for (const p of pool) {
-  //     const s = score(p);
-  //     if (s > bestScore) { best = p; bestScore = s; }
-  //   }
-  //   return best;
-  // };
-
-  // // open the info card 
-  // useEffect(() => {
-  //   if (!searchQuery) {
-  //     setOpenId(null);
-  //     return;
-  //   }
-  //   const match = findBestMatch(searchQuery);
-  //   if (match) setOpenId(match.id);
-  // }, [searchQuery, activeCategories]);
+  // Pan and drag handlers
+  const handleMouseDown = (e) => {
+    const target = e.target;
+    if (
+      target.closest('.pin-btn') ||
+      target.closest('.pin-info') ||
+      target.closest('.zoom-controls') ||
+      target.closest('button') ||
+      target.closest('a')
+    ) {
+      return;
+    }
+    
+    setIsDragging(true);
+    dragStartRef.current = {
+      x: e.clientX - pan.x,
+      y: e.clientY - pan.y
+    };
+    e.preventDefault();
+  };
 
   // Load points from backend when filters/search change
   useEffect(() => {
@@ -101,6 +88,30 @@ export default function MapCanvas({ activeCategories, searchQuery }) {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  // Mouse move and up handlers for dragging
+  useEffect(() => {
+    if (!isDragging) return;
+
+    const handleMouseMove = (e) => {
+      setPan({
+        x: e.clientX - dragStartRef.current.x,
+        y: e.clientY - dragStartRef.current.y
+      });
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+    };
+
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isDragging]);
+
   const onDoubleClick = () => zoomIn();
 
   const visible = useMemo(() => points, [points]);
@@ -112,7 +123,12 @@ export default function MapCanvas({ activeCategories, searchQuery }) {
   const closeCard = () => setOpenId(null);
 
   return (
-    <div className="map-canvas" ref={canvasRef} onDoubleClick={onDoubleClick}>
+    <div 
+      className={`map-canvas ${isDragging ? 'is-dragging' : ''}`}
+      ref={canvasRef} 
+      onDoubleClick={onDoubleClick}
+      onMouseDown={handleMouseDown}
+    >
       <div className="zoom-controls" role="toolbar" aria-label="Map zoom controls">
         <button type="button" className="zoom-btn" onClick={zoomOut} aria-label="Zoom out">-</button>
         <div className="zoom-indicator" aria-live="polite">{Math.round(zoom * 100)}%</div>
@@ -120,7 +136,7 @@ export default function MapCanvas({ activeCategories, searchQuery }) {
         <button type="button" className="zoom-reset" onClick={zoomReset} aria-label="Reset zoom">Reset</button>
       </div>
 
-      <div className="map-inner" style={{ transform: `scale(${zoom})` }}>
+      <div className="map-inner" style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})` }}>
         {visible.map((p) => {const isOpen = openId === p.id;
           return (
             <div
@@ -139,7 +155,15 @@ export default function MapCanvas({ activeCategories, searchQuery }) {
               </button>
 
               {isOpen && (
-                <div className="pin-info" role="dialog" aria-label={`${p.title} information`}>
+                <div 
+                  className="pin-info" 
+                  role="dialog" 
+                  aria-label={`${p.title} information`}
+                  style={{ 
+                    transform: `scale(${1 / zoom}) translate(calc(-50% + var(--pin-info-shift-x)), calc(-100% + var(--pin-info-shift-y)))`,
+                    transformOrigin: 'center bottom'
+                  }}
+                >
                   <button
                     type="button"
                     className="pin-info-close"
