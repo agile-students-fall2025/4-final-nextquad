@@ -11,7 +11,10 @@ export default function FeedComments({ post, navigateTo, returnToPage = 'main' }
   const [editingComment, setEditingComment] = useState(null);
   const [editText, setEditText] = useState('');
   const [savingEdit, setSavingEdit] = useState(false);
+  const [sortBy, setSortBy] = useState('Newest');
+  const [showSortMenu, setShowSortMenu] = useState(false);
   const menuRef = useRef(null);
+  const sortMenuRef = useRef(null);
   const currentUserId = 'user123'; // Mock current user
 
   // Fetch comments when component mounts or post changes
@@ -41,16 +44,19 @@ export default function FeedComments({ post, navigateTo, returnToPage = 'main' }
       if (menuRef.current && !menuRef.current.contains(event.target)) {
         setOpenMenuId(null);
       }
+      if (sortMenuRef.current && !sortMenuRef.current.contains(event.target)) {
+        setShowSortMenu(false);
+      }
     };
 
-    if (openMenuId !== null) {
+    if (openMenuId !== null || showSortMenu) {
       document.addEventListener('mousedown', handleClickOutside);
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [openMenuId]);
+  }, [openMenuId, showSortMenu]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -138,6 +144,29 @@ export default function FeedComments({ post, navigateTo, returnToPage = 'main' }
     }
   };
 
+  // Get sorted comments based on selected sort option
+  const getSortedComments = () => {
+    const sorted = [...comments];
+    
+    if (sortBy === 'Most Liked') {
+      // Sort by likes descending, then by newest
+      sorted.sort((a, b) => {
+        if (b.likes !== a.likes) {
+          return b.likes - a.likes;
+        }
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      });
+    } else if (sortBy === 'Oldest') {
+      // Sort by oldest first
+      sorted.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+    } else {
+      // Default: Newest first
+      sorted.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    }
+    
+    return sorted;
+  };
+
   return (
     <div className="feed-comments-container">
       <div className="feed-comments-nav-bar">
@@ -169,7 +198,39 @@ export default function FeedComments({ post, navigateTo, returnToPage = 'main' }
       )}
 
       <div className="feed-comments-section">
-        <h2 className="feed-comments-section-title">Comments ({comments.length})</h2>
+        <div className="feed-comments-header-row">
+          <h2 className="feed-comments-section-title" style={{ margin: 0 }}>Comments ({comments.length})</h2>
+          
+          {/* Sort Dropdown */}
+          <div className="feed-comments-sort-container" ref={sortMenuRef}>
+            <button 
+              className="feed-comments-sort-button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowSortMenu(!showSortMenu);
+              }}
+              type="button"
+            >
+              Sort: {sortBy} <span>▼</span>
+            </button>
+            {showSortMenu && (
+              <div className="feed-comments-sort-menu">
+                {['Most Liked', 'Newest', 'Oldest'].map(option => (
+                  <div 
+                    key={option} 
+                    className="feed-comments-sort-option"
+                    onClick={() => { 
+                      setSortBy(option); 
+                      setShowSortMenu(false); 
+                    }}
+                  >
+                    {option}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
 
         <form className="feed-comments-form" onSubmit={handleSubmit}>
           <textarea
@@ -196,7 +257,7 @@ export default function FeedComments({ post, navigateTo, returnToPage = 'main' }
         )}
 
         <div className="feed-comments-list">
-          {comments.map(comment => (
+          {getSortedComments().map(comment => (
             <div key={comment.id} className="feed-comment-item" style={{ position: 'relative' }}>
               <img
                 src={comment.author.avatar}
