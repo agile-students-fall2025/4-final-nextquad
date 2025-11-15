@@ -148,7 +148,9 @@ const createPost = (req, res) => {
         userId: 'user123' // TODO: Get from auth
       },
       isLikedByUser: false,
-      updatedAt: new Date()
+      updatedAt: new Date(),
+      resolved: false,
+      editCount: 0
     };
 
     mockPosts.push(newPost);
@@ -195,6 +197,8 @@ const updatePost = (req, res) => {
 
     // Update fields
     const { title, content, category, image, resolved } = req.body;
+    console.log('Update request body:', req.body);
+    console.log('Resolved value received:', resolved, 'Type:', typeof resolved);
     let edited = false;
     if (title && title !== post.title) { post.title = title; edited = true; }
     if (content && content !== post.content) { post.content = content; edited = true; }
@@ -207,6 +211,7 @@ const updatePost = (req, res) => {
     }
 
     mockPosts[postIndex] = post;
+    console.log('Updated post resolved status:', post.resolved);
 
     res.status(200).json({
       success: true,
