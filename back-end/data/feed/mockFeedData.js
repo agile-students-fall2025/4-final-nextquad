@@ -71,7 +71,9 @@ const generateMockPost = (id) => {
       userId: authorUserId
     },
     isLikedByUser: false, // Track if current user liked this post
-    updatedAt: new Date()
+    updatedAt: new Date(),
+    resolved: false, // New field for resolved status
+    editCount: 0 // New field for edit count
   };
 };
 

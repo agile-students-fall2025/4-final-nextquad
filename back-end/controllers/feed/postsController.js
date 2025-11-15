@@ -194,16 +194,17 @@ const updatePost = (req, res) => {
     }
 
     // Update fields
-    const { title, content, category, image } = req.body;
-    
-    if (title) post.title = title;
-    if (content) post.content = content;
-    if (category && categories.includes(category) && category !== 'All') {
-      post.category = category;
+    const { title, content, category, image, resolved } = req.body;
+    let edited = false;
+    if (title && title !== post.title) { post.title = title; edited = true; }
+    if (content && content !== post.content) { post.content = content; edited = true; }
+    if (category && categories.includes(category) && category !== 'All' && category !== post.category) { post.category = category; edited = true; }
+    if (image !== undefined && image !== post.image) { post.image = image; edited = true; }
+    if (typeof resolved === 'boolean' && resolved !== post.resolved) { post.resolved = resolved; edited = true; }
+    if (edited) {
+      post.editCount = (post.editCount || 0) + 1;
+      post.updatedAt = new Date();
     }
-    if (image !== undefined) post.image = image;
-    
-    post.updatedAt = new Date();
 
     mockPosts[postIndex] = post;
 
