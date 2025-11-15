@@ -1,10 +1,29 @@
 import './FeedSavedPosts.css'; // Reuse the same styles
-import { useState, useEffect } from 'react';
-import { getAllPosts, togglePostLike } from '../../services/api';
+import { useState, useEffect, useRef } from 'react';
+import { getAllPosts, togglePostLike, deletePost } from '../../services/api';
 
 export default function FeedMyPosts({ navigateTo }) {
   const [myPosts, setMyPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [openMenuId, setOpenMenuId] = useState(null);
+  const menuRef = useRef(null);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setOpenMenuId(null);
+      }
+    };
+
+    if (openMenuId !== null) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [openMenuId]);
 
   useEffect(() => {
     const fetchMyPosts = async () => {
@@ -44,6 +63,25 @@ export default function FeedMyPosts({ navigateTo }) {
     }
   };
 
+  const handleDeletePost = async (postId) => {
+    if (window.confirm('Are you sure you want to delete this post? This action cannot be undone.')) {
+      try {
+        await deletePost(postId);
+        
+        // Remove the post from the local state
+        setMyPosts(prevPosts => prevPosts.filter(post => post.id !== postId));
+        setOpenMenuId(null);
+      } catch (err) {
+        console.error('Error deleting post:', err);
+        alert('Failed to delete post. Please try again.');
+      }
+    }
+  };
+
+  const toggleMenu = (postId) => {
+    setOpenMenuId(openMenuId === postId ? null : postId);
+  };
+
   return (
     <div className="feed-saved-container">
       <div className="feed-saved-header">
@@ -67,12 +105,30 @@ export default function FeedMyPosts({ navigateTo }) {
           <div className="feed-saved-empty">You haven't created any posts yet.</div>
         )}
         {myPosts.map(post => (
-          <div key={post.id} className="feed-saved-card">
+          <div key={post.id} className="feed-saved-card" style={{ position: 'relative' }}>
             <div className="feed-saved-headerline">
               <img src={post.author.avatar} alt={post.author.name} className="feed-saved-avatar" />
-              <div>
+              <div style={{ flex: 1 }}>
                 <p className="feed-saved-author">{post.author.name}</p>
                 <p className="feed-saved-time">{post.timestamp}</p>
+              </div>
+              <div ref={openMenuId === post.id ? menuRef : null}>
+                <button 
+                  className="feed-post-menu-button"
+                  onClick={() => toggleMenu(post.id)}
+                >
+                  ⋮
+                </button>
+                {openMenuId === post.id && (
+                  <div className="feed-post-menu-dropdown">
+                    <button 
+                      className="feed-post-menu-item"
+                      onClick={() => handleDeletePost(post.id)}
+                    >
+                      🗑️ Delete Post
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
             <h3 className="feed-saved-titleline">{post.title}</h3>
