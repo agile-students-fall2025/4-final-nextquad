@@ -152,14 +152,22 @@ export default function FeedMyPosts({ navigateTo }) {
 
   return (
     <div className="feed-saved-container">
-      <div className="feed-saved-header">
+      <div className="feed-saved-nav-bar">
         <button
           className="feed-saved-back-button"
           onClick={() => navigateTo('main')}
         >
-          ← Back
+          ← Back to Feed
         </button>
-        <h1 className="feed-saved-title">My Posts</h1>
+        <h2 className="feed-saved-nav-title">
+          My Posts
+        </h2>
+        <button 
+          className="feed-saved-nav-button"
+          onClick={() => navigateTo('saved')}
+        >
+          Saved Posts
+        </button>
       </div>
       <div className="feed-main-controls" style={{ marginBottom: '0px' }}>
         <input
