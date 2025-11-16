@@ -67,54 +67,54 @@ const getPrivacyPolicy = (req, res) => {
   }
 };
 
-// // change user password
-// const changeUserPassword = (req, res) => {
-//   const { currentPassword, newPassword, confirmPassword } = req.body;
+// change user password
+const changeUserPassword = (req, res) => {
+  const { currentPassword, newPassword, confirmPassword } = req.body;
 
-//   if (!currentPassword || !newPassword || !confirmPassword) {
-//     return res.status(400).json({
-//       success: false,
-//       error: "All password fields are required.",
-//     });
-//   }
+  if (!currentPassword || !newPassword || !confirmPassword) {
+    return res.status(400).json({
+      success: false,
+      error: "All password fields are required.",
+    });
+  }
 
-//   if (newPassword !== confirmPassword) {
-//     return res.status(400).json({
-//       success: false,
-//       error: "New password and confirmation do not match.",
-//     });
-//   }
+  if (newPassword !== confirmPassword) {
+    return res.status(400).json({
+      success: false,
+      error: "New password and confirmation do not match.",
+    });
+  }
 
-//   try {
-//     // Mock verification — you can later replace this with DB validation
-//     const mockCurrentPassword = "oldPassword123";
+  try {
+    // UPDATE WHEN PROF SHOWS PASSWORD HANDLING
+    const mockCurrentPassword = "Password123";
 
-//     if (currentPassword !== mockCurrentPassword) {
-//       return res.status(401).json({
-//         success: false,
-//         error: "Current password is incorrect.",
-//       });
-//     }
+    if (currentPassword !== mockCurrentPassword) {
+      return res.status(401).json({
+        success: false,
+        error: "Current password is incorrect.",
+      });
+    }
 
-//     // Mock updating password
-//     console.log("Password successfully changed to:", newPassword);
+    // Mock updating password
+    console.log("Password successfully changed to:", newPassword);
 
-//     return res.status(200).json({
-//       success: true,
-//       message: "Password changed successfully.",
-//     });
-//   } catch (error) {
-//     console.error("Error changing password:", error);
-//     return res.status(500).json({
-//       success: false,
-//       error: "Server error while changing password.",
-//     });
-//   }
-// };
+    return res.status(200).json({
+      success: true,
+      message: "Password changed successfully.",
+    });
+  } catch (error) {
+    console.error("Error changing password:", error);
+    return res.status(500).json({
+      success: false,
+      error: "Server error while changing password.",
+    });
+  }
+};
 
 module.exports = {
   getUserSettings,
   updateUserSettings,
   getPrivacyPolicy,
-  // changeUserPassword,
+  changeUserPassword,
 };
