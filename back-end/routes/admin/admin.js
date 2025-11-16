@@ -8,8 +8,10 @@ const {
   createReport,
   getEmergencyAlerts,
   createEmergencyAlert,
+  adminSignIn,
 } = require("../../controllers/admin/adminController");
 
+router.post("/signin", adminSignIn);
 
 router.get("/", getAdminSettings);
 router.post("/", updateAdminSettings);
