@@ -15,6 +15,16 @@ export default function FeedMyPosts({ navigateTo }) {
   const feedCategories = ['General','Marketplace','Lost and Found','Roommate Request','Safety Alerts'];
   const [editCategory, setEditCategory] = useState('');
 
+  // Prevent background scroll when edit modal is open
+  useEffect(() => {
+    if (editingPost) {
+      document.body.classList.add('modal-open');
+    } else {
+      document.body.classList.remove('modal-open');
+    }
+    return () => document.body.classList.remove('modal-open');
+  }, [editingPost]);
+
   // Close menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -152,16 +162,24 @@ export default function FeedMyPosts({ navigateTo }) {
 
   return (
     <div className="feed-saved-container">
-      <div className="feed-saved-header">
+      <div className="feed-saved-nav-bar">
         <button
           className="feed-saved-back-button"
           onClick={() => navigateTo('main')}
         >
-          ← Back
+          ← Back to Feed
         </button>
-        <h1 className="feed-saved-title">My Posts</h1>
+        <h2 className="feed-saved-nav-title">
+          My Posts
+        </h2>
+        <button 
+          className="feed-saved-nav-button"
+          onClick={() => navigateTo('saved')}
+        >
+          Saved Posts
+        </button>
       </div>
-      <div className="feed-main-controls" style={{ marginBottom: '0px' }}>
+      <div className="feed-main-controls">
         <input
           type="text"
           placeholder="Search posts..."
@@ -233,13 +251,24 @@ export default function FeedMyPosts({ navigateTo }) {
           <div className="feed-edit-modal">
             <h2>Edit Post</h2>
             <form onSubmit={handleEditFormSubmit}>
-              <div className="event-create-image-upload" style={{ marginBottom: '18px' }}>
+              <div
+                className="event-create-image-upload"
+                style={{ marginBottom: '18px' }}
+                onClick={() => alert('Photo uploads not supported yet.')}
+              >
                 <span style={{ fontSize: '48px' }}>+</span>
                 <p>Upload Photo (Optional)</p>
                 {editForm.image && (
                   <div style={{ marginTop: '10px' }}>
                     <img src={editForm.image} alt="Post" style={{ maxWidth: '100%', maxHeight: '180px', borderRadius: '8px' }} />
-                    <button type="button" className="feed-edit-cancel" style={{ marginTop: '8px' }} onClick={() => setEditForm(f => ({ ...f, image: '' }))}>Remove Image</button>
+                    <button
+                      type="button"
+                      className="feed-edit-cancel"
+                      style={{ marginTop: '8px' }}
+                      onClick={(e) => { e.stopPropagation(); setEditForm(f => ({ ...f, image: '' })); }}
+                    >
+                      Remove Image
+                    </button>
                   </div>
                 )}
               </div>

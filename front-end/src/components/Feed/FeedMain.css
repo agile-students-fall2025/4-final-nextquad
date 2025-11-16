@@ -19,14 +19,44 @@
   font-size: 24px;
   font-weight: 700;
   color: #333;
-  margin-right: auto;
+  flex: 1 1 100%;
+}
+
+@media (min-width: 768px) {
+  .feed-main-header-title {
+    flex: 0 1 auto;
+    margin-right: auto;
+  }
+}
+
+.feed-main-nav-button {
+  flex: 1 1 calc(50% - 6px);
+  padding: 10px 20px;
+  background-color: white;
+  color: #6B46C1;
+  border: 1px solid #6B46C1;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+@media (min-width: 768px) {
+  .feed-main-nav-button {
+    flex: 0 1 auto;
+  }
+}
+
+.feed-main-nav-button:hover {
+  background-color: #f5f3ff;
 }
 
 .feed-main-controls {
   padding: 24px 32px;
   background-color: white;
   border-radius: 12px;
-  margin: 24px;
+  margin-bottom: 24px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 }
 
@@ -98,6 +128,7 @@
   font-weight: 600;
   cursor: pointer;
   transition: background-color 0.2s ease;
+  margin-top: 16px;
 }
 
 .feed-main-create-button:hover {
@@ -108,7 +139,7 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
-  padding: 0 24px;
+  padding: 0;
 }
 
 .feed-post-card {

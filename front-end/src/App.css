@@ -49,6 +49,11 @@
   box-shadow: 0 4px 12px rgba(76, 29, 149, 0.25);
 }
 
+.tab-button-active:hover {
+  background: #3b1575;
+  border-color: #3b1575;
+}
+
 /* Module Body - Full Width for Web */
 .module-body {
   flex: 1;
@@ -184,6 +189,11 @@
 .map-canvas-region {
   flex: 1;
   min-height: 60vh;
+}
+
+/* Lock background scroll when modals are open */
+body.modal-open {
+  overflow: hidden;
 }
 
 
