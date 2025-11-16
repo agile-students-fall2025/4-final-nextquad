@@ -14,6 +14,7 @@ const {
 const {
   getPostComments,
   addComment,
+  updateComment,
   deleteComment,
   toggleCommentLike
 } = require('../../controllers/feed/commentsController');
@@ -38,6 +39,7 @@ router.post('/posts/:id/like', togglePostLike);
 // Comment routes
 router.get('/posts/:id/comments', getPostComments);
 router.post('/posts/:id/comments', addComment);
+router.put('/comments/:commentId', updateComment);
 router.delete('/comments/:commentId', deleteComment);
 router.post('/comments/:commentId/like', toggleCommentLike);
 

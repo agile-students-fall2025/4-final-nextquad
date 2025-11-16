@@ -102,6 +102,63 @@
   margin-bottom: 20px;
 }
 
+.feed-comments-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.feed-comments-sort-container {
+  position: relative;
+}
+
+.feed-comments-sort-button {
+  padding: 8px 12px;
+  background-color: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  min-width: 140px;
+  justify-content: space-between;
+}
+
+.feed-comments-sort-button:hover {
+  background-color: #ebebeb;
+  border-color: #d0d0d0;
+}
+
+.feed-comments-sort-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  background-color: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 140px;
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.feed-comments-sort-option {
+  padding: 10px 14px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #333;
+  transition: background-color 0.2s ease;
+}
+
+.feed-comments-sort-option:hover {
+  background-color: #f5f5f5;
+}
+
 .feed-comments-form {
   background-color: white;
   padding: 20px;
@@ -170,6 +227,7 @@
   align-items: center;
   gap: 12px;
   margin-bottom: 8px;
+  position: relative;
 }
 
 .feed-comment-author {
@@ -183,6 +241,7 @@
   margin: 0;
   font-size: 13px;
   color: #999;
+  margin-right: auto;
 }
 
 .feed-comment-text {
@@ -190,6 +249,18 @@
   font-size: 15px;
   color: #666;
   line-height: 1.5;
+}
+
+.feed-comment-edit-tag {
+  display: inline-block;
+  padding: 4px 10px;
+  background: #f3f3f3;
+  color: #666;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  margin-right: 8px;
+  margin-bottom: 8px;
 }
 
 .feed-comment-like-button {

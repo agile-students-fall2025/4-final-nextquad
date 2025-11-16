@@ -89,7 +89,8 @@ const addComment = (req, res) => {
         avatar: 'https://picsum.photos/seed/currentuser/50/50',
         userId: 'user123' // TODO: Get from auth
       },
-      isLikedByUser: false
+      isLikedByUser: false,
+      editCount: 0
     };
 
     mockComments.push(newComment);
@@ -106,6 +107,64 @@ const addComment = (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Server error while adding comment'
+    });
+  }
+};
+
+/**
+ * PUT /api/feed/comments/:commentId
+ * Update a comment
+ */
+const updateComment = (req, res) => {
+  try {
+    const commentId = parseInt(req.params.commentId);
+    const commentIndex = mockComments.findIndex(c => c.id === commentId);
+
+    if (commentIndex === -1) {
+      return res.status(404).json({
+        success: false,
+        error: 'Comment not found'
+      });
+    }
+
+    const comment = mockComments[commentIndex];
+
+    // Check if user is the author
+    const currentUserId = 'user123'; // Mock user ID
+    if (comment.author.userId !== currentUserId) {
+      return res.status(403).json({
+        success: false,
+        error: 'You are not authorized to update this comment'
+      });
+    }
+
+    // Update fields
+    const { text } = req.body;
+    
+    if (!text || text.trim().length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Comment text is required'
+      });
+    }
+
+    if (text.trim() !== comment.text) {
+      comment.text = text.trim();
+      comment.editCount = (comment.editCount || 0) + 1;
+      comment.updatedAt = new Date();
+    }
+
+    mockComments[commentIndex] = comment;
+
+    res.status(200).json({
+      success: true,
+      message: 'Comment updated successfully',
+      data: comment
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: 'Server error while updating comment'
     });
   }
 };
@@ -225,6 +284,7 @@ const toggleCommentLike = (req, res) => {
 module.exports = {
   getPostComments,
   addComment,
+  updateComment,
   deleteComment,
   toggleCommentLike
 };

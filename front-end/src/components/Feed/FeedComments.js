@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { getPostComments, addComment, toggleCommentLike } from '../../services/api';
+import { useState, useEffect, useRef } from 'react';
+import { getPostComments, addComment, updateComment, deleteComment, toggleCommentLike } from '../../services/api';
 import './FeedComments.css';
 
 export default function FeedComments({ post, navigateTo, returnToPage = 'main' }) {
@@ -7,6 +7,15 @@ export default function FeedComments({ post, navigateTo, returnToPage = 'main' }
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [openMenuId, setOpenMenuId] = useState(null);
+  const [editingComment, setEditingComment] = useState(null);
+  const [editText, setEditText] = useState('');
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [sortBy, setSortBy] = useState('Newest');
+  const [showSortMenu, setShowSortMenu] = useState(false);
+  const menuRef = useRef(null);
+  const sortMenuRef = useRef(null);
+  const currentUserId = 'user123'; // Mock current user
 
   // Fetch comments when component mounts or post changes
   useEffect(() => {
@@ -29,6 +38,26 @@ export default function FeedComments({ post, navigateTo, returnToPage = 'main' }
     fetchComments();
   }, [post?.id]);
 
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setOpenMenuId(null);
+      }
+      if (sortMenuRef.current && !sortMenuRef.current.contains(event.target)) {
+        setShowSortMenu(false);
+      }
+    };
+
+    if (openMenuId !== null || showSortMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [openMenuId, showSortMenu]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (commentText.trim()) {
@@ -37,6 +66,11 @@ export default function FeedComments({ post, navigateTo, returnToPage = 'main' }
         // Add new comment to the list
         setComments(prev => [response.data, ...prev]);
         setCommentText('');
+        // Optimistically update main feed/post lists comment count
+        if (window.updateFeedMainPost) {
+          const nextCount = (post.commentCount || 0) + 1;
+          window.updateFeedMainPost({ ...post, commentCount: nextCount });
+        }
       } catch (err) {
         console.error('Error adding comment:', err);
         alert('Failed to add comment. Please try again.');
@@ -59,6 +93,78 @@ export default function FeedComments({ post, navigateTo, returnToPage = 'main' }
     } catch (err) {
       console.error('Error liking comment:', err);
     }
+  };
+
+  const handleEditComment = (comment) => {
+    setEditingComment(comment);
+    setEditText(comment.text);
+    setOpenMenuId(null);
+  };
+
+  const handleUpdateComment = async (e) => {
+    e.preventDefault();
+    if (!editText.trim() || !editingComment) return;
+
+    setSavingEdit(true);
+    try {
+      const response = await updateComment(editingComment.id, editText.trim());
+      // Update comment in list, preserving isLikedByUser from current state
+      setComments(prevComments =>
+        prevComments.map(c =>
+          c.id === editingComment.id 
+            ? { ...response.data, isLikedByUser: c.isLikedByUser } 
+            : c
+        )
+      );
+      setEditingComment(null);
+      setEditText('');
+    } catch (err) {
+      console.error('Error updating comment:', err);
+      alert('Failed to update comment. Please try again.');
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
+  const handleDeleteComment = async (commentId) => {
+    if (!window.confirm('Are you sure you want to delete this comment?')) return;
+
+    try {
+      await deleteComment(commentId);
+      setComments(prevComments => prevComments.filter(c => c.id !== commentId));
+      setOpenMenuId(null);
+      // Update main feed post comment count
+      if (window.updateFeedMainPost) {
+        const nextCount = Math.max(0, (post.commentCount || 0) - 1);
+        window.updateFeedMainPost({ ...post, commentCount: nextCount });
+      }
+    } catch (err) {
+      console.error('Error deleting comment:', err);
+      alert('Failed to delete comment. Please try again.');
+    }
+  };
+
+  // Get sorted comments based on selected sort option
+  const getSortedComments = () => {
+    const sorted = [...comments];
+    
+    if (sortBy === 'Most Liked') {
+      // Sort by likes descending, then by newest
+      sorted.sort((a, b) => {
+        if (b.likes !== a.likes) {
+          return b.likes - a.likes;
+        }
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      });
+    } else if (sortBy === 'Oldest') {
+      // Sort by oldest first
+      sorted.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+    } else {
+      // Default: Newest first
+      sorted.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    }
+    
+    return sorted;
   };
 
   return (
@@ -92,7 +198,39 @@ export default function FeedComments({ post, navigateTo, returnToPage = 'main' }
       )}
 
       <div className="feed-comments-section">
-        <h2 className="feed-comments-section-title">Comments ({comments.length})</h2>
+        <div className="feed-comments-header-row">
+          <h2 className="feed-comments-section-title" style={{ margin: 0 }}>Comments ({comments.length})</h2>
+          
+          {/* Sort Dropdown */}
+          <div className="feed-comments-sort-container" ref={sortMenuRef}>
+            <button 
+              className="feed-comments-sort-button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowSortMenu(!showSortMenu);
+              }}
+              type="button"
+            >
+              Sort: {sortBy} <span>▼</span>
+            </button>
+            {showSortMenu && (
+              <div className="feed-comments-sort-menu">
+                {['Most Liked', 'Newest', 'Oldest'].map(option => (
+                  <div 
+                    key={option} 
+                    className="feed-comments-sort-option"
+                    onClick={() => { 
+                      setSortBy(option); 
+                      setShowSortMenu(false); 
+                    }}
+                  >
+                    {option}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
 
         <form className="feed-comments-form" onSubmit={handleSubmit}>
           <textarea
@@ -119,8 +257,8 @@ export default function FeedComments({ post, navigateTo, returnToPage = 'main' }
         )}
 
         <div className="feed-comments-list">
-          {comments.map(comment => (
-            <div key={comment.id} className="feed-comment-item">
+          {getSortedComments().map(comment => (
+            <div key={comment.id} className="feed-comment-item" style={{ position: 'relative' }}>
               <img
                 src={comment.author.avatar}
                 alt={comment.author.name}
@@ -130,8 +268,27 @@ export default function FeedComments({ post, navigateTo, returnToPage = 'main' }
                 <div className="feed-comment-header">
                   <p className="feed-comment-author">{comment.author.name}</p>
                   <p className="feed-comment-timestamp">{comment.timestamp}</p>
+                  {comment.author.userId === currentUserId && (
+                    <div ref={openMenuId === comment.id ? menuRef : null}>
+                      <button
+                        className="feed-post-menu-button"
+                        onClick={() => setOpenMenuId(openMenuId === comment.id ? null : comment.id)}
+                      >
+                        ⋮
+                      </button>
+                      {openMenuId === comment.id && (
+                        <div className="feed-post-menu-dropdown" style={{ right: 0, left: 'auto', top: '36px' }}>
+                          <button className="feed-post-menu-item" onClick={() => handleEditComment(comment)}>✏️ Edit Comment</button>
+                          <button className="feed-post-menu-item" onClick={() => handleDeleteComment(comment.id)}>🗑️ Delete Comment</button>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
                 <p className="feed-comment-text">{comment.text}</p>
+                {typeof comment.editCount === 'number' && comment.editCount > 0 && (
+                  <span className="feed-comment-edit-tag">Edited {comment.editCount} {comment.editCount === 1 ? 'time' : 'times'}</span>
+                )}
                 <button 
                   className="feed-comment-like-button"
                   onClick={() => handleLikeComment(comment.id)}
@@ -143,6 +300,44 @@ export default function FeedComments({ post, navigateTo, returnToPage = 'main' }
           ))}
         </div>
       </div>
+
+      {/* Edit Comment Modal */}
+      {editingComment && (
+        <div className="feed-edit-modal-overlay">
+          <div className="feed-edit-modal">
+            <h2>Edit Comment</h2>
+            <form onSubmit={handleUpdateComment}>
+              <textarea
+                value={editText}
+                onChange={(e) => setEditText(e.target.value)}
+                required
+                className="feed-edit-textarea"
+                placeholder="Edit your comment..."
+              />
+              <div className="feed-edit-modal-actions">
+                <button
+                  type="button"
+                  className="feed-edit-cancel"
+                  onClick={() => {
+                    setEditingComment(null);
+                    setEditText('');
+                  }}
+                  disabled={savingEdit}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="feed-edit-save"
+                  disabled={!editText.trim() || savingEdit}
+                >
+                  {savingEdit ? 'Saving...' : 'Save'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
