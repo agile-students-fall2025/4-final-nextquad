@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { getAllPosts, togglePostLike, feedCategories } from '../../services/api';
+import { getAllPosts, togglePostLike, feedCategories, deletePost } from '../../services/api';
 import { createReport } from '../../services/api'; 
 import './FeedMain.css';
 
@@ -149,6 +149,25 @@ export default function FeedMain({ navigateTo, isAdmin = false }) {
     alert("Server error. Please try again later.");
   }
 };
+  // Delete post (admin feature)
+  const handleAdminDelete = async (postId) => {
+  if (!window.confirm("Are you sure you want to delete this post? This action cannot be undone.")) {
+    return;
+  }
+
+  try {
+    await deletePost(postId);
+
+    // Remove the deleted post from the feed
+    setPosts(prev => prev.filter(p => p.id !== postId));
+
+    alert("Post deleted successfully.");
+  } catch (err) {
+    console.error("Admin delete failed:", err);
+    alert("Failed to delete post. Please try again.");
+  }
+};
+
 
   return (
     <div className="feed-main-container">
@@ -348,10 +367,11 @@ export default function FeedMain({ navigateTo, isAdmin = false }) {
 
   {isAdmin && (
   <>
-    {/* Delete Post */}
+    {/* Delete Post (Admin Only) */}
     <button 
       className="feed-post-action-button"
-      onClick={() => console.log('Delete post', post.id)}
+      onClick={() => handleAdminDelete(post.id)}
+
     >
       🗑 Delete
     </button>
@@ -365,6 +385,7 @@ export default function FeedMain({ navigateTo, isAdmin = false }) {
     </button>
   </>
 )}
+
 
 </div>
 
