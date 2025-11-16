@@ -387,16 +387,16 @@ export const updateUserSettings = async (updates) => {
 /**
  * Change user password
  */
-// export const changeUserPassword = async (currentPassword, newPassword, confirmPassword) => {
-//   return fetchAPI('/settings/change-password', {
-//     method: 'POST',
-//     body: JSON.stringify({
-//       currentPassword,
-//       newPassword,
-//       confirmPassword,
-//     }),
-//   });
-// };
+export const changeUserPassword = async (currentPassword, newPassword, confirmPassword) => {
+  return fetchAPI('/settings/change-password', {
+    method: 'POST',
+    body: JSON.stringify({
+      currentPassword,
+      newPassword,
+      confirmPassword,
+    }),
+  });
+};
 
 // ============================================
 // Admin APIs
@@ -433,6 +433,13 @@ export const createEmergencyAlert = async (alertData) => {
     body: JSON.stringify(alertData),
   });
 };
+
+export const adminSignIn = async (email, password) => {
+  return fetchAPI("/admin/signin", {
+    method: "POST",
+    body: JSON.stringify({ email, password }),
+  });
+}
 
 // ============================================
 // Campus Map APIs

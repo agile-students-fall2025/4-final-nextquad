@@ -4,12 +4,12 @@ const {
   getUserSettings,
   updateUserSettings,
   getPrivacyPolicy,
-  // changeUserPassword,
+  changeUserPassword,
 } = require("../../controllers/settings/settingsController");
 
 router.get("/", getUserSettings);
 router.post("/", updateUserSettings);
 router.get("/privacy-policy", getPrivacyPolicy);
-// router.post("/change-password", changeUserPassword);
+router.post("/change-password", changeUserPassword);
 
 module.exports = router;

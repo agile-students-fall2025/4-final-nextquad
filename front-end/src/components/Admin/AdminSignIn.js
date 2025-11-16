@@ -6,20 +6,40 @@ import googleIcon from '../../assets/log_in/google_icon.png';
 export default function SignIn({ setActiveModule, setCurrentPage }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = () => {
+
+    const handleLogin = async () => {
     if (!email.trim() || !password.trim()) {
       alert("Please enter both email and password.");
       return;
     }
 
-    // TODO Sprint 2: replace with backend API call
-    console.log("Logging in:", email, password);
+    try {
+      setLoading(true);
 
-    setActiveModule('admin');
-    setCurrentPage('dashboard');
+      const res = await fetch("http://localhost:3000/api/auth/signin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
 
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || data.message || "Login failed.");
+      }
+
+      alert(`Welcome back, ${data.data.name}!`);
+      setActiveModule("admin"); 
+      setCurrentPage("dashboard"); 
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
+
 
   return (
     <div className="auth-container">

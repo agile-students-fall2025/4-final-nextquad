@@ -2,6 +2,7 @@ const { faker } = require("@faker-js/faker");
 const { mockAdminSettings } = require("../../data/admin/mockAdminData");
 const { mockReports } = require("../../data/admin/mockReportData");
 const { mockAlerts } = require("../../data/admin/mockAlertData");
+const { mockAdmins } = require("../../data/admin/mockAdminData");
 
 //settings
 
@@ -163,6 +164,34 @@ const createEmergencyAlert = (req, res) => {
   }
 };
 
+// post admin sign-in
+const adminSignIn = (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ success: false, error: "Email and password are required" });
+  }
+
+  const admin = mockAdmins.find(
+    (a) => a.email === email && a.password === password
+  );
+
+  if (!admin) {
+    return res.status(401).json({ success: false, error: "Invalid credentials" });
+  }
+
+  res.json({
+    success: true,
+    message: "Admin signed in successfully",
+    data: {
+      id: admin.id,
+      name: admin.name,
+      email: admin.email,
+      role: admin.role,
+    },
+  });
+};
+
 
 module.exports = {
   getAdminSettings,
@@ -171,4 +200,5 @@ module.exports = {
   createReport,
   getEmergencyAlerts,
   createEmergencyAlert,
+  adminSignIn,
 };
