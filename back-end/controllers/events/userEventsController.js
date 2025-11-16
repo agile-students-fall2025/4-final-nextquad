@@ -80,6 +80,35 @@ const getUserHostedEvents = (req, res) => {
 };
 
 /**
+ * Helper function to parse event date and time correctly
+ * Handles 12-hour format like "3:30 PM"
+ */
+const parseEventDateTime = (dateStr, timeStr) => {
+  // Parse date: "2024-11-12"
+  const [year, month, day] = dateStr.split('-').map(Number);
+  
+  // Parse time: "3:30 PM" or "11:45 AM"
+  const timeMatch = timeStr.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  if (!timeMatch) {
+    console.error('Invalid time format:', timeStr);
+    return null;
+  }
+  
+  let [, hours, minutes, period] = timeMatch;
+  hours = parseInt(hours);
+  minutes = parseInt(minutes);
+  
+  // Convert to 24-hour format
+  if (period.toUpperCase() === 'PM' && hours !== 12) {
+    hours += 12;
+  } else if (period.toUpperCase() === 'AM' && hours === 12) {
+    hours = 0;
+  }
+  
+  return new Date(year, month - 1, day, hours, minutes, 0, 0);
+};
+
+/**
  * GET /api/events/user/needs-attention
  * Get events that need user attention (check-in required or survey needed)
  * Includes both upcoming events (check-in) and past events (survey)
@@ -100,7 +129,9 @@ const getEventsNeedingAttention = (req, res) => {
       if (!hasRSVPd) return false;
 
       // Parse date with time for accurate check-in window calculation
-      const eventDateTime = new Date(`${event.date} ${event.time}`);
+      const eventDateTime = parseEventDateTime(event.date, event.time);
+      if (!eventDateTime) return false; // Skip if parsing failed
+      
       const eventDateOnly = new Date(event.date);
       const isPast = eventDateOnly < todayMidnight;
 
@@ -121,14 +152,14 @@ const getEventsNeedingAttention = (req, res) => {
       return false;
     }).map(event => {
       // Parse date with time for accurate check-in window calculation
-      const eventDateTime = new Date(`${event.date} ${event.time}`);
+      const eventDateTime = parseEventDateTime(event.date, event.time);
       const eventDateOnly = new Date(event.date);
       const isPast = eventDateOnly < todayMidnight;
-      const hoursDiff = (eventDateTime - now) / (1000 * 60 * 60);
+      const hoursDiff = eventDateTime ? (eventDateTime - now) / (1000 * 60 * 60) : -1;
       
       return {
         ...event,
-        needsCheckIn: !isPast && hoursDiff <= 24 && hoursDiff >= 0,
+        needsCheckIn: eventDateTime && !isPast && hoursDiff <= 24 && hoursDiff >= 0,
         needsSurvey: isPast
       };
     });

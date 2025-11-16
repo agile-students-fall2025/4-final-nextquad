@@ -57,8 +57,8 @@ const rsvpToEvent = (req, res) => {
     // Add RSVP
     mockRSVPs[eventId].push(userId);
     
-    // Update event's RSVP count
-    event.rsvpCount = mockRSVPs[eventId].length;
+    // Update event's RSVP count (increment the existing count)
+    event.rsvpCount = (event.rsvpCount || 0) + 1;
 
     res.status(200).json({
       success: true,
@@ -106,8 +106,8 @@ const cancelRSVP = (req, res) => {
     // Remove RSVP
     mockRSVPs[eventId] = mockRSVPs[eventId].filter(id => id !== userId);
     
-    // Update event's RSVP count
-    event.rsvpCount = mockRSVPs[eventId].length;
+    // Update event's RSVP count (decrement the existing count)
+    event.rsvpCount = Math.max(0, (event.rsvpCount || 0) - 1);
 
     res.status(200).json({
       success: true,
