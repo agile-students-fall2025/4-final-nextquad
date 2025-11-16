@@ -121,7 +121,7 @@ export default function EventSurvey({ navigateTo, event }) {
             onClick={() => navigateTo('rsvps')}
             style={{ marginTop: '30px' }}
           >
-            Back to My Events
+            Back to My RSVPs
           </button>
         </div>
       </div>

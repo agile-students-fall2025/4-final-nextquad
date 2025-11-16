@@ -33,7 +33,7 @@ export default function EventAnalytics({ navigateTo, event }) {
     return (
       <div className="event-analytics-container">
         <div className="event-analytics-header">
-          <button className="event-analytics-back-button" onClick={() => navigateTo('my-events')}>
+          <button className="event-analytics-back-button" onClick={() => navigateTo('rsvps')}>
             ← Back
           </button>
           <h1 className="event-analytics-title">Event Analytics</h1>
@@ -50,7 +50,7 @@ export default function EventAnalytics({ navigateTo, event }) {
     return (
       <div className="event-analytics-container">
         <div className="event-analytics-header">
-          <button className="event-analytics-back-button" onClick={() => navigateTo('my-events')}>
+          <button className="event-analytics-back-button" onClick={() => navigateTo('rsvps')}>
             ← Back
           </button>
           <h1 className="event-analytics-title">Event Analytics</h1>
@@ -67,7 +67,7 @@ export default function EventAnalytics({ navigateTo, event }) {
     return (
       <div className="event-analytics-container">
         <div className="event-analytics-header">
-          <button className="event-analytics-back-button" onClick={() => navigateTo('my-events')}>
+          <button className="event-analytics-back-button" onClick={() => navigateTo('rsvps')}>
             ← Back
           </button>
           <h1 className="event-analytics-title">Event Analytics</h1>
@@ -83,7 +83,7 @@ export default function EventAnalytics({ navigateTo, event }) {
   return (
     <div className="event-analytics-container">
       <div className="event-analytics-header">
-        <button className="event-analytics-back-button" onClick={() => navigateTo('my-events')}>
+        <button className="event-analytics-back-button" onClick={() => navigateTo('rsvps')}>
           ← Back
         </button>
         <h1 className="event-analytics-title">Event Analytics</h1>

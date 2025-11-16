@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
-import { getUserRSVPedEvents, getUserPastEvents } from '../../services/api';
+import { getUserHostedEvents } from '../../services/api';
 import './MyEvents.css';
 
 export default function MyEvents({ navigateTo }) {
-  const [rsvpedEvents, setRsvpedEvents] = useState([]);
-  const [pastEvents, setPastEvents] = useState([]);
+  const [hostedEvents, setHostedEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -12,12 +11,8 @@ export default function MyEvents({ navigateTo }) {
     const fetchUserEvents = async () => {
       try {
         setLoading(true);
-        const [rsvpsResponse, pastResponse] = await Promise.all([
-          getUserRSVPedEvents(),
-          getUserPastEvents()
-        ]);
-        setRsvpedEvents(rsvpsResponse.data || []);
-        setPastEvents(pastResponse.data || []);
+        const hostedResponse = await getUserHostedEvents();
+        setHostedEvents(hostedResponse.data || []);
         setError(null);
       } catch (err) {
         console.error('Error fetching user events:', err);
@@ -65,48 +60,30 @@ export default function MyEvents({ navigateTo }) {
 
       {!loading && !error && (
         <div className="my-events-content">
-          {/* Upcoming Events - Shows events user has RSVP'd to (ATTENDING) */}
+          {/* Events I'm Hosting */}
           <div className="my-events-section">
-          <h2 className="my-events-section-header">Upcoming Events (Attending)</h2>
-          {rsvpedEvents.length > 0 ? (
-            rsvpedEvents.map(event => (
-              <div key={event.id} className="my-events-card">
-                <h3 className="my-events-card-title">{event.title}</h3>
-                <p className="my-events-card-info">{event.date} at {event.time}</p>
-                <p className="my-events-card-info">{event.location}</p>
-                <button 
-                  className="my-events-button"
-                  onClick={() => navigateTo('detail', event.id)}
-                >
-                  View Details
-                </button>
-              </div>
-            ))
-          ) : (
-            <p className="my-events-empty">No upcoming events</p>
-          )}
-        </div>
-
-        {/* Past Events */}
-        <div className="my-events-section">
-          <h2 className="my-events-section-header">Past Events</h2>
-          {pastEvents.length > 0 ? (
-            pastEvents.map(event => (
-              <div key={event.id} className="my-events-card">
-                <h3 className="my-events-card-title">{event.title}</h3>
-                <p className="my-events-card-info">{event.date}</p>
-                <button 
-                  className="my-events-button"
-                  onClick={() => navigateTo('analytics', event.id)}
-                >
-                  View Stats
-                </button>
-              </div>
-            ))
-          ) : (
-            <p className="my-events-empty">No past events</p>
-          )}
-        </div>
+            <h2 className="my-events-section-header">Events I'm Hosting</h2>
+            {hostedEvents.length > 0 ? (
+              hostedEvents.map(event => (
+                <div key={event.id} className="my-events-card">
+                  <h3 className="my-events-card-title">{event.title}</h3>
+                  <p className="my-events-card-info">{event.date} at {event.time}</p>
+                  <p className="my-events-card-info">{event.location}</p>
+                  <p className="my-events-card-info" style={{ color: '#57068c', fontWeight: '600' }}>
+                    {event.rsvpCount} RSVPs
+                  </p>
+                  <button 
+                    className="my-events-button"
+                    onClick={() => navigateTo('detail', event.id)}
+                  >
+                    View Details
+                  </button>
+                </div>
+              ))
+            ) : (
+              <p className="my-events-empty">You're not hosting any events yet. Create one to get started!</p>
+            )}
+          </div>
         </div>
       )}
     </div>
