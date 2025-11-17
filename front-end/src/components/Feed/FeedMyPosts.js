@@ -11,7 +11,10 @@ export default function FeedMyPosts({ navigateTo }) {
   const [loading, setLoading] = useState(true);
   const [openMenuId, setOpenMenuId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState('Latest');
+  const [showSortMenu, setShowSortMenu] = useState(false);
   const menuRef = useRef(null);
+  const sortMenuRef = useRef(null);
   const feedCategories = ['General','Marketplace','Lost and Found','Roommate Request','Safety Alerts'];
   const [editCategory, setEditCategory] = useState('');
 
@@ -31,16 +34,19 @@ export default function FeedMyPosts({ navigateTo }) {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
         setOpenMenuId(null);
       }
+      if (sortMenuRef.current && !sortMenuRef.current.contains(event.target)) {
+        setShowSortMenu(false);
+      }
     };
 
-    if (openMenuId !== null) {
+    if (openMenuId !== null || showSortMenu) {
       document.addEventListener('mousedown', handleClickOutside);
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [openMenuId]);
+  }, [openMenuId, showSortMenu]);
 
   useEffect(() => {
     const fetchMyPosts = async () => {
@@ -155,10 +161,30 @@ export default function FeedMyPosts({ navigateTo }) {
   };
 
   // Filter posts by search term
-  const filteredPosts = myPosts.filter(post =>
-    post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    post.content.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredPosts = myPosts.filter(post => {
+    if (!searchTerm) return true;
+    const term = searchTerm.toLowerCase();
+    return post.title.toLowerCase().includes(term) ||
+      post.content.toLowerCase().includes(term) ||
+      post.author.name.toLowerCase().includes(term);
+  });
+
+  // Sort posts based on sortBy selection
+  const sortedPosts = (() => {
+    const posts = [...filteredPosts];
+    switch (sortBy) {
+      case 'Latest':
+        return posts.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+      case 'Oldest':
+        return posts.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+      case 'Most Liked':
+        return posts.sort((a, b) => (b.likes || 0) - (a.likes || 0));
+      case 'Most Comments':
+        return posts.sort((a, b) => (b.commentCount || 0) - (a.commentCount || 0));
+      default:
+        return posts;
+    }
+  })();
 
   return (
     <div className="feed-saved-container">
@@ -180,13 +206,42 @@ export default function FeedMyPosts({ navigateTo }) {
         </button>
       </div>
       <div className="feed-main-controls">
-        <input
-          type="text"
-          placeholder="Search posts..."
-          value={searchTerm}
-          onChange={e => setSearchTerm(e.target.value)}
-          className="feed-main-search-input"
-        />
+        <div className="feed-saved-search-sort-row">
+          <input
+            type="text"
+            placeholder="Search posts..."
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            className="feed-main-search-input"
+          />
+          <div className="feed-main-sort-container" ref={sortMenuRef}>
+            <button 
+              className="feed-main-sort-button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowSortMenu(!showSortMenu);
+              }}
+            >
+              Sort: {sortBy} ▼
+            </button>
+            {showSortMenu && (
+              <div className="feed-main-sort-menu">
+                {['Latest', 'Oldest', 'Most Liked', 'Most Comments'].map(option => (
+                  <div 
+                    key={option} 
+                    className="feed-main-sort-option"
+                    onClick={() => { 
+                      setSortBy(option); 
+                      setShowSortMenu(false); 
+                    }}
+                  >
+                    {option}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {loading && (
@@ -196,10 +251,12 @@ export default function FeedMyPosts({ navigateTo }) {
       )}
 
       <div className="feed-saved-list">
-        {!loading && filteredPosts.length === 0 && (
-          <div className="feed-saved-empty">No posts found.</div>
+        {!loading && sortedPosts.length === 0 && (
+          <div className="feed-saved-empty">
+            {searchTerm ? 'No posts found matching your search.' : 'No posts found.'}
+          </div>
         )}
-        {filteredPosts.map(post => (
+        {sortedPosts.map(post => (
           <div key={post.id} className="feed-post-card" style={{ position: 'relative' }}>
             <div className="feed-post-header">
               <img src={post.author.avatar} alt={post.author.name} className="feed-post-avatar" />

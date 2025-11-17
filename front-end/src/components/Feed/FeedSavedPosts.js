@@ -1,11 +1,15 @@
 import './FeedSavedPosts.css';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { getPostById, togglePostLike } from '../../services/api';
 
 export default function FeedSavedPosts({ navigateTo }) {
   const [savedIds, setSavedIds] = useState(() => JSON.parse(localStorage.getItem('savedPostIds') || '[]'));
   const [savedPosts, setSavedPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState('Latest');
+  const [showSortMenu, setShowSortMenu] = useState(false);
+  const sortMenuRef = useRef(null);
 
   useEffect(() => {
     const fetchSavedPosts = async () => {
@@ -41,6 +45,20 @@ export default function FeedSavedPosts({ navigateTo }) {
     }
   }, [savedIds]);
 
+  // Close sort menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (sortMenuRef.current && !sortMenuRef.current.contains(event.target)) {
+        setShowSortMenu(false);
+      }
+    };
+
+    if (showSortMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showSortMenu]);
+
   const handleLike = async (postId) => {
     try {
       const response = await togglePostLike(postId);
@@ -57,6 +75,32 @@ export default function FeedSavedPosts({ navigateTo }) {
       console.error('Error liking post:', err);
     }
   };
+
+  // Filter posts by search term
+  const filteredPosts = savedPosts.filter(post => {
+    if (!searchTerm) return true;
+    const term = searchTerm.toLowerCase();
+    return post.title.toLowerCase().includes(term) ||
+      post.content.toLowerCase().includes(term) ||
+      post.author.name.toLowerCase().includes(term);
+  });
+
+  // Sort posts based on sortBy selection
+  const sortedPosts = (() => {
+    const posts = [...filteredPosts];
+    switch (sortBy) {
+      case 'Latest':
+        return posts.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+      case 'Oldest':
+        return posts.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+      case 'Most Liked':
+        return posts.sort((a, b) => (b.likes || 0) - (a.likes || 0));
+      case 'Most Comments':
+        return posts.sort((a, b) => (b.commentCount || 0) - (a.commentCount || 0));
+      default:
+        return posts;
+    }
+  })();
 
   return (
     <div className="feed-saved-container">
@@ -78,6 +122,45 @@ export default function FeedSavedPosts({ navigateTo }) {
         </button>
       </div>
 
+      <div className="feed-main-controls">
+        <div className="feed-saved-search-sort-row">
+          <input
+            type="text"
+            placeholder="Search posts..."
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            className="feed-main-search-input"
+          />
+          <div className="feed-main-sort-container" ref={sortMenuRef}>
+            <button 
+              className="feed-main-sort-button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowSortMenu(!showSortMenu);
+              }}
+            >
+              Sort: {sortBy} ▼
+            </button>
+            {showSortMenu && (
+              <div className="feed-main-sort-menu">
+                {['Latest', 'Oldest', 'Most Liked', 'Most Comments'].map(option => (
+                  <div 
+                    key={option} 
+                    className="feed-main-sort-option"
+                    onClick={() => { 
+                      setSortBy(option); 
+                      setShowSortMenu(false); 
+                    }}
+                  >
+                    {option}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
       {loading && (
         <div style={{ padding: '40px', textAlign: 'center', color: '#666' }}>
           Loading saved posts...
@@ -85,10 +168,12 @@ export default function FeedSavedPosts({ navigateTo }) {
       )}
 
       <div className="feed-saved-list">
-        {!loading && savedPosts.length === 0 && (
-          <div className="feed-saved-empty">No saved posts yet.</div>
+        {!loading && sortedPosts.length === 0 && (
+          <div className="feed-saved-empty">
+            {searchTerm ? 'No posts found matching your search.' : 'No saved posts yet.'}
+          </div>
         )}
-        {savedPosts.map(post => (
+        {sortedPosts.map(post => (
           <div key={post.id} className="feed-saved-card">
             <div className="feed-saved-headerline">
               <img src={post.author.avatar} alt={post.author.name} className="feed-saved-avatar" />
