@@ -169,6 +169,31 @@
   box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 }
 
+/* Search and Sort Row*/
+.feed-saved-search-sort-row {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 0px;
+}
+
+@media (min-width: 768px) {
+  .feed-saved-search-sort-row {
+    flex-direction: row;
+    gap: 16px;
+  }
+  
+  .feed-saved-search-sort-row .feed-main-search-input {
+    flex: 1;
+    margin-bottom: 0;
+    width: auto;
+  }
+  
+  .feed-saved-search-sort-row .feed-main-sort-container {
+    flex: 1;
+  }
+}
+
 .feed-saved-list { display: flex; flex-direction: column; gap: 20px; padding: 24px 0; }
 .feed-saved-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
 .feed-saved-headerline { display: flex; gap: 12px; align-items: center; margin-bottom: 12px; }
