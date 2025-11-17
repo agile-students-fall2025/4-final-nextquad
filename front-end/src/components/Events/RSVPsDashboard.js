@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { getUserHostedEvents, getEventsNeedingAttention } from '../../services/api';
+import { getUserRSVPedEvents, getUserPastEvents, getEventsNeedingAttention } from '../../services/api';
 import './RSVPsDashboard.css';
 
 export default function RSVPsDashboard({ navigateTo }) {
-  const [hostedEvents, setHostedEvents] = useState([]);
   const [needsAttentionEvents, setNeedsAttentionEvents] = useState([]);
+  const [attendingEvents, setAttendingEvents] = useState([]);
+  const [pastEvents, setPastEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -12,11 +13,11 @@ export default function RSVPsDashboard({ navigateTo }) {
     const fetchRSVPData = async () => {
       try {
         setLoading(true);
-        const [hostedResponse, attentionResponse] = await Promise.all([
-          getUserHostedEvents(),
-          getEventsNeedingAttention()
+        const [attentionResponse, attendingResponse, pastResponse] = await Promise.all([
+          getEventsNeedingAttention(),
+          getUserRSVPedEvents(),
+          getUserPastEvents()
         ]);
-        setHostedEvents(hostedResponse.data || []);
         
         // Backend returns {needsCheckIn: [...], needsSurvey: [...]}
         // Combine them into one array with flags
@@ -24,6 +25,9 @@ export default function RSVPsDashboard({ navigateTo }) {
         const needsSurvey = attentionResponse.needsSurvey || [];
         const combined = [...needsCheckIn, ...needsSurvey];
         setNeedsAttentionEvents(combined);
+        
+        setAttendingEvents(attendingResponse.data || []);
+        setPastEvents(pastResponse.data || []);
         
         setError(null);
       } catch (err) {
@@ -48,7 +52,7 @@ export default function RSVPsDashboard({ navigateTo }) {
           ← Back to Events
         </button>
         <h2 className="rsvps-nav-title">
-          My RSVPs & Hosted Events
+          My RSVPs
         </h2>
         <button 
           className="rsvps-nav-button"
@@ -74,65 +78,86 @@ export default function RSVPsDashboard({ navigateTo }) {
         <div className="rsvps-content">
           {/* Needs Attention Section */}
           <div className="rsvps-attention-section">
-          <h2 className="rsvps-attention-header">Needs Attention</h2>
-          
-          {needsAttentionEvents.length > 0 ? (
-            needsAttentionEvents.map(event => (
-              <div key={event.id} className="rsvps-attention-card">
-                <h3 className="rsvps-attention-title">{event.title}</h3>
-                <p className="rsvps-attention-info">{event.date} at {event.time}</p>
-                <div className="rsvps-button-row">
-                  {event.needsCheckIn && (
+            <h2 className="rsvps-attention-header">Needs Attention</h2>
+            
+            {needsAttentionEvents.length > 0 ? (
+              needsAttentionEvents.map(event => (
+                <div key={event.id} className="rsvps-attention-card">
+                  <h3 className="rsvps-attention-title">{event.title}</h3>
+                  <p className="rsvps-attention-info">{event.date} at {event.time}</p>
+                  <div className="rsvps-button-row">
+                    {event.needsCheckIn && (
+                      <button 
+                        className="rsvps-action-button"
+                        onClick={() => navigateTo('checkin', event.id)}
+                      >
+                        Check-ins
+                      </button>
+                    )}
+                    {event.needsSurvey && (
+                      <button 
+                        className="rsvps-action-button"
+                        onClick={() => navigateTo('survey', event.id)}
+                      >
+                        Take Survey
+                      </button>
+                    )}
                     <button 
-                      className="rsvps-action-button"
-                      onClick={() => navigateTo('checkin', event.id)}
+                      className="rsvps-action-button-secondary"
+                      onClick={() => navigateTo('detail', event.id)}
                     >
-                      Check-ins
+                      View Details
                     </button>
-                  )}
-                  {event.needsSurvey && (
-                    <button 
-                      className="rsvps-action-button"
-                      onClick={() => navigateTo('survey', event.id)}
-                    >
-                      Take Survey
-                    </button>
-                  )}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="rsvps-empty">No events need attention</p>
+            )}
+          </div>
+
+          {/* Upcoming Events - Events user is ATTENDING */}
+          <div className="rsvps-section">
+            <h2 className="rsvps-section-header">Upcoming Events (Attending)</h2>
+            {attendingEvents.length > 0 ? (
+              attendingEvents.map(event => (
+                <div key={event.id} className="rsvps-card">
+                  <h3 className="rsvps-card-title">{event.title}</h3>
+                  <p className="rsvps-card-info">{event.date} at {event.time}</p>
+                  <p className="rsvps-card-info">{event.location}</p>
                   <button 
-                    className="rsvps-action-button-secondary"
+                    className="rsvps-button"
                     onClick={() => navigateTo('detail', event.id)}
                   >
                     View Details
                   </button>
                 </div>
-              </div>
-            ))
-          ) : (
-            <p className="rsvps-empty">No events need attention</p>
-          )}
-        </div>
+              ))
+            ) : (
+              <p className="rsvps-empty">No upcoming events</p>
+            )}
+          </div>
 
-        {/* Upcoming Events Section - Shows events user is HOSTING */}
-        <div className="rsvps-section">
-          <h2 className="rsvps-section-header">Upcoming Events (Hosting)</h2>
-          {hostedEvents.length > 0 ? (
-            hostedEvents.map(event => (
-              <div key={event.id} className="rsvps-card">
-                <h3 className="rsvps-card-title">{event.title}</h3>
-                <p className="rsvps-card-info">{event.date} at {event.time}</p>
-                <p className="rsvps-card-info">{event.rsvpCount} RSVPs</p>
-                <button 
-                  className="rsvps-button"
-                  onClick={() => navigateTo('detail', event.id)}
-                >
-                  View Details
-                </button>
-              </div>
-            ))
-          ) : (
-            <p className="rsvps-empty">No hosted events</p>
-          )}
-        </div>
+          {/* Past Events */}
+          <div className="rsvps-section">
+            <h2 className="rsvps-section-header">Past Events</h2>
+            {pastEvents.length > 0 ? (
+              pastEvents.map(event => (
+                <div key={event.id} className="rsvps-card">
+                  <h3 className="rsvps-card-title">{event.title}</h3>
+                  <p className="rsvps-card-info">{event.date}</p>
+                  <button 
+                    className="rsvps-button"
+                    onClick={() => navigateTo('analytics', event.id)}
+                  >
+                    View Stats
+                  </button>
+                </div>
+              ))
+            ) : (
+              <p className="rsvps-empty">No past events</p>
+            )}
+          </div>
         </div>
       )}
     </div>
