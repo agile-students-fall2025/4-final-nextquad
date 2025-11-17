@@ -170,15 +170,10 @@
 }
 
 /* Search and Sort Row*/
-.feed-saved-search-sort-row {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  margin-bottom: 0px;
-}
-
 @media (min-width: 768px) {
   .feed-saved-search-sort-row {
+    display: flex;
+    margin-bottom: 0px;
     flex-direction: row;
     gap: 16px;
   }
