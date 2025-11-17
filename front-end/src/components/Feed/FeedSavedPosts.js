@@ -90,9 +90,9 @@ export default function FeedSavedPosts({ navigateTo }) {
     const posts = [...filteredPosts];
     switch (sortBy) {
       case 'Latest':
-        return posts.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        return posts.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
       case 'Oldest':
-        return posts.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+        return posts.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
       case 'Most Liked':
         return posts.sort((a, b) => (b.likes || 0) - (a.likes || 0));
       case 'Most Comments':
