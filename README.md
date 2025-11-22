@@ -15,6 +15,18 @@ NextQuad is a verified campus community platform that connects NYU students with
 - Scrum Master: [Polaris Wu](https://github.com/Polaris-Wu450)
 - Product Owner: [Xiaohan Zhou](https://github.com/XiaohanZhou711)
 
+**Sprint 1 Roles:**
+- Scrum Master: [Polaris Wu](https://github.com/Polaris-Wu450)
+- Product Owner: [Milan Engineer](https://github.com/MilanEngineer)
+
+**Sprint 2 Roles:**
+- Scrum Master: [Polaris Wu](https://github.com/Polaris-Wu450)
+- Product Owner: [Haroon Shafi](https://github.com/haroonshafi)
+
+**Sprint 3 Roles:**
+- Scrum Master: [Haroon Shafi](https://github.com/haroonshafi)
+- Product Owner: [Laura Liu](https://github.com/lauraliu518)
+
 ## Project History
 NextQuad was born from the common frustration of NYU students struggling to:
 - Find available study spaces during peak hours
