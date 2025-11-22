@@ -1,14 +1,20 @@
 // import and instantiate express
 const express = require("express"); // CommonJS import style!
 const cors = require("cors");
+const morgan = require("morgan");
+const cookieParser = require("cookie-parser");
 require("dotenv").config(); // Load environment variables
 
 const app = express(); // instantiate an Express object
 
 // Middleware
+app.use(
+  morgan("dev", { skip: (req, res) => process.env.NODE_ENV === "test" })
+);
 app.use(cors()); // Enable CORS for all routes
 app.use(express.json()); // Parse JSON request bodies
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
+app.use(cookieParser());
 
 // Import routes
 const eventsRoutes = require("./routes/events/events");
