@@ -16,7 +16,7 @@ export default function SignIn({ setActiveModule, setCurrentPage }) {
     try {
       setLoading(true);
 
-      const res = await fetch("http://localhost:3000/api/auth/signin", {
+      const res = await fetch("http://localhost:3001/api/auth/signin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
