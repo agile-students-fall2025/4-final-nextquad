@@ -80,68 +80,49 @@ const getPostById = async (req, res) => {
  * POST /api/feed/posts
  * Create a new post
  */
-const createPost = (req, res) => {
+const createPost = async (req, res) => {
   try {
     const { title, content, category, image } = req.body;
 
-    // Validation
     if (!title || !content) {
-      return res.status(400).json({
-        success: false,
-        error: 'Please provide title and content'
-      });
+      return res.status(400).json({ success: false, error: 'Please provide title and content' });
     }
-
     if (!category) {
-      return res.status(400).json({
-        success: false,
-        error: 'Please select a category'
-      });
+      return res.status(400).json({ success: false, error: 'Please select a category' });
     }
-
-    // Validate category
     if (!categories.includes(category) || category === 'All') {
-      return res.status(400).json({
-        success: false,
-        error: 'Invalid category'
-      });
+      return res.status(400).json({ success: false, error: 'Invalid category' });
     }
 
-    // Create new post
-    const createdAt = new Date();
-    const newPost = {
-      id: getNextPostId(),
+    const last = await Post.findOne().sort({ id: -1 }).lean();
+    const nextId = last ? last.id + 1 : 1;
+
+    const createdAtDate = new Date();
+    const doc = await Post.create({
+      id: nextId,
       title,
       content,
-      timestamp: formatRelativeTime(createdAt),
-      createdAt: createdAt.getTime(),
+      timestamp: formatRelativeTime(createdAtDate),
+      createdAt: createdAtDate.getTime(),
       category,
       likes: 0,
       commentCount: 0,
       image: image || null,
       author: {
-        name: 'Current User', // TODO: Get from auth
+        name: 'Current User',
         avatar: 'https://picsum.photos/seed/currentuser/50/50',
-        userId: 'user123' // TODO: Get from auth
+        userId: 'user123',
       },
       isLikedByUser: false,
       updatedAt: new Date(),
       resolved: false,
-      editCount: 0
-    };
-
-    mockPosts.push(newPost);
-
-    res.status(201).json({
-      success: true,
-      message: 'Post created successfully',
-      data: newPost
+      editCount: 0,
     });
+
+    res.status(201).json({ success: true, message: 'Post created successfully', data: doc.toObject() });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: 'Server error while creating post'
-    });
+    console.error('[createPost] error:', error);
+    res.status(500).json({ success: false, error: 'Server error while creating post' });
   }
 };
 
@@ -149,30 +130,19 @@ const createPost = (req, res) => {
  * PUT /api/feed/posts/:id
  * Update a post
  */
-const updatePost = (req, res) => {
+const updatePost = async (req, res) => {
   try {
-    const postId = parseInt(req.params.id);
-    const postIndex = mockPosts.findIndex(p => p.id === postId);
-
-    if (postIndex === -1) {
-      return res.status(404).json({
-        success: false,
-        error: 'Post not found'
-      });
+    const postId = parseInt(req.params.id, 10);
+    const post = await Post.findOne({ id: postId });
+    if (!post) {
+      return res.status(404).json({ success: false, error: 'Post not found' });
     }
 
-    const post = mockPosts[postIndex];
-
-    // Check if user is the author (simple auth check)
-    const currentUserId = 'user123'; // Mock user ID
-    if (post.author.userId !== currentUserId) {
-      return res.status(403).json({
-        success: false,
-        error: 'You are not authorized to update this post'
-      });
+    const currentUserId = 'user123';
+    if (post.author?.userId !== currentUserId) {
+      return res.status(403).json({ success: false, error: 'You are not authorized to update this post' });
     }
 
-    // Update fields
     const { title, content, category, image, resolved } = req.body;
     let edited = false;
     if (title && title !== post.title) { post.title = title; edited = true; }
@@ -180,23 +150,18 @@ const updatePost = (req, res) => {
     if (category && categories.includes(category) && category !== 'All' && category !== post.category) { post.category = category; edited = true; }
     if (image !== undefined && image !== post.image) { post.image = image; edited = true; }
     if (typeof resolved === 'boolean' && resolved !== post.resolved) { post.resolved = resolved; edited = true; }
+
     if (edited) {
       post.editCount = (post.editCount || 0) + 1;
       post.updatedAt = new Date();
     }
 
-    mockPosts[postIndex] = post;
+    await post.save();
 
-    res.status(200).json({
-      success: true,
-      message: 'Post updated successfully',
-      data: post
-    });
+    res.status(200).json({ success: true, message: 'Post updated successfully', data: post.toObject() });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: 'Server error while updating post'
-    });
+    console.error('[updatePost] error:', error);
+    res.status(500).json({ success: false, error: 'Server error while updating post' });
   }
 };
 
@@ -204,42 +169,27 @@ const updatePost = (req, res) => {
  * DELETE /api/feed/posts/:id
  * Delete a post
  */
-const deletePost = (req, res) => {
+const deletePost = async (req, res) => {
   try {
-    const postId = parseInt(req.params.id);
-    const postIndex = mockPosts.findIndex(p => p.id === postId);
-
-    if (postIndex === -1) {
-      return res.status(404).json({
-        success: false,
-        error: 'Post not found'
-      });
+    const postId = parseInt(req.params.id, 10);
+    const post = await Post.findOne({ id: postId });
+    if (!post) {
+      return res.status(404).json({ success: false, error: 'Post not found' });
     }
 
-    const post = mockPosts[postIndex];
-
-    // Check if user is the author
-    const currentUserId = 'user123'; // Mock user ID
-    // TEMPORARY FOR TESTING PURPOSES
-    const isAdmin = true;
-    if (post.author.userId !== currentUserId && !isAdmin) {
-      return res.status(403).json({
-        success: false,
-        error: 'You are not authorized to delete this post'
-      });
+    const currentUserId = 'user123';
+    const isAdmin = true; // temporary for testing parity
+    if (post.author?.userId !== currentUserId && !isAdmin) {
+      return res.status(403).json({ success: false, error: 'You are not authorized to delete this post' });
     }
 
-    mockPosts.splice(postIndex, 1);
+    await Post.deleteOne({ id: postId });
+    await Comment.deleteMany({ postId });
 
-    res.status(200).json({
-      success: true,
-      message: 'Post deleted successfully'
-    });
+    res.status(200).json({ success: true, message: 'Post deleted successfully' });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: 'Server error while deleting post'
-    });
+    console.error('[deletePost] error:', error);
+    res.status(500).json({ success: false, error: 'Server error while deleting post' });
   }
 };
 
