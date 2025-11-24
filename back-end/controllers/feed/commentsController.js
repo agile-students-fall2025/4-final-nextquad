@@ -3,6 +3,7 @@ const {
 } = require('../../data/feed/mockFeedData');
 const Comment = require('../../models/Comment');
 const Post = require('../../models/Post');
+const CommentLike = require('../../models/CommentLike');
 
 /**
  * GET /api/feed/posts/:id/comments
@@ -16,8 +17,13 @@ const getPostComments = async (req, res) => {
       return res.status(404).json({ success: false, error: 'Post not found' });
     }
     const comments = await Comment.find({ postId }).sort({ createdAt: -1 }).lean();
-    // likes persistence not migrated yet; keep isLikedByUser false
-    const withLikeFlag = comments.map(c => ({ ...c, isLikedByUser: false }));
+    const currentUserId = 'user123';
+    const withLikeFlag = await Promise.all(
+      comments.map(async c => {
+        const liked = await CommentLike.findOne({ commentId: c.id, userId: currentUserId }).lean();
+        return { ...c, isLikedByUser: !!liked };
+      })
+    );
     res.status(200).json({ success: true, count: withLikeFlag.length, data: withLikeFlag });
   } catch (error) {
     console.error('[getPostComments] error:', error);
@@ -126,9 +132,40 @@ const deleteComment = async (req, res) => {
  * POST /api/feed/comments/:commentId/like
  * Like/unlike a comment
  */
-// Placeholder: likes not yet persisted in Mongo
-const toggleCommentLike = (req, res) => {
-  return res.status(501).json({ success: false, error: 'Comment like not yet migrated' });
+const toggleCommentLike = async (req, res) => {
+  try {
+    const commentId = parseInt(req.params.commentId, 10);
+    const currentUserId = 'user123';
+    const comment = await Comment.findOne({ id: commentId });
+    if (!comment) {
+      return res.status(404).json({ success: false, error: 'Comment not found' });
+    }
+    const existing = await CommentLike.findOne({ commentId, userId: currentUserId });
+    if (existing) {
+      // Unlike
+      await CommentLike.deleteOne({ _id: existing._id });
+      comment.likes = Math.max(0, (comment.likes || 0) - 1);
+      await comment.save();
+      return res.status(200).json({
+        success: true,
+        message: 'Comment unliked successfully',
+        data: { commentId, likes: comment.likes, isLikedByUser: false }
+      });
+    } else {
+      // Like
+      await CommentLike.create({ commentId, userId: currentUserId });
+      comment.likes = (comment.likes || 0) + 1;
+      await comment.save();
+      return res.status(200).json({
+        success: true,
+        message: 'Comment liked successfully',
+        data: { commentId, likes: comment.likes, isLikedByUser: true }
+      });
+    }
+  } catch (error) {
+    console.error('[toggleCommentLike] error:', error);
+    res.status(500).json({ success: false, error: 'Server error while toggling comment like' });
+  }
 };
 
 module.exports = {

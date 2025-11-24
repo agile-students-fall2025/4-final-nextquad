@@ -7,6 +7,7 @@ const {
 } = require('../../data/feed/mockFeedData');
 const Post = require('../../models/Post');
 const Comment = require('../../models/Comment');
+const PostLike = require('../../models/PostLike');
 
 /**
  * GET /api/feed/posts
@@ -30,12 +31,12 @@ const getAllPosts = async (req, res) => {
     else if (sort === 'popular') sortSpec = { likes: -1, createdAt: -1 };
 
     const posts = await Post.find(query).sort(sortSpec).lean();
-
-    // Compute comment counts (simple N+1; OK for small data)
+    const currentUserId = 'user123';
     const result = await Promise.all(
       posts.map(async (p) => {
         const count = await Comment.countDocuments({ postId: p.id });
-        return { ...p, commentCount: count, isLikedByUser: p.isLikedByUser || false };
+        const liked = await PostLike.findOne({ postId: p.id, userId: currentUserId }).lean();
+        return { ...p, commentCount: count, isLikedByUser: !!liked };
       })
     );
 
@@ -67,7 +68,9 @@ const getPostById = async (req, res) => {
     }
 
     const count = await Comment.countDocuments({ postId: post.id });
-    const data = { ...post, commentCount: count, isLikedByUser: post.isLikedByUser || false };
+    const currentUserId = 'user123';
+    const liked = await PostLike.findOne({ postId: post.id, userId: currentUserId }).lean();
+    const data = { ...post, commentCount: count, isLikedByUser: !!liked };
 
     res.status(200).json({ success: true, data });
   } catch (error) {
