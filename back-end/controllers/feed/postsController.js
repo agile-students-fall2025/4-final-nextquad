@@ -5,64 +5,50 @@ const {
   categories,
   formatRelativeTime
 } = require('../../data/feed/mockFeedData');
+const Post = require('../../models/Post');
+const Comment = require('../../models/Comment');
 
 /**
  * GET /api/feed/posts
  * Get all posts with optional filtering and sorting
  */
-const getAllPosts = (req, res) => {
+const getAllPosts = async (req, res) => {
   try {
     const { category, search, sort } = req.query;
-    
-    let filteredPosts = [...mockPosts];
 
-    // Filter by category
+    const query = {};
     if (category && category !== 'All') {
-      filteredPosts = filteredPosts.filter(post => 
-        post.category === category
-      );
+      query.category = category;
     }
-
-    // Filter by search term (searches in title and content)
     if (search) {
-      const searchLower = search.toLowerCase();
-      filteredPosts = filteredPosts.filter(post => 
-        post.title.toLowerCase().includes(searchLower) ||
-        post.content.toLowerCase().includes(searchLower)
-      );
+      const regex = new RegExp(search, 'i');
+      query.$or = [{ title: regex }, { content: regex }];
     }
 
-    // Sort posts
-    if (sort === 'latest') {
-      filteredPosts.sort((a, b) => b.createdAt - a.createdAt);
-    } else if (sort === 'oldest') {
-      filteredPosts.sort((a, b) => a.createdAt - b.createdAt);
-    } else if (sort === 'popular') {
-      filteredPosts.sort((a, b) => b.likes - a.likes);
-    } else {
-      // Default: sort by latest (newest first)
-      filteredPosts.sort((a, b) => b.createdAt - a.createdAt);
-    }
+    let sortSpec = { createdAt: -1 }; // default latest
+    if (sort === 'oldest') sortSpec = { createdAt: 1 };
+    else if (sort === 'popular') sortSpec = { likes: -1, createdAt: -1 };
 
-    // Update isLikedByUser status based on mock user and ensure accurate commentCount
-    const currentUserId = 'user123'; // Mock user ID
-    // Lazy-require to avoid circular import issues
-    const { mockComments } = require('../../data/feed/mockFeedData');
-    filteredPosts = filteredPosts.map(post => ({
-      ...post,
-      isLikedByUser: mockPostLikes[post.id]?.includes(currentUserId) || false,
-      commentCount: mockComments.filter(c => c.postId === post.id).length
-    }));
+    const posts = await Post.find(query).sort(sortSpec).lean();
+
+    // Compute comment counts (simple N+1; OK for small data)
+    const result = await Promise.all(
+      posts.map(async (p) => {
+        const count = await Comment.countDocuments({ postId: p.id });
+        return { ...p, commentCount: count, isLikedByUser: p.isLikedByUser || false };
+      })
+    );
 
     res.status(200).json({
       success: true,
-      count: filteredPosts.length,
-      data: filteredPosts
+      count: result.length,
+      data: result,
     });
   } catch (error) {
+    console.error('[getAllPosts] error:', error);
     res.status(500).json({
       success: false,
-      error: 'Server error while fetching posts'
+      error: 'Server error while fetching posts',
     });
   }
 };
@@ -71,36 +57,22 @@ const getAllPosts = (req, res) => {
  * GET /api/feed/posts/:id
  * Get a single post by ID
  */
-const getPostById = (req, res) => {
+const getPostById = async (req, res) => {
   try {
-    const postId = parseInt(req.params.id);
-    const post = mockPosts.find(p => p.id === postId);
+    const postId = parseInt(req.params.id, 10);
+    const post = await Post.findOne({ id: postId }).lean();
 
     if (!post) {
-      return res.status(404).json({
-        success: false,
-        error: 'Post not found'
-      });
+      return res.status(404).json({ success: false, error: 'Post not found' });
     }
 
-    // Update isLikedByUser status and ensure accurate commentCount
-    const currentUserId = 'user123'; // Mock user ID
-    const { mockComments } = require('../../data/feed/mockFeedData');
-    const postWithLikeStatus = {
-      ...post,
-      isLikedByUser: mockPostLikes[post.id]?.includes(currentUserId) || false,
-      commentCount: mockComments.filter(c => c.postId === post.id).length
-    };
+    const count = await Comment.countDocuments({ postId: post.id });
+    const data = { ...post, commentCount: count, isLikedByUser: post.isLikedByUser || false };
 
-    res.status(200).json({
-      success: true,
-      data: postWithLikeStatus
-    });
+    res.status(200).json({ success: true, data });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: 'Server error while fetching post'
-    });
+    console.error('[getPostById] error:', error);
+    res.status(500).json({ success: false, error: 'Server error while fetching post' });
   }
 };
 
