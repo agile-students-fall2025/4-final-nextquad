@@ -193,6 +193,7 @@ const deletePost = async (req, res) => {
     await Post.deleteOne({ id: postId });
     await Comment.deleteMany({ postId });
     await PostSave.deleteMany({ postId });
+    await PostLike.deleteMany({ postId });
 
     res.status(200).json({ success: true, message: 'Post deleted successfully' });
   } catch (error) {
