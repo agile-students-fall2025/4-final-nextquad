@@ -21,7 +21,7 @@ const getPostComments = async (req, res) => {
     const withLikeFlag = await Promise.all(
       comments.map(async c => {
         const liked = await CommentLike.findOne({ commentId: c.id, userId: currentUserId }).lean();
-        return { ...c, isLikedByUser: !!liked };
+        return { ...c, isLikedByUser: !!liked, timestamp: formatRelativeTime(new Date(c.createdAt)) };
       })
     );
     res.status(200).json({ success: true, count: withLikeFlag.length, data: withLikeFlag });
@@ -54,7 +54,6 @@ const addComment = async (req, res) => {
       id: nextId,
       postId,
       text: text.trim(),
-      timestamp: formatRelativeTime(createdAtDate),
       createdAt: createdAtDate.getTime(),
       likes: 0,
       author: {
@@ -66,7 +65,11 @@ const addComment = async (req, res) => {
       editCount: 0,
     });
 
-    res.status(201).json({ success: true, message: 'Comment added successfully', data: doc.toObject() });
+    // Add dynamic timestamp for response
+    const responseData = doc.toObject();
+    responseData.timestamp = formatRelativeTime(new Date(responseData.createdAt));
+
+    res.status(201).json({ success: true, message: 'Comment added successfully', data: responseData });
   } catch (error) {
     console.error('[addComment] error:', error);
     res.status(500).json({ success: false, error: 'Server error while adding comment' });
