@@ -7,6 +7,8 @@ const {
 } = require('../../data/feed/mockFeedData');
 const Post = require('../../models/Post');
 const Comment = require('../../models/Comment');
+const PostLike = require('../../models/PostLike');
+const PostSave = require('../../models/PostSave');
 
 /**
  * GET /api/feed/posts
@@ -30,12 +32,13 @@ const getAllPosts = async (req, res) => {
     else if (sort === 'popular') sortSpec = { likes: -1, createdAt: -1 };
 
     const posts = await Post.find(query).sort(sortSpec).lean();
-
-    // Compute comment counts (simple N+1; OK for small data)
+    const currentUserId = 'user123';
     const result = await Promise.all(
       posts.map(async (p) => {
         const count = await Comment.countDocuments({ postId: p.id });
-        return { ...p, commentCount: count, isLikedByUser: p.isLikedByUser || false };
+        const liked = await PostLike.findOne({ postId: p.id, userId: currentUserId }).lean();
+        const saved = await PostSave.findOne({ postId: p.id, userId: currentUserId }).lean();
+        return { ...p, commentCount: count, isLikedByUser: !!liked, isSavedByUser: !!saved };
       })
     );
 
@@ -67,7 +70,10 @@ const getPostById = async (req, res) => {
     }
 
     const count = await Comment.countDocuments({ postId: post.id });
-    const data = { ...post, commentCount: count, isLikedByUser: post.isLikedByUser || false };
+    const currentUserId = 'user123';
+    const liked = await PostLike.findOne({ postId: post.id, userId: currentUserId }).lean();
+    const saved = await PostSave.findOne({ postId: post.id, userId: currentUserId }).lean();
+    const data = { ...post, commentCount: count, isLikedByUser: !!liked, isSavedByUser: !!saved };
 
     res.status(200).json({ success: true, data });
   } catch (error) {
@@ -114,6 +120,7 @@ const createPost = async (req, res) => {
         userId: 'user123',
       },
       isLikedByUser: false,
+      isSavedByUser: false,
       updatedAt: new Date(),
       resolved: false,
       editCount: 0,
@@ -185,11 +192,65 @@ const deletePost = async (req, res) => {
 
     await Post.deleteOne({ id: postId });
     await Comment.deleteMany({ postId });
+    await PostSave.deleteMany({ postId });
+    await PostLike.deleteMany({ postId });
 
     res.status(200).json({ success: true, message: 'Post deleted successfully' });
   } catch (error) {
     console.error('[deletePost] error:', error);
     res.status(500).json({ success: false, error: 'Server error while deleting post' });
+  }
+};
+
+/**
+ * POST /api/feed/posts/:id/save
+ * Toggle save/unsave for a post
+ */
+const toggleSavePost = async (req, res) => {
+  try {
+    const postId = parseInt(req.params.id, 10);
+    const currentUserId = 'user123';
+    const post = await Post.findOne({ id: postId });
+    if (!post) {
+      return res.status(404).json({ success: false, error: 'Post not found' });
+    }
+
+    const existing = await PostSave.findOne({ postId, userId: currentUserId });
+    if (existing) {
+      await PostSave.deleteOne({ _id: existing._id });
+      return res.status(200).json({ success: true, message: 'Post unsaved', data: { postId, isSavedByUser: false } });
+    } else {
+      await PostSave.create({ postId, userId: currentUserId });
+      return res.status(201).json({ success: true, message: 'Post saved', data: { postId, isSavedByUser: true } });
+    }
+  } catch (error) {
+    console.error('[toggleSavePost] error:', error);
+    res.status(500).json({ success: false, error: 'Server error while toggling save' });
+  }
+};
+
+/**
+ * GET /api/feed/saved
+ * Get all saved posts for current user
+ */
+const getSavedPosts = async (req, res) => {
+  try {
+    const currentUserId = 'user123';
+    const saves = await PostSave.find({ userId: currentUserId }).lean();
+    const postIds = saves.map(s => s.postId);
+    if (postIds.length === 0) {
+      return res.status(200).json({ success: true, count: 0, data: [] });
+    }
+    const posts = await Post.find({ id: { $in: postIds } }).sort({ createdAt: -1 }).lean();
+    const result = await Promise.all(posts.map(async (p) => {
+      const commentCount = await Comment.countDocuments({ postId: p.id });
+      const liked = await PostLike.findOne({ postId: p.id, userId: currentUserId }).lean();
+      return { ...p, commentCount, isLikedByUser: !!liked, isSavedByUser: true };
+    }));
+    res.status(200).json({ success: true, count: result.length, data: result });
+  } catch (error) {
+    console.error('[getSavedPosts] error:', error);
+    res.status(500).json({ success: false, error: 'Server error while fetching saved posts' });
   }
 };
 
@@ -217,5 +278,7 @@ module.exports = {
   createPost,
   updatePost,
   deletePost,
+  toggleSavePost,
+  getSavedPosts,
   getCategories
 };
