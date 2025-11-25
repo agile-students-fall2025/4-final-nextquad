@@ -9,6 +9,13 @@ export default function FeedComments({ post, navigateTo, returnToPage = 'main' }
   const [error, setError] = useState(null);
   const [openMenuId, setOpenMenuId] = useState(null);
   const [postState, setPostState] = useState(post);
+  const [savedIds, setSavedIds] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('savedPostIds') || '[]');
+    } catch {
+      return [];
+    }
+  });
   const [editingComment, setEditingComment] = useState(null);
   const [editText, setEditText] = useState('');
   const [savingEdit, setSavingEdit] = useState(false);
@@ -100,10 +107,18 @@ export default function FeedComments({ post, navigateTo, returnToPage = 'main' }
   const handleSavePost = async () => {
     try {
       const response = await toggleSavePost(postState.id);
-      setPostState(prev => ({
-        ...prev,
-        isSavedByUser: response.data.isSavedByUser
-      }));
+      if (response.success) {
+        const isSaved = response.data.isSavedByUser;
+        setSavedIds(prev => {
+          const newIds = isSaved ? [...prev, postState.id] : prev.filter(id => id !== postState.id);
+          localStorage.setItem('savedPostIds', JSON.stringify(newIds));
+          return newIds;
+        });
+        setPostState(prev => ({
+          ...prev,
+          isSavedByUser: isSaved
+        }));
+      }
     } catch (err) {
       console.error('Error saving post:', err);
     }
@@ -255,7 +270,7 @@ export default function FeedComments({ post, navigateTo, returnToPage = 'main' }
               className="feed-post-action-button"
               onClick={handleSavePost}
             >
-              {postState.isSavedByUser ? '✓ Saved' : 'Save'}
+              {savedIds.includes(postState.id) ? '✓ Saved' : 'Save'}
             </button>
           </div>
         </div>
