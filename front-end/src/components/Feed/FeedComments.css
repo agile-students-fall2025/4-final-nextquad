@@ -85,7 +85,7 @@
 }
 
 .feed-comments-post-content {
-  margin: 0;
+  margin: 0 0 16px 0;
   font-size: 15px;
   color: #666;
   line-height: 1.6;

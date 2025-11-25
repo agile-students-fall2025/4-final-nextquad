@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { getPostComments, addComment, updateComment, deleteComment, toggleCommentLike } from '../../services/api';
+import { getPostComments, addComment, updateComment, deleteComment, toggleCommentLike, togglePostLike, toggleSavePost } from '../../services/api';
 import './FeedComments.css';
 
 export default function FeedComments({ post, navigateTo, returnToPage = 'main' }) {
@@ -8,6 +8,7 @@ export default function FeedComments({ post, navigateTo, returnToPage = 'main' }
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [openMenuId, setOpenMenuId] = useState(null);
+  const [postState, setPostState] = useState(post);
   const [editingComment, setEditingComment] = useState(null);
   const [editText, setEditText] = useState('');
   const [savingEdit, setSavingEdit] = useState(false);
@@ -16,6 +17,11 @@ export default function FeedComments({ post, navigateTo, returnToPage = 'main' }
   const menuRef = useRef(null);
   const sortMenuRef = useRef(null);
   const currentUserId = 'user123'; // Mock current user
+
+  // Update local post state when prop changes
+  useEffect(() => {
+    setPostState(post);
+  }, [post]);
 
   // Fetch comments when component mounts or post changes
   useEffect(() => {
@@ -75,6 +81,31 @@ export default function FeedComments({ post, navigateTo, returnToPage = 'main' }
         console.error('Error adding comment:', err);
         alert('Failed to add comment. Please try again.');
       }
+    }
+  };
+
+  const handleLikePost = async () => {
+    try {
+      const response = await togglePostLike(postState.id);
+      setPostState(prev => ({
+        ...prev,
+        likes: response.data.likes,
+        isLikedByUser: response.data.isLikedByUser
+      }));
+    } catch (err) {
+      console.error('Error liking post:', err);
+    }
+  };
+
+  const handleSavePost = async () => {
+    try {
+      const response = await toggleSavePost(postState.id);
+      setPostState(prev => ({
+        ...prev,
+        isSavedByUser: response.data.isSavedByUser
+      }));
+    } catch (err) {
+      console.error('Error saving post:', err);
     }
   };
 
@@ -179,21 +210,54 @@ export default function FeedComments({ post, navigateTo, returnToPage = 'main' }
         <h1 className="feed-comments-title">Comments</h1>
       </div>
 
-      {post && (
+      {postState && (
         <div className="feed-comments-post-preview">
           <div className="feed-comments-post-header">
             <img
-              src={post.author.avatar}
-              alt={post.author.name}
+              src={postState.author.avatar}
+              alt={postState.author.name}
               className="feed-comments-post-avatar"
             />
             <div className="feed-comments-post-info">
-              <p className="feed-comments-post-author">{post.author.name}</p>
-              <p className="feed-comments-post-timestamp">{post.timestamp}</p>
+              <p className="feed-comments-post-author">{postState.author.name}</p>
+              <p className="feed-comments-post-timestamp">{postState.timestamp}</p>
             </div>
           </div>
-          <h3 className="feed-comments-post-title">{post.title}</h3>
-          <p className="feed-comments-post-content">{post.content}</p>
+          <h3 className="feed-comments-post-title">{postState.title}</h3>
+          <p className="feed-comments-post-content">{postState.content}</p>
+          {postState.image && (
+            <img src={postState.image} alt={postState.title} className="feed-post-image" />
+          )}
+
+          <div className="feed-post-tags">
+            {postState.category && (
+              <span className="feed-post-tag">#{postState.category}</span>
+            )}
+            {typeof postState.editCount === 'number' && postState.editCount > 0 && (
+              <span className="feed-post-tag" style={{ background: '#f3f3f3', color: '#666' }}>Edited {postState.editCount} {postState.editCount === 1 ? 'time' : 'times'}</span>
+            )}
+            {/* Resolved/Unresolved tag for relevant categories */}
+            {['Marketplace', 'Roommate Request', 'Lost and Found'].includes(postState.category) && (
+              <span className="feed-post-tag" style={{ background: postState.resolved ? '#c6f6d5' : '#fed7d7', color: postState.resolved ? '#276749' : '#c53030', marginLeft: '6px' }}>
+                {postState.resolved ? 'Resolved' : 'Unresolved'}
+              </span>
+            )}
+          </div>
+
+          <div className="feed-post-actions">
+            <button 
+              className="feed-post-action-button"
+              onClick={handleLikePost}
+            >
+              {postState.isLikedByUser ? '❤️' : '🤍'} {postState.likes}
+            </button>
+            <button
+              className="feed-post-action-button"
+              onClick={handleSavePost}
+            >
+              {postState.isSavedByUser ? '✓ Saved' : 'Save'}
+            </button>
+          </div>
         </div>
       )}
 
