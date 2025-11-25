@@ -187,6 +187,22 @@ export default function FeedSavedPosts({ navigateTo }) {
             {post.image && (
               <img src={post.image} alt={post.title} className="feed-saved-image" />
             )}
+
+            <div className="feed-post-tags">
+              {post.category && (
+                <span className="feed-post-tag">#{post.category}</span>
+              )}
+              {typeof post.editCount === 'number' && post.editCount > 0 && (
+                <span className="feed-post-tag" style={{ background: '#f3f3f3', color: '#666' }}>Edited {post.editCount} {post.editCount === 1 ? 'time' : 'times'}</span>
+              )}
+              {/* Resolved/Unresolved tag for relevant categories */}
+              {['Marketplace', 'Roommate Request', 'Lost and Found'].includes(post.category) && (
+                <span className="feed-post-tag" style={{ background: post.resolved ? '#c6f6d5' : '#fed7d7', color: post.resolved ? '#276749' : '#c53030', marginLeft: '6px' }}>
+                  {post.resolved ? 'Resolved' : 'Unresolved'}
+                </span>
+              )}
+            </div>
+
             <div className="feed-saved-actions">
               <button className="feed-post-action-button" onClick={() => navigateTo('comments', post.id, 'saved')}>💬 {post.commentCount}</button>
               <button 
