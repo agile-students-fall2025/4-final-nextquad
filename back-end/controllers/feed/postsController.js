@@ -38,7 +38,7 @@ const getAllPosts = async (req, res) => {
         const count = await Comment.countDocuments({ postId: p.id });
         const liked = await PostLike.findOne({ postId: p.id, userId: currentUserId }).lean();
         const saved = await PostSave.findOne({ postId: p.id, userId: currentUserId }).lean();
-        return { ...p, commentCount: count, isLikedByUser: !!liked, isSavedByUser: !!saved };
+        return { ...p, commentCount: count, isLikedByUser: !!liked, isSavedByUser: !!saved, timestamp: formatRelativeTime(new Date(p.createdAt)) };
       })
     );
 
@@ -73,7 +73,7 @@ const getPostById = async (req, res) => {
     const currentUserId = 'user123';
     const liked = await PostLike.findOne({ postId: post.id, userId: currentUserId }).lean();
     const saved = await PostSave.findOne({ postId: post.id, userId: currentUserId }).lean();
-    const data = { ...post, commentCount: count, isLikedByUser: !!liked, isSavedByUser: !!saved };
+    const data = { ...post, commentCount: count, isLikedByUser: !!liked, isSavedByUser: !!saved, timestamp: formatRelativeTime(new Date(post.createdAt)) };
 
     res.status(200).json({ success: true, data });
   } catch (error) {
@@ -108,7 +108,6 @@ const createPost = async (req, res) => {
       id: nextId,
       title,
       content,
-      timestamp: formatRelativeTime(createdAtDate),
       createdAt: createdAtDate.getTime(),
       category,
       likes: 0,
@@ -126,7 +125,11 @@ const createPost = async (req, res) => {
       editCount: 0,
     });
 
-    res.status(201).json({ success: true, message: 'Post created successfully', data: doc.toObject() });
+    // Add dynamic timestamp for response
+    const responseData = doc.toObject();
+    responseData.timestamp = formatRelativeTime(new Date(responseData.createdAt));
+
+    res.status(201).json({ success: true, message: 'Post created successfully', data: responseData });
   } catch (error) {
     console.error('[createPost] error:', error);
     res.status(500).json({ success: false, error: 'Server error while creating post' });
@@ -245,7 +248,7 @@ const getSavedPosts = async (req, res) => {
     const result = await Promise.all(posts.map(async (p) => {
       const commentCount = await Comment.countDocuments({ postId: p.id });
       const liked = await PostLike.findOne({ postId: p.id, userId: currentUserId }).lean();
-      return { ...p, commentCount, isLikedByUser: !!liked, isSavedByUser: true };
+      return { ...p, commentCount, isLikedByUser: !!liked, isSavedByUser: true, timestamp: formatRelativeTime(new Date(p.createdAt)) };
     }));
     res.status(200).json({ success: true, count: result.length, data: result });
   } catch (error) {
