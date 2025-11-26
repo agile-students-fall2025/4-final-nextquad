@@ -1,4 +1,4 @@
-const { mockEvents, mockRSVPs } = require('../../data/events/mockEvents');
+const Event = require('../../models/Event');
 
 // Mock user ID (in real app, this would come from authentication)
 const MOCK_USER_ID = process.env.MOCK_USER_ID || 'user123';
@@ -7,13 +7,12 @@ const MOCK_USER_ID = process.env.MOCK_USER_ID || 'user123';
  * POST /api/events/:id/rsvp
  * RSVP to an event
  */
-const rsvpToEvent = (req, res) => {
+const rsvpToEvent = async (req, res) => {
   try {
-    const eventId = parseInt(req.params.id);
-    const userId = MOCK_USER_ID; // TODO: Get from auth middleware
+    const userId = MOCK_USER_ID; // TODO: Get from auth middleware (req.user.id)
 
     // Check if event exists
-    const event = mockEvents.find(e => e.id === eventId);
+    const event = await Event.findById(req.params.id);
     if (!event) {
       return res.status(404).json({
         success: false,
@@ -34,42 +33,52 @@ const rsvpToEvent = (req, res) => {
     }
 
     // Check if user is the host
-    if (event.host.userId === userId) {
+    if (event.isHost(userId)) {
       return res.status(400).json({
         success: false,
         error: 'Cannot RSVP to event as host'
       });
     }
 
-    // Initialize RSVP array for this event if it doesn't exist
-    if (!mockRSVPs[eventId]) {
-      mockRSVPs[eventId] = [];
-    }
-
     // Check if user has already RSVP'd
-    if (mockRSVPs[eventId].includes(userId)) {
+    if (event.hasUserRSVPd(userId)) {
       return res.status(400).json({
         success: false,
         error: 'You have already RSVP\'d to this event'
       });
     }
 
-    // Add RSVP
-    mockRSVPs[eventId].push(userId);
+    // Add RSVP to the rsvps array
+    event.rsvps.push({
+      userId,
+      rsvpedAt: new Date()
+    });
     
-    // Update event's RSVP count (increment the existing count)
+    // Increment RSVP count
     event.rsvpCount = (event.rsvpCount || 0) + 1;
+
+    await event.save();
 
     res.status(200).json({
       success: true,
       message: 'RSVP successful',
       data: {
-        eventId,
+        eventId: event._id,
         userId,
         rsvpedAt: new Date()
       }
     });
   } catch (error) {
+    console.error('Error in rsvpToEvent:', error);
+    
+    // Handle invalid ObjectId
+    if (error.name === 'CastError') {
+      return res.status(404).json({
+        success: false,
+        error: 'Event not found'
+      });
+    }
+    
     res.status(500).json({
       success: false,
       error: 'Server error while RSVP\'ing to event'
@@ -81,13 +90,12 @@ const rsvpToEvent = (req, res) => {
  * DELETE /api/events/:id/rsvp
  * Cancel RSVP to an event
  */
-const cancelRSVP = (req, res) => {
+const cancelRSVP = async (req, res) => {
   try {
-    const eventId = parseInt(req.params.id);
-    const userId = MOCK_USER_ID; // TODO: Get from auth middleware
+    const userId = MOCK_USER_ID; // TODO: Get from auth middleware (req.user.id)
 
     // Check if event exists
-    const event = mockEvents.find(e => e.id === eventId);
+    const event = await Event.findById(req.params.id);
     if (!event) {
       return res.status(404).json({
         success: false,
@@ -96,28 +104,40 @@ const cancelRSVP = (req, res) => {
     }
 
     // Check if RSVP exists
-    if (!mockRSVPs[eventId] || !mockRSVPs[eventId].includes(userId)) {
+    if (!event.hasUserRSVPd(userId)) {
       return res.status(400).json({
         success: false,
         error: 'You have not RSVP\'d to this event'
       });
     }
 
-    // Remove RSVP
-    mockRSVPs[eventId] = mockRSVPs[eventId].filter(id => id !== userId);
+    // Remove RSVP from the array
+    event.rsvps = event.rsvps.filter(rsvp => rsvp.userId !== userId);
     
-    // Update event's RSVP count (decrement the existing count)
+    // Decrement RSVP count
     event.rsvpCount = Math.max(0, (event.rsvpCount || 0) - 1);
+
+    await event.save();
 
     res.status(200).json({
       success: true,
       message: 'Successfully cancelled RSVP',
       data: {
-        eventId,
+        eventId: event._id,
         rsvpCount: event.rsvpCount
       }
     });
   } catch (error) {
+    console.error('Error in cancelRSVP:', error);
+    
+    // Handle invalid ObjectId
+    if (error.name === 'CastError') {
+      return res.status(404).json({
+        success: false,
+        error: 'Event not found'
+      });
+    }
+    
     res.status(500).json({
       success: false,
       error: 'Server error while cancelling RSVP'
@@ -129,13 +149,12 @@ const cancelRSVP = (req, res) => {
  * GET /api/events/:id/rsvps
  * Get all RSVPs for an event (for hosts)
  */
-const getEventRSVPs = (req, res) => {
+const getEventRSVPs = async (req, res) => {
   try {
-    const eventId = parseInt(req.params.id);
-    const userId = MOCK_USER_ID; // TODO: Get from auth middleware
+    const userId = MOCK_USER_ID; // TODO: Get from auth middleware (req.user.id)
 
     // Check if event exists
-    const event = mockEvents.find(e => e.id === eventId);
+    const event = await Event.findById(req.params.id);
     if (!event) {
       return res.status(404).json({
         success: false,
@@ -144,23 +163,23 @@ const getEventRSVPs = (req, res) => {
     }
 
     // Check if user is the host
-    if (event.host.userId !== userId) {
+    if (!event.isHost(userId)) {
       return res.status(403).json({
         success: false,
         error: 'Only the event host can view RSVPs'
       });
     }
 
-    // Get RSVPs for this event
-    const rsvps = mockRSVPs[eventId] || [];
+    // Get RSVPs from the event
+    const rsvps = event.rsvps || [];
 
-    // In a real app, we would fetch user details for each RSVP
+    // In a real app, we would fetch user details for each RSVP from User model
     // For now, we'll return mock user data
-    const rsvpDetails = rsvps.map((userId, index) => ({
-      userId,
-      name: `User ${userId}`,
-      email: `${userId}@nyu.edu`,
-      rsvpDate: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString() // Random date within last 7 days
+    const rsvpDetails = rsvps.map((rsvp) => ({
+      userId: rsvp.userId,
+      name: `User ${rsvp.userId}`,
+      email: `${rsvp.userId}@nyu.edu`,
+      rsvpDate: rsvp.rsvpedAt
     }));
 
     res.status(200).json({
@@ -169,6 +188,16 @@ const getEventRSVPs = (req, res) => {
       data: rsvpDetails
     });
   } catch (error) {
+    console.error('Error in getEventRSVPs:', error);
+    
+    // Handle invalid ObjectId
+    if (error.name === 'CastError') {
+      return res.status(404).json({
+        success: false,
+        error: 'Event not found'
+      });
+    }
+    
     res.status(500).json({
       success: false,
       error: 'Server error while fetching RSVPs'
@@ -180,13 +209,12 @@ const getEventRSVPs = (req, res) => {
  * GET /api/events/:id/rsvp-status
  * Check if current user has RSVP'd to an event
  */
-const checkRSVPStatus = (req, res) => {
+const checkRSVPStatus = async (req, res) => {
   try {
-    const eventId = parseInt(req.params.id);
-    const userId = MOCK_USER_ID; // TODO: Get from auth middleware
+    const userId = MOCK_USER_ID; // TODO: Get from auth middleware (req.user.id)
 
     // Check if event exists
-    const event = mockEvents.find(e => e.id === eventId);
+    const event = await Event.findById(req.params.id);
     if (!event) {
       return res.status(404).json({
         success: false,
@@ -195,10 +223,10 @@ const checkRSVPStatus = (req, res) => {
     }
 
     // Check if user has RSVP'd
-    const hasRSVPd = mockRSVPs[eventId] && mockRSVPs[eventId].includes(userId);
+    const hasRSVPd = event.hasUserRSVPd(userId);
     
     // Check if user is the host
-    const isHost = event.host.userId === userId;
+    const isHost = event.isHost(userId);
 
     res.status(200).json({
       success: true,
@@ -209,6 +237,16 @@ const checkRSVPStatus = (req, res) => {
       }
     });
   } catch (error) {
+    console.error('Error in checkRSVPStatus:', error);
+    
+    // Handle invalid ObjectId
+    if (error.name === 'CastError') {
+      return res.status(404).json({
+        success: false,
+        error: 'Event not found'
+      });
+    }
+    
     res.status(500).json({
       success: false,
       error: 'Server error while checking RSVP status'
@@ -222,4 +260,3 @@ module.exports = {
   getEventRSVPs,
   checkRSVPStatus
 };
-

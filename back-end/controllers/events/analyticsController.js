@@ -1,22 +1,16 @@
-const { mockEvents, mockRSVPs } = require('../../data/events/mockEvents');
+const Event = require('../../models/Event');
 
-// In-memory storage (in production, this would be from database)
-// Mock check-in data: eventId -> array of userIds who checked in
-// Note: Check-ins should only include users who have RSVP'd
-let mockCheckIns = {
-  100: ['user123'] // Past event has 1 check-in (user123 RSVP'd and attended)
-};
+// Mock user ID (in real app, this would come from authentication)
+const MOCK_USER_ID = process.env.MOCK_USER_ID || 'user123';
 
 /**
  * GET /api/events/:id/analytics
  * Get analytics data for a specific event (host only)
  */
-const getEventAnalytics = (req, res) => {
+const getEventAnalytics = async (req, res) => {
   try {
-    const eventId = parseInt(req.params.id);
-    
     // Check if event exists
-    const event = mockEvents.find(e => e.id === eventId);
+    const event = await Event.findById(req.params.id);
     if (!event) {
       return res.status(404).json({
         success: false,
@@ -24,27 +18,25 @@ const getEventAnalytics = (req, res) => {
       });
     }
 
-    // Get RSVP data
-    const rsvpList = mockRSVPs[eventId] || [];
+    // Get data from event document
+    const rsvpList = event.rsvps || [];
     const totalRSVPs = rsvpList.length;
 
-    // Get check-in data
-    const checkInList = mockCheckIns[eventId] || [];
+    const checkInList = event.checkIns || [];
     const totalCheckIns = checkInList.length;
+
+    const surveys = event.surveys || [];
 
     // Calculate check-in rate
     const checkInRate = totalRSVPs > 0 
       ? ((totalCheckIns / totalRSVPs) * 100).toFixed(1)
       : '0.0';
 
-    // Get survey data (import from surveyController's storage)
-    // For now, we'll calculate it here
-    const surveys = require('./surveyController').getSurveysForAnalytics(eventId);
-    const averageRating = surveys.length > 0
-      ? (surveys.reduce((sum, s) => sum + s.rating, 0) / surveys.length).toFixed(1)
-      : '0.0';
+    // Get average rating from virtual property
+    const averageRating = event.averageRating || '0.0';
 
-    // Generate mock RSVP timeline data (in production, this would be from database)
+    // Generate mock RSVP timeline data (in production, aggregate by rsvpedAt date)
+    // For now, simulate timeline based on total RSVPs
     const rsvpTimeline = [
       { day: 'Mon', count: Math.floor(totalRSVPs * 0.2) },
       { day: 'Tue', count: Math.floor(totalRSVPs * 0.3) },
@@ -57,6 +49,7 @@ const getEventAnalytics = (req, res) => {
     const insights = [];
     
     // Peak RSVP day insight
+    if (totalRSVPs > 0) {
     const peakDay = rsvpTimeline.reduce((max, curr) => 
       curr.count > max.count ? curr : max
     , rsvpTimeline[0]);
@@ -64,6 +57,7 @@ const getEventAnalytics = (req, res) => {
       icon: '↑',
       text: `Peak RSVP day was ${peakDay.day} with ${peakDay.count} RSVPs`
     });
+    }
 
     // Check-in rate insight
     if (event.isPast) {
@@ -78,7 +72,7 @@ const getEventAnalytics = (req, res) => {
           icon: '•',
           text: `Good attendance with ${checkInRate}% check-in rate`
         });
-      } else {
+      } else if (totalCheckIns > 0) {
         insights.push({
           icon: '⚠',
           text: `Low attendance with ${checkInRate}% check-in rate`
@@ -99,6 +93,11 @@ const getEventAnalytics = (req, res) => {
           icon: '•',
           text: `${averageRating}/5.0 average rating from ${surveys.length} survey responses`
         });
+      } else if (rating > 0) {
+        insights.push({
+          icon: '⚠',
+          text: `Below average rating of ${averageRating}/5.0 from ${surveys.length} responses`
+        });
       }
     } else if (event.isPast) {
       insights.push({
@@ -110,7 +109,7 @@ const getEventAnalytics = (req, res) => {
     // Response data
     const analytics = {
       event: {
-        id: event.id,
+        id: event._id,
         title: event.title,
         date: event.date,
         isPast: event.isPast
@@ -138,6 +137,15 @@ const getEventAnalytics = (req, res) => {
     });
   } catch (error) {
     console.error('Get analytics error:', error);
+    
+    // Handle invalid ObjectId
+    if (error.name === 'CastError') {
+      return res.status(404).json({
+        success: false,
+        error: 'Event not found'
+      });
+    }
+    
     res.status(500).json({
       success: false,
       error: 'Server error while fetching analytics'
@@ -149,13 +157,12 @@ const getEventAnalytics = (req, res) => {
  * POST /api/events/:id/checkin
  * Record a check-in for an event
  */
-const checkInToEvent = (req, res) => {
+const checkInToEvent = async (req, res) => {
   try {
-    const eventId = parseInt(req.params.id);
-    const userId = 'user123'; // Mock user ID
+    const userId = MOCK_USER_ID; // Mock user ID - Get from req.user.id
     
     // Check if event exists
-    const event = mockEvents.find(e => e.id === eventId);
+    const event = await Event.findById(req.params.id);
     if (!event) {
       return res.status(404).json({
         success: false,
@@ -164,21 +171,15 @@ const checkInToEvent = (req, res) => {
     }
 
     // Check if user has RSVP'd
-    const rsvpList = mockRSVPs[eventId] || [];
-    if (!rsvpList.includes(userId)) {
+    if (!event.hasUserRSVPd(userId)) {
       return res.status(403).json({
         success: false,
         error: 'You must RSVP to this event before checking in'
       });
     }
 
-    // Initialize check-in list if doesn't exist
-    if (!mockCheckIns[eventId]) {
-      mockCheckIns[eventId] = [];
-    }
-
     // Check if already checked in
-    if (mockCheckIns[eventId].includes(userId)) {
+    if (event.hasUserCheckedIn(userId)) {
       return res.status(400).json({
         success: false,
         error: 'You have already checked in to this event'
@@ -186,19 +187,33 @@ const checkInToEvent = (req, res) => {
     }
 
     // Record check-in
-    mockCheckIns[eventId].push(userId);
+    event.checkIns.push({
+      userId,
+      checkedInAt: new Date()
+    });
+
+    await event.save();
 
     res.status(200).json({
       success: true,
       message: 'Check-in successful',
       data: {
-        eventId,
+        eventId: event._id,
         userId,
         checkedInAt: new Date()
       }
     });
   } catch (error) {
     console.error('Check-in error:', error);
+    
+    // Handle invalid ObjectId
+    if (error.name === 'CastError') {
+      return res.status(404).json({
+        success: false,
+        error: 'Event not found'
+      });
+    }
+    
     res.status(500).json({
       success: false,
       error: 'Server error while checking in'
@@ -210,4 +225,3 @@ module.exports = {
   getEventAnalytics,
   checkInToEvent
 };
-

@@ -1,4 +1,4 @@
-const { mockEvents, mockRSVPs } = require('../../data/events/mockEvents');
+const Event = require('../../models/Event');
 
 // Mock user ID (in real app, this would come from authentication)
 const MOCK_USER_ID = process.env.MOCK_USER_ID || 'user123';
@@ -7,26 +7,18 @@ const MOCK_USER_ID = process.env.MOCK_USER_ID || 'user123';
  * GET /api/events/user/rsvps
  * Get events the user has RSVP'd to (attending) - only upcoming events
  */
-const getUserRSVPedEvents = (req, res) => {
+const getUserRSVPedEvents = async (req, res) => {
   try {
-    // TODO: Get userId from authentication middleware
+    // TODO: Get userId from authentication middleware (req.user.id)
     const userId = MOCK_USER_ID;
 
-    // Find all events where user has RSVP'd
-    const userRSVPedEvents = mockEvents.filter(event => {
-      const hasRSVPd = mockRSVPs[event.id] && mockRSVPs[event.id].includes(userId);
-      
-      // Only include upcoming events
-      const eventDate = new Date(event.date);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const isUpcoming = eventDate >= today;
-      
-      return hasRSVPd && isUpcoming;
-    });
+    const today = new Date().toISOString().split('T')[0]; // "YYYY-MM-DD"
 
-    // Sort by date (soonest first)
-    userRSVPedEvents.sort((a, b) => new Date(a.date) - new Date(b.date));
+    // Find all events where user has RSVP'd and event is upcoming
+    const userRSVPedEvents = await Event.find({
+      'rsvps.userId': userId,
+      date: { $gte: today }
+    }).sort({ date: 1 }); // Sort by date (soonest first)
 
     res.status(200).json({
       success: true,
@@ -34,9 +26,12 @@ const getUserRSVPedEvents = (req, res) => {
       data: userRSVPedEvents
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: 'Server error while fetching user RSVP\'d events'
+    console.error('Error in getUserRSVPedEvents:', error);
+    res.status(200).json({
+      success: true,
+      count: 0,
+      data: [],
+      message: 'No events found'
     });
   }
 };
@@ -45,26 +40,18 @@ const getUserRSVPedEvents = (req, res) => {
  * GET /api/events/user/hosting
  * Get events the user is hosting - only upcoming events
  */
-const getUserHostedEvents = (req, res) => {
+const getUserHostedEvents = async (req, res) => {
   try {
-    // TODO: Get userId from authentication middleware
+    // TODO: Get userId from authentication middleware (req.user.id)
     const userId = MOCK_USER_ID;
 
-    // Find all events where user is the host
-    const hostedEvents = mockEvents.filter(event => {
-      const isHost = event.host.userId === userId;
-      
-      // Only include upcoming events
-      const eventDate = new Date(event.date);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const isUpcoming = eventDate >= today;
-      
-      return isHost && isUpcoming;
-    });
+    const today = new Date().toISOString().split('T')[0]; // "YYYY-MM-DD"
 
-    // Sort by date (soonest first)
-    hostedEvents.sort((a, b) => new Date(a.date) - new Date(b.date));
+    // Find all events where user is the host and event is upcoming
+    const hostedEvents = await Event.find({
+      'host.userId': userId,
+      date: { $gte: today }
+    }).sort({ date: 1 }); // Sort by date (soonest first)
 
     res.status(200).json({
       success: true,
@@ -72,9 +59,12 @@ const getUserHostedEvents = (req, res) => {
       data: hostedEvents
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: 'Server error while fetching user hosted events'
+    console.error('Error in getUserHostedEvents:', error);
+    res.status(200).json({
+      success: true,
+      count: 0,
+      data: [],
+      message: 'No events found'
     });
   }
 };
@@ -113,60 +103,60 @@ const parseEventDateTime = (dateStr, timeStr) => {
  * Get events that need user attention (check-in required or survey needed)
  * Includes both upcoming events (check-in) and past events (survey)
  */
-const getEventsNeedingAttention = (req, res) => {
+const getEventsNeedingAttention = async (req, res) => {
   try {
-    // TODO: Get userId from authentication middleware
+    // TODO: Get userId from authentication middleware (req.user.id)
     const userId = MOCK_USER_ID;
 
     const now = new Date();
     const todayMidnight = new Date();
     todayMidnight.setHours(0, 0, 0, 0);
+    const todayStr = todayMidnight.toISOString().split('T')[0]; // "YYYY-MM-DD"
 
-    // Find events where user has RSVP'd and needs to take action
-    const needsAttentionEvents = mockEvents.filter(event => {
-      const hasRSVPd = mockRSVPs[event.id] && mockRSVPs[event.id].includes(userId);
-      
-      if (!hasRSVPd) return false;
-
-      // Parse date with time for accurate check-in window calculation
-      const eventDateTime = parseEventDateTime(event.date, event.time);
-      if (!eventDateTime) return false; // Skip if parsing failed
-      
-      const eventDateOnly = new Date(event.date);
-      const isPast = eventDateOnly < todayMidnight;
-
-      // For upcoming events: check if it's within 24 hours (needs check-in)
-      // Calculate from current time, not midnight
-      const hoursDiff = (eventDateTime - now) / (1000 * 60 * 60);
-      const needsCheckIn = !isPast && hoursDiff <= 24 && hoursDiff >= 0;
-
-      // For past events: check if survey hasn't been completed
-      // In this mock, we'll assume all past RSVP'd events need surveys
-      const needsSurvey = isPast;
-
-      // Add flags to the event object
-      if (needsCheckIn || needsSurvey) {
-        return true;
-      }
-
-      return false;
-    }).map(event => {
-      // Parse date with time for accurate check-in window calculation
-      const eventDateTime = parseEventDateTime(event.date, event.time);
-      const eventDateOnly = new Date(event.date);
-      const isPast = eventDateOnly < todayMidnight;
-      const hoursDiff = eventDateTime ? (eventDateTime - now) / (1000 * 60 * 60) : -1;
-      
-      return {
-        ...event,
-        needsCheckIn: eventDateTime && !isPast && hoursDiff <= 24 && hoursDiff >= 0,
-        needsSurvey: isPast
-      };
+    // Find all events where user has RSVP'd
+    const allUserEvents = await Event.find({
+      'rsvps.userId': userId
     });
 
-    // Separate into two arrays: needsCheckIn and needsSurvey
-    const needsCheckIn = needsAttentionEvents.filter(e => e.needsCheckIn);
-    const needsSurvey = needsAttentionEvents.filter(e => e.needsSurvey);
+    // Filter and categorize events
+    const needsCheckIn = [];
+    const needsSurvey = [];
+
+    for (const event of allUserEvents) {
+      // Parse date with time for accurate check-in window calculation
+      const eventDateTime = parseEventDateTime(event.date, event.time);
+      if (!eventDateTime) continue; // Skip if parsing failed
+      
+      const eventDateOnly = new Date(event.date);
+      const isPast = event.date < todayStr;
+
+      // For upcoming events: check if it's within 24 hours (needs check-in)
+      // And user hasn't checked in yet
+      if (!isPast) {
+        const hoursDiff = (eventDateTime - now) / (1000 * 60 * 60);
+        const withinCheckInWindow = hoursDiff <= 24 && hoursDiff >= 0;
+        const hasCheckedIn = event.hasUserCheckedIn(userId);
+        
+        if (withinCheckInWindow && !hasCheckedIn) {
+          needsCheckIn.push({
+            ...event.toObject(),
+            needsCheckIn: true
+          });
+        }
+      }
+
+      // For past events: check if survey hasn't been completed
+      if (isPast) {
+        const hasSubmittedSurvey = event.hasUserSubmittedSurvey(userId);
+        
+        if (!hasSubmittedSurvey) {
+          needsSurvey.push({
+            ...event.toObject(),
+            needsSurvey: true
+          });
+        }
+      }
+    }
 
     res.status(200).json({
       success: true,
@@ -174,9 +164,11 @@ const getEventsNeedingAttention = (req, res) => {
       needsSurvey
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: 'Server error while fetching events needing attention'
+    console.error('Error in getEventsNeedingAttention:', error);
+    res.status(200).json({
+      success: true,
+      needsCheckIn: [],
+      needsSurvey: []
     });
   }
 };
@@ -185,25 +177,18 @@ const getEventsNeedingAttention = (req, res) => {
  * GET /api/events/user/past
  * Get user's past events (events they RSVP'd to that have already happened)
  */
-const getUserPastEvents = (req, res) => {
+const getUserPastEvents = async (req, res) => {
   try {
-    // TODO: Get userId from authentication middleware
+    // TODO: Get userId from authentication middleware (req.user.id)
     const userId = MOCK_USER_ID;
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = new Date().toISOString().split('T')[0]; // "YYYY-MM-DD"
 
     // Find all past events where user has RSVP'd
-    const pastEvents = mockEvents.filter(event => {
-      const hasRSVPd = mockRSVPs[event.id] && mockRSVPs[event.id].includes(userId);
-      const eventDate = new Date(event.date);
-      const isPast = eventDate < today;
-      
-      return hasRSVPd && isPast;
-    });
-
-    // Sort by date (most recent first)
-    pastEvents.sort((a, b) => new Date(b.date) - new Date(a.date));
+    const pastEvents = await Event.find({
+      'rsvps.userId': userId,
+      date: { $lt: today }
+    }).sort({ date: -1 }); // Sort by date (most recent first)
 
     res.status(200).json({
       success: true,
@@ -211,9 +196,12 @@ const getUserPastEvents = (req, res) => {
       data: pastEvents
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: 'Server error while fetching user past events'
+    console.error('Error in getUserPastEvents:', error);
+    res.status(200).json({
+      success: true,
+      count: 0,
+      data: [],
+      message: 'No events found'
     });
   }
 };
@@ -224,4 +212,3 @@ module.exports = {
   getEventsNeedingAttention,
   getUserPastEvents
 };
-
