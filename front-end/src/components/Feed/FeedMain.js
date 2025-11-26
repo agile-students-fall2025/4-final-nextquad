@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { getAllPosts, togglePostLike, feedCategories, deletePost } from '../../services/api';
+import { getAllPosts, togglePostLike, toggleSavePost, feedCategories, deletePost } from '../../services/api';
 import { createReport } from '../../services/api'; 
 import './FeedMain.css';
 
@@ -351,13 +351,19 @@ export default function FeedMain({ navigateTo, isAdmin = false }) {
       </button>
       <button
         className="feed-post-action-button"
-        onClick={() => {
-          setSavedIds(prev => {
-            const exists = prev.includes(post.id);
-            return exists ? prev.filter(id => id !== post.id) : [...prev, post.id];
-          });
-          // Also optimistically update the post's saved flag locally (optional)
-          setPosts(prevPosts => prevPosts.map(p => p.id === post.id ? { ...p, isSavedByUser: !savedIds.includes(post.id) } : p));
+        onClick={async () => {
+          try {
+            const response = await toggleSavePost(post.id);
+            if (response.success) {
+              const isSaved = response.data.isSavedByUser;
+              setSavedIds(prev => {
+                return isSaved ? [...prev, post.id] : prev.filter(id => id !== post.id);
+              });
+              setPosts(prevPosts => prevPosts.map(p => p.id === post.id ? { ...p, isSavedByUser: isSaved } : p));
+            }
+          } catch (error) {
+            console.error('Failed to toggle save:', error);
+          }
         }}
       >
         {savedIds.includes(post.id) ? '✓ Saved' : 'Save'}

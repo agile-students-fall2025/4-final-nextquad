@@ -295,6 +295,23 @@ export const togglePostLike = async (postId) => {
 };
 
 /**
+ * Save or unsave a post
+ * @param {number} postId - Post ID
+ */
+export const toggleSavePost = async (postId) => {
+  return fetchAPI(`/feed/posts/${postId}/save`, {
+    method: 'POST',
+  });
+};
+
+/**
+ * Get all saved posts for current user
+ */
+export const getSavedPosts = async () => {
+  return fetchAPI('/feed/saved');
+};
+
+/**
  * Get all comments for a post
  * @param {number} postId - Post ID
  */
