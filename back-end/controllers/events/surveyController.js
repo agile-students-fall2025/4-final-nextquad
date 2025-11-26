@@ -1,17 +1,16 @@
-const { mockEvents } = require('../../data/events/mockEvents');
+const Event = require('../../models/Event');
 
-// In-memory storage for surveys (in production, this would be in a database)
-let mockSurveys = [];
+// Mock user ID (in real app, this would come from authentication)
+const MOCK_USER_ID = process.env.MOCK_USER_ID || 'user123';
 
 /**
  * POST /api/events/:id/survey
  * Submit survey feedback for an event
  */
-const submitSurvey = (req, res) => {
+const submitSurvey = async (req, res) => {
   try {
-    const eventId = parseInt(req.params.id);
     const { rating, enjoyedAspects, feedback } = req.body;
-    const userId = 'user123'; // TODO: Get from auth
+    const userId = MOCK_USER_ID; // TODO: Get from auth (req.user.id)
     
     // Validation
     if (!rating || rating < 1 || rating > 5) {
@@ -22,7 +21,7 @@ const submitSurvey = (req, res) => {
     }
 
     // Check if event exists
-    const event = mockEvents.find(e => e.id === eventId);
+    const event = await Event.findById(req.params.id);
     if (!event) {
       return res.status(404).json({
         success: false,
@@ -31,10 +30,7 @@ const submitSurvey = (req, res) => {
     }
 
     // Check if user has already submitted a survey for this event
-    const existingSurvey = mockSurveys.find(
-      s => s.eventId === eventId && s.userId === userId
-    );
-    if (existingSurvey) {
+    if (event.hasUserSubmittedSurvey(userId)) {
       return res.status(400).json({
         success: false,
         error: 'You have already submitted a survey for this event'
@@ -43,8 +39,6 @@ const submitSurvey = (req, res) => {
 
     // Create survey response
     const surveyResponse = {
-      id: mockSurveys.length + 1,
-      eventId,
       userId,
       rating,
       enjoyedAspects: enjoyedAspects || [],
@@ -52,7 +46,9 @@ const submitSurvey = (req, res) => {
       submittedAt: new Date()
     };
 
-    mockSurveys.push(surveyResponse);
+    // Add survey to event
+    event.surveys.push(surveyResponse);
+    await event.save();
 
     res.status(201).json({
       success: true,
@@ -61,6 +57,15 @@ const submitSurvey = (req, res) => {
     });
   } catch (error) {
     console.error('Survey submission error:', error);
+    
+    // Handle invalid ObjectId
+    if (error.name === 'CastError') {
+      return res.status(404).json({
+        success: false,
+        error: 'Event not found'
+      });
+    }
+    
     res.status(500).json({
       success: false,
       error: 'Server error while submitting survey'
@@ -72,12 +77,10 @@ const submitSurvey = (req, res) => {
  * GET /api/events/:id/surveys
  * Get all survey responses for an event (host only)
  */
-const getEventSurveys = (req, res) => {
+const getEventSurveys = async (req, res) => {
   try {
-    const eventId = parseInt(req.params.id);
-    
     // Check if event exists
-    const event = mockEvents.find(e => e.id === eventId);
+    const event = await Event.findById(req.params.id);
     if (!event) {
       return res.status(404).json({
         success: false,
@@ -86,8 +89,8 @@ const getEventSurveys = (req, res) => {
     }
 
     // Check if user is the host
-    const currentUserId = 'user123'; // Mock user ID
-    if (event.host.userId !== currentUserId) {
+    const currentUserId = MOCK_USER_ID; // Get from req.user.id
+    if (!event.isHost(currentUserId)) {
       return res.status(403).json({
         success: false,
         error: 'Only the host can view survey responses'
@@ -95,21 +98,28 @@ const getEventSurveys = (req, res) => {
     }
 
     // Get all surveys for this event
-    const eventSurveys = mockSurveys.filter(s => s.eventId === eventId);
+    const eventSurveys = event.surveys || [];
 
-    // Calculate average rating
-    const avgRating = eventSurveys.length > 0
-      ? eventSurveys.reduce((sum, s) => sum + s.rating, 0) / eventSurveys.length
-      : 0;
+    // Calculate average rating using the virtual property
+    const avgRating = event.averageRating || 0;
 
     res.status(200).json({
       success: true,
       count: eventSurveys.length,
-      averageRating: avgRating.toFixed(1),
+      averageRating: avgRating,
       data: eventSurveys
     });
   } catch (error) {
     console.error('Get surveys error:', error);
+    
+    // Handle invalid ObjectId
+    if (error.name === 'CastError') {
+      return res.status(404).json({
+        success: false,
+        error: 'Event not found'
+      });
+    }
+    
     res.status(500).json({
       success: false,
       error: 'Server error while fetching surveys'
@@ -121,13 +131,12 @@ const getEventSurveys = (req, res) => {
  * GET /api/events/:id/survey-status
  * Check if user has submitted a survey for this event
  */
-const checkSurveyStatus = (req, res) => {
+const checkSurveyStatus = async (req, res) => {
   try {
-    const eventId = parseInt(req.params.id);
-    const userId = 'user123'; // TODO: Get from auth
+    const userId = MOCK_USER_ID; // TODO: Get from auth (req.user.id)
     
     // Check if event exists
-    const event = mockEvents.find(e => e.id === eventId);
+    const event = await Event.findById(req.params.id);
     if (!event) {
       return res.status(404).json({
         success: false,
@@ -136,19 +145,27 @@ const checkSurveyStatus = (req, res) => {
     }
 
     // Check if user has submitted survey
-    const existingSurvey = mockSurveys.find(
-      s => s.eventId === eventId && s.userId === userId
-    );
+    const hasSubmitted = event.hasUserSubmittedSurvey(userId);
+    const userSurvey = event.surveys.find(s => s.userId === userId);
 
     res.status(200).json({
       success: true,
       data: {
-        hasSubmitted: !!existingSurvey,
-        survey: existingSurvey || null
+        hasSubmitted,
+        survey: userSurvey || null
       }
     });
   } catch (error) {
     console.error('Check survey status error:', error);
+    
+    // Handle invalid ObjectId
+    if (error.name === 'CastError') {
+      return res.status(404).json({
+        success: false,
+        error: 'Event not found'
+      });
+    }
+    
     res.status(500).json({
       success: false,
       error: 'Server error while checking survey status'
@@ -159,9 +176,17 @@ const checkSurveyStatus = (req, res) => {
 /**
  * Helper function for analytics
  * Get surveys for a specific event (internal use)
+ * @param {String} eventId - MongoDB ObjectId
+ * @returns {Promise<Array>} Array of surveys
  */
-const getSurveysForAnalytics = (eventId) => {
-  return mockSurveys.filter(s => s.eventId === eventId);
+const getSurveysForAnalytics = async (eventId) => {
+  try {
+    const event = await Event.findById(eventId);
+    return event ? event.surveys : [];
+  } catch (error) {
+    console.error('Error getting surveys for analytics:', error);
+    return [];
+  }
 };
 
 module.exports = {
@@ -170,4 +195,3 @@ module.exports = {
   checkSurveyStatus,
   getSurveysForAnalytics
 };
-
