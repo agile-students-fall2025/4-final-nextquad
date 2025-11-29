@@ -7,6 +7,31 @@ require("dotenv").config(); // Load environment variables
 
 const app = express(); // instantiate an Express object
 
+const jwt = require('jsonwebtoken')
+const passport = require('passport')
+
+// use this JWT strategy within passport for authentication handling
+const jwtStrategy = require('./config/jwt-config.js') // import setup options for using JWT in passport
+passport.use(jwtStrategy)
+
+// tell express to use passport middleware
+app.use(passport.initialize())
+
+// mongoose models for MongoDB data manipulation
+const mongoose = require('mongoose')
+const admin = require('./models/Admin.js')
+
+// connect to the database
+// console.log(`Connecting to MongoDB at ${process.env.MONGODB_URI}`)
+try {
+  mongoose.connect(process.env.MONGODB_URI)
+  console.log(`Connected to MongoDB.`)
+} catch (err) {
+  console.log(
+    `Error connecting to MongoDB Admin account authentication will fail: ${err}`
+  )
+}
+
 // Middleware
 app.use(
   morgan("dev", { skip: (req, res) => process.env.NODE_ENV === "test" })

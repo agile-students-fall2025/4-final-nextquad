@@ -3,6 +3,9 @@ const { mockAdminSettings } = require("../../data/admin/mockAdminData");
 const { mockReports } = require("../../data/admin/mockReportData");
 const { mockAlerts } = require("../../data/admin/mockAlertData");
 const { mockAdmins } = require("../../data/admin/mockAdminData");
+const Admin = require('../../models/Admin');
+const { jwtSecret, jwtOptions } = require('../../config/jwt-config');
+const jwt = require('jsonwebtoken');
 
 //settings
 
@@ -165,31 +168,41 @@ const createEmergencyAlert = (req, res) => {
 };
 
 // post admin sign-in
-const adminSignIn = (req, res) => {
+const adminSignIn = async (req, res) => {
   const { email, password } = req.body;
-
+  console.log("Sign-in request body:", req.body);
+  // validate request
   if (!email || !password) {
-    return res.status(400).json({ success: false, error: "Email and password are required" });
+    return res.status(400).json({
+      success: false,
+      error: "Email and password are required",
+    });
   }
 
-  const admin = mockAdmins.find(
-    (a) => a.email === email && a.password === password
-  );
+  try {
+    // find admin by email
+    const admin = await Admin.findOne({ email });
+    console.log("User found in DB:", admin);
+    if (!admin || !admin.validPassword(password)) {
+      return res.status(401).json({
+        success: false,
+        error: "Invalid credentials",
+      });
+    }
 
-  if (!admin) {
-    return res.status(401).json({ success: false, error: "Invalid credentials" });
+    // return JWT and admin info
+    return res.json({
+      success: true,
+      message: "Admin signed in successfully",
+      data: admin.toAuthJSON(),
+    });
+  } catch (err) {
+    console.error("Admin sign-in error:", err);
+    return res.status(500).json({
+      success: false,
+      error: "Server error",
+    });
   }
-
-  res.json({
-    success: true,
-    message: "Admin signed in successfully",
-    data: {
-      id: admin.id,
-      name: admin.name,
-      email: admin.email,
-      role: admin.role,
-    },
-  });
 };
 
 
