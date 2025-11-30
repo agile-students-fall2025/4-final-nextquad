@@ -11,8 +11,10 @@ const fetchAPI = async (endpoint, options = {}) => {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       headers: {
         'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache',
         ...options.headers,
       },
+      cache: 'no-store', // prevent caching
       ...options,
     });
 
@@ -419,12 +421,21 @@ export const changeUserPassword = async (currentPassword, newPassword, confirmPa
 // Admin APIs
 // ============================================
 export const getAdminSettings = async () => {
-  return fetchAPI("/admin");
-};
-
-export const updateAdminSettings = async (updates) => {
+  const token = localStorage.getItem("jwt");
   return fetchAPI("/admin", {
-    method: "POST",
+    headers: {
+      Authorization: `jwt ${token}`,
+    },
+  });
+};
+export const updateAdminSettings = async (updates) => {
+  const token = localStorage.getItem("jwt");
+  return fetchAPI("/admin", {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `jwt ${token}`,
+    },
     body: JSON.stringify(updates),
   });
 };

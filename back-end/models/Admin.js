@@ -51,7 +51,7 @@ adminSchema.methods.validPassword = function (password) {
 adminSchema.methods.generateJWT = function () {
   const today = new Date()
   const exp = new Date(today)
-  // DO I NEED TO COVERT TO A NUMBER? 
+
   exp.setDate(today.getDate() + process.env.JWT_EXP_DAYS) // assuming an environment variable with num days in it
 
   return jwt.sign(

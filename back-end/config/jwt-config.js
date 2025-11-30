@@ -27,7 +27,7 @@ const jwtVerifyToken = async function (jwt_payload, next) {
   // try to find a matching admin in our database
 
   // find this user in the database
-  const adminId = ObjectId(jwt_payload.id) // convert the string id to an ObjectId
+  const adminId = new ObjectId(jwt_payload.id) // convert the string id to an ObjectId
   const admin = await Admin.findOne({ _id: adminId }).exec()
   if (admin) {
     // we found the admin... keep going
