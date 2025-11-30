@@ -19,14 +19,14 @@ export default function AdminEmergencyAlert({ navigateTo }) {
     setSuccess(false);
 
     try {
-      const response = await createEmergencyAlert({ message, sentBy: "Admin" });
+      const response = await createEmergencyAlert({ message });
 
-      if (response.success) {
+      if (response?.success) {
         setSuccess(true);
         setMessage("");
         setTimeout(() => navigateTo("dashboard"), 1500);
       } else {
-        setError("Failed to send alert. Please try again.");
+        setError(response?.error || "Failed to send alert. Please try again.");
       }
     } catch (err) {
       console.error("Error sending alert:", err);

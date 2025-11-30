@@ -31,8 +31,17 @@ router.get("/reports", getAllReports);
 router.post("/reports", createReport);
 
 
-router.get("/alerts", getEmergencyAlerts);
-router.post("/alerts", createEmergencyAlert);
+router.get(
+  "/alerts",
+  passport.authenticate("jwt", { session: false }),
+  getEmergencyAlerts
+);
+
+router.post(
+  "/alerts", 
+  passport.authenticate("jwt", { session: false }),
+  createEmergencyAlert);
+
 
 module.exports = router;
 
