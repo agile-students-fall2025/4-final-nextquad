@@ -29,8 +29,10 @@ export default function SignIn({ setActiveModule, setCurrentPage }) {
       if (!res.ok) {
         throw new Error(data.error || data.message || "Login failed.");
       }
+      //set JWT in local storage
+      localStorage.setItem("jwt", data.data.token);
 
-      alert(`Welcome back, ${data.data.email}!`);
+      // alert(`Welcome back, ${data.data.email}!`);
       setActiveModule("admin"); 
       setCurrentPage("dashboard"); 
     } catch (err) {
