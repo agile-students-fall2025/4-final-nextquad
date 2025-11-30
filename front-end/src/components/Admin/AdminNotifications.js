@@ -10,36 +10,50 @@ export default function AdminNotifications({ navigateTo }) {
   useEffect(() => {
     getAdminSettings()
       .then((data) => {
-        if (data) setSettings(data.data.notifications);
+        if (data && data.data) setSettings(data.data);
       })
       .catch((err) => console.error("Error fetching admin settings:", err))
       .finally(() => setLoading(false));
   }, []);
 
-  // Handle toggling logic
+  // Toggle logic for notifications
   const handleToggle = (key) => {
-    let updated = { ...settings, [key]: !settings[key] };
+    if (!settings || !settings.notifications) return;
 
-    // Toggle all on/off
+    // Copy notifications object
+    let updatedNotifications = { ...settings.notifications };
+
     if (key === "all") {
-      const newValue = !settings.all;
-      updated = Object.fromEntries(
-        Object.entries(settings).map(([k]) => [k, newValue])
+      // Toggle all notifications
+      const newValue = !updatedNotifications.all;
+      updatedNotifications = Object.fromEntries(
+        Object.keys(updatedNotifications).map((k) => [k, newValue])
       );
     } else {
-      // Update "all" if everything else is true
-      const everyOn = Object.entries(updated)
+      // Toggle individual notification
+      updatedNotifications[key] = !updatedNotifications[key];
+
+      // Update "all" if all others are true
+      const others = Object.entries(updatedNotifications)
         .filter(([k]) => k !== "all")
-        .every(([_, v]) => v);
-      updated.all = everyOn;
+        .map(([_, v]) => v);
+      updatedNotifications.all = others.every(Boolean);
     }
 
-    setSettings(updated);
+    setSettings({ ...settings, notifications: updatedNotifications });
+  };
 
-    // Send to backend
-    updateAdminSettings(updated).catch((err) =>
-      console.error("Error updating admin settings:", err)
-    );
+  // Save changes when leaving page
+  const handleBack = async () => {
+    try {
+      if (settings && settings.notifications) {
+        await updateAdminSettings({ notifications: settings.notifications });
+      }
+      navigateTo("dashboard");
+    } catch (err) {
+      console.error("Error updating admin settings:", err);
+      navigateTo("dashboard");
+    }
   };
 
   if (loading || !settings) {
@@ -53,19 +67,21 @@ export default function AdminNotifications({ navigateTo }) {
     );
   }
 
+  const { notifications } = settings;
+
   return (
     <div className="notification-container">
       <div className="notification-content">
         <h1 className="notification-header">Configure Notifications</h1>
 
         <div className="toggle-group">
-          {Object.entries(settings).map(([key, value]) => (
+          {["all", "emergencyAlerts", "userReports", "newPosts"].map((key) => (
             <div key={key} className="toggle-row">
               <span>{formatLabel(key)}</span>
               <label className="switch">
                 <input
                   type="checkbox"
-                  checked={value}
+                  checked={notifications[key]}
                   onChange={() => handleToggle(key)}
                 />
                 <span className="slider"></span>
@@ -74,7 +90,7 @@ export default function AdminNotifications({ navigateTo }) {
           ))}
         </div>
 
-        <button className="back-button" onClick={() => navigateTo("dashboard")}>
+        <button className="back-button" onClick={handleBack}>
           Back to Dashboard
         </button>
       </div>

@@ -4,17 +4,30 @@ const { mockReports } = require("../../data/admin/mockReportData");
 const { mockAlerts } = require("../../data/admin/mockAlertData");
 const { mockAdmins } = require("../../data/admin/mockAdminData");
 const Admin = require('../../models/Admin');
+const AdminSettings = require('../../models/AdminSettings');
 const { jwtSecret, jwtOptions } = require('../../config/jwt-config');
 const jwt = require('jsonwebtoken');
 
 //settings
 
 // get request for admin
-const getAdminSettings = (req, res) => {
+const getAdminSettings = async (req, res) => {
+
   try {
+    const adminId = req.user._id;
+
+    let settings = await AdminSettings.findOne({ admin: adminId });
+
+    // If no settings exist yet, create defaults automatically
+    if (!settings) {
+      settings = new AdminSettings({ admin: adminId });
+      await settings.save();
+    }
+
+
     res.status(200).json({
       success: true,
-      data: mockAdminSettings,
+      data: settings,
     });
   } catch (error) {
     console.error("Error fetching admin settings:", error);
@@ -25,37 +38,35 @@ const getAdminSettings = (req, res) => {
   }
 };
 
-// POST (update) admin notification settings
-const updateAdminSettings = (req, res) => {
-  const updates = req.body;
-
-  if (!updates || typeof updates !== "object") {
-    return res.status(400).json({
-      success: false,
-      error: "Invalid request body. Expected an object with notification updates.",
-    });
-  }
-
+// put request to update admin settings
+const updateAdminSettings = async (req, res) => {
   try {
-    // Update mock settings in memory
-    Object.keys(updates).forEach((key) => {
-      if (mockAdminSettings.notifications.hasOwnProperty(key)) {
-        mockAdminSettings.notifications[key] = updates[key];
-      }
-    });
+    const adminId = req.user._id;
+    const updates = req.body.notifications; 
 
-    mockAdminSettings.updatedAt = new Date().toISOString();
+    if (!updates) {
+      return res.status(400).json({
+        success: false,
+        error: "No notifications provided for update",
+      });
+    }
 
-    return res.status(200).json({
+    // Update notifications in DB
+    const settings = await AdminSettings.findOneAndUpdate(
+      { admin: adminId },
+      { notifications: updates },
+      { new: true, upsert: true, setDefaultsOnInsert: true }
+    );
+    res.status(200).json({
       success: true,
-      data: mockAdminSettings,
-      message: "Admin notification settings updated successfully.",
+      data: settings,
+      message: "Admin notification settings updated successfully",
     });
   } catch (error) {
     console.error("Error updating admin settings:", error);
-    return res.status(500).json({
+    res.status(500).json({
       success: false,
-      error: "Server error while updating admin settings.",
+      error: "Server error while updating admin settings",
     });
   }
 };

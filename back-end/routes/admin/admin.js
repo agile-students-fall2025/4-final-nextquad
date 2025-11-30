@@ -1,4 +1,5 @@
 const express = require("express");
+const passport = require("passport");
 const router = express.Router();
 
 const {
@@ -11,10 +12,20 @@ const {
   adminSignIn,
 } = require("../../controllers/admin/adminController");
 
+//doesn't need to be protected since it's for signing in
 router.post("/signin", adminSignIn);
 
-router.get("/", getAdminSettings);
-router.post("/", updateAdminSettings);
+
+router.get(
+  "/",
+  passport.authenticate("jwt", { session: false }),
+  getAdminSettings
+);
+router.put(
+  "/",
+  passport.authenticate("jwt", { session: false }),
+  updateAdminSettings
+);
 
 router.get("/reports", getAllReports);
 router.post("/reports", createReport);
