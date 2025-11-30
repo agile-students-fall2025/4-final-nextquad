@@ -456,11 +456,17 @@ export const getEmergencyAlerts = async () => {
 };
 
 export const createEmergencyAlert = async (alertData) => {
+  const token = localStorage.getItem("jwt");
   return fetchAPI("/admin/alerts", {
     method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `jwt ${token}`,
+    },
     body: JSON.stringify(alertData),
   });
 };
+
 
 export const adminSignIn = async (email, password) => {
   return fetchAPI("/admin/signin", {

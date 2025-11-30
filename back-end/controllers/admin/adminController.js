@@ -1,10 +1,10 @@
 const { faker } = require("@faker-js/faker");
-const { mockAdminSettings } = require("../../data/admin/mockAdminData");
 const { mockReports } = require("../../data/admin/mockReportData");
 const { mockAlerts } = require("../../data/admin/mockAlertData");
 const { mockAdmins } = require("../../data/admin/mockAdminData");
 const Admin = require('../../models/Admin');
 const AdminSettings = require('../../models/AdminSettings');
+const AdminEmergencyAlert = require('../../models/AdminEmergencyAlert');
 const { jwtSecret, jwtOptions } = require('../../config/jwt-config');
 const jwt = require('jsonwebtoken');
 
@@ -125,14 +125,17 @@ const createReport = (req, res) => {
   }
 };
 
+// emergency alerts
+// get emergency alerts
 
-//emergency alerts
-// get all emergency alerts
-const getEmergencyAlerts = (req, res) => {
+const getEmergencyAlerts = async (req, res) => {
   try {
+    const alerts = await AdminEmergencyAlert.find()
+      .sort({ createdAt: -1 }); 
+
     res.status(200).json({
       success: true,
-      data: mockAlerts,
+      data: alerts,
     });
   } catch (error) {
     console.error("Error fetching emergency alerts:", error);
@@ -144,29 +147,28 @@ const getEmergencyAlerts = (req, res) => {
 };
 
 // post create emergency alert
-const createEmergencyAlert = (req, res) => {
-  const { message, sentBy = "Admin" } = req.body;
-
-  if (!message || !message.trim()) {
-    return res.status(400).json({
-      success: false,
-      error: "Message is required to send an alert.",
-    });
-  }
-
+const createEmergencyAlert = async (req, res) => {
   try {
-    const newAlert = {
-      id: faker.string.uuid(),
-      message: message.trim(),
-      sentAt: new Date().toISOString(),
-      sentBy,
-    };
+    const { message } = req.body;
 
-    mockAlerts.unshift(newAlert); 
+    if (!message || !message.trim()) {
+      return res.status(400).json({
+        success: false,
+        error: "Message is required to send an alert.",
+      });
+    }
+
+    
+    const adminId = req.user.id;
+
+    const newAlert = await AdminEmergencyAlert.create({
+      admin: adminId,
+      message: message.trim()
+    });
 
     res.status(201).json({
       success: true,
-      message: "Emergency alert sent successfully.",
+      message: "Emergency alert created successfully.",
       data: newAlert,
     });
   } catch (error) {
