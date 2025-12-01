@@ -1,4 +1,6 @@
 const { mockUserSettings, mockPrivacyPolicy } = require("../../data/settings/mockSettingsData");
+const PrivacyPolicy = require("../../models/PrivacyPolicy");
+
 
 // get user's current notification settings
 const getUserSettings = (req, res) => {
@@ -52,20 +54,25 @@ const updateUserSettings = (req, res) => {
 };
 
 // get Privacy Policy
-const getPrivacyPolicy = (req, res) => {
+const getPrivacyPolicy = async (req, res) => {
   try {
-    res.status(200).json({
+    let policy = await PrivacyPolicy.findOne();
+
+    return res.status(200).json({
       success: true,
-      data: mockPrivacyPolicy,
+      data: policy,
     });
   } catch (error) {
     console.error("Error fetching privacy policy:", error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: "Server error while fetching privacy policy",
     });
   }
 };
+
+module.exports = { getPrivacyPolicy };
+
 
 // change user password
 const changeUserPassword = (req, res) => {
