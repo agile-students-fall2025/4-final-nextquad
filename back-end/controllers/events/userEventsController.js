@@ -38,20 +38,17 @@ const getUserRSVPedEvents = async (req, res) => {
 
 /**
  * GET /api/events/user/hosting
- * Get events the user is hosting - only upcoming events
+ * Get all events the user is hosting (including past events)
  */
 const getUserHostedEvents = async (req, res) => {
   try {
     // TODO: Get userId from authentication middleware (req.user.id)
     const userId = MOCK_USER_ID;
 
-    const today = new Date().toISOString().split('T')[0]; // "YYYY-MM-DD"
-
-    // Find all events where user is the host and event is upcoming
+    // Find all events where user is the host (no date filter)
     const hostedEvents = await Event.find({
-      'host.userId': userId,
-      date: { $gte: today }
-    }).sort({ date: 1 }); // Sort by date (soonest first)
+      'host.userId': userId
+    }).sort({ date: -1 }); // Sort by date (most recent first)
 
     res.status(200).json({
       success: true,
