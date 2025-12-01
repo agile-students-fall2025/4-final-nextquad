@@ -9,10 +9,41 @@ export default function EventCreate({ navigateTo }) {
     time: '',
     location: '',
     description: '',
-    categories: []
+    categories: [],
+    image: null
   });
+  const [imagePreview, setImagePreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(false);
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setError('Image size must be less than 5MB');
+        return;
+      }
+
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        setError('Please upload a valid image file');
+        return;
+      }
+
+      setError(null);
+      
+      // Convert to base64
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result;
+        setFormData({...formData, image: base64String});
+        setImagePreview(base64String);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -20,6 +51,7 @@ export default function EventCreate({ navigateTo }) {
     try {
       setLoading(true);
       setError(null);
+      setSuccess(false);
       
       // Convert 24-hour time to 12-hour format
       let displayTime = formData.time;
@@ -38,16 +70,21 @@ export default function EventCreate({ navigateTo }) {
         time: displayTime,
         location: formData.location,
         description: formData.description,
-        category: formData.categories
+        category: formData.categories,
+        image: formData.image
       });
       
-      alert('Event created successfully!');
-      navigateTo('main');
+      setSuccess(true);
       
       // Trigger event list refresh
       setTimeout(() => {
         window.dispatchEvent(new Event('refreshEvents'));
       }, 100);
+      
+      // Navigate after a short delay to show success message
+      setTimeout(() => {
+        navigateTo('main');
+      }, 1500);
     } catch (err) {
       console.error('Error creating event:', err);
       setError(err.message || 'Failed to create event. Please try again.');
@@ -89,10 +126,36 @@ export default function EventCreate({ navigateTo }) {
           </div>
         )}
 
-        <div className="event-create-image-upload">
-          <span style={{fontSize: '48px'}}>+</span>
-          <p>Upload Event Photo</p>
+        {success && (
+          <div style={{ 
+            padding: '12px', 
+            backgroundColor: '#e8f5e9', 
+            color: '#2e7d32', 
+            borderRadius: '4px',
+            marginBottom: '16px',
+            textAlign: 'center'
+          }}>
+            ✓ Event created successfully!
+          </div>
+        )}
+
+        <div className="event-create-image-upload" onClick={() => document.getElementById('image-upload').click()} style={{cursor: 'pointer'}}>
+          {imagePreview ? (
+            <img src={imagePreview} alt="Preview" style={{width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px'}} />
+          ) : (
+            <>
+              <span style={{fontSize: '48px'}}>+</span>
+              <p>Upload Event Photo</p>
+            </>
+          )}
         </div>
+        <input 
+          id="image-upload"
+          type="file" 
+          accept="image/*"
+          style={{display: 'none'}}
+          onChange={handleImageChange}
+        />
 
         <input 
           type="text" 
