@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { faker } from '@faker-js/faker';
-import './SignUp.css';
-import googleIcon from '../../assets/log_in/google_icon.png';
+import React, { useState } from "react";
+import { faker } from "@faker-js/faker";
+import "./SignUp.css";
+import googleIcon from "../../assets/log_in/google_icon.png";
 
 export default function SignUp({ setActiveModule, setCurrentPage }) {
   const [email, setEmail] = useState("");
@@ -10,18 +10,41 @@ export default function SignUp({ setActiveModule, setCurrentPage }) {
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [checkboxError, setCheckboxError] = useState("");
+  const [success, setSuccess] = useState("");
+
   const fakeTerms = faker.lorem.paragraphs(4);
 
   const handleCreateAccount = async () => {
-    if (!email.trim() || !password.trim()) {
-      alert("Please enter both email and password.");
+    // Reset all errors
+    setEmailError("");
+    setPasswordError("");
+    setCheckboxError("");
+    setSuccess("");
+
+    if (!agree) {
+      setCheckboxError("Please agree to the Terms & Privacy Policy.");
       return;
     }
 
-    if (!agree) {
-      alert("Please agree to the Terms & Privacy Policy.");
-      return;
+    let hasError = false;
+
+    if (!email.trim()) {
+      setEmailError("Please enter your email.");
+      hasError = true;
     }
+
+    if (!password.trim()) {
+      setPasswordError("Please enter your password.");
+      hasError = true;
+    } else if (password.length < 6) {
+      setPasswordError("Password must be at least 6 characters.");
+      hasError = true;
+    }
+
+    if (hasError) return;
 
     try {
       setLoading(true);
@@ -35,14 +58,21 @@ export default function SignUp({ setActiveModule, setCurrentPage }) {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || data.message || "Signup failed.");
+        if (data.message?.toLowerCase().includes("email")) {
+          setEmailError(data.message);
+        } else {
+          setCheckboxError(data.message || "Signup failed.");
+        }
+        return;
       }
 
-      alert("Account created successfully!");
-      setActiveModule("auth");
-      setCurrentPage("profilesetup");
+      setSuccess("Account created successfully!");
+      setTimeout(() => {
+        setActiveModule("auth");
+        setCurrentPage("profilesetup");
+      }, 800);
     } catch (err) {
-      alert(err.message);
+      setCheckboxError(err.message);
     } finally {
       setLoading(false);
     }
@@ -68,18 +98,26 @@ export default function SignUp({ setActiveModule, setCurrentPage }) {
         type="email"
         placeholder="Email address"
         value={email}
-        onChange={(e) => setEmail(e.target.value)}
+        onChange={(e) => {
+          setEmail(e.target.value);
+          setEmailError("");
+        }}
         disabled={loading}
       />
+      {!checkboxError && emailError && <p className="form-error">{emailError}</p>}
 
       <input
         className="auth-input"
         type="password"
         placeholder="Password"
         value={password}
-        onChange={(e) => setPassword(e.target.value)}
+        onChange={(e) => {
+          setPassword(e.target.value);
+          setPasswordError("");
+        }}
         disabled={loading}
       />
+      {!checkboxError && passwordError && <p className="form-error">{passwordError}</p>}
 
       <label className="checkbox-box">
         <input
@@ -89,16 +127,18 @@ export default function SignUp({ setActiveModule, setCurrentPage }) {
           disabled={loading}
         />
         <span>
-          I agree to the
+          I agree to the{" "}
           <span
             className="terms-link"
             onClick={() => !loading && setShowModal(true)}
           >
-            {" "}
             Terms & Privacy Policy
           </span>
         </span>
       </label>
+      {checkboxError && <p className="form-error">{checkboxError}</p>}
+
+      {success && <p className="form-success">{success}</p>}
 
       <button
         className="auth-btn"
@@ -120,10 +160,7 @@ export default function SignUp({ setActiveModule, setCurrentPage }) {
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <h3>Terms & Privacy Policy</h3>
             <p>{fakeTerms}</p>
-            <button
-              className="close-modal"
-              onClick={() => setShowModal(false)}
-            >
+            <button className="close-modal" onClick={() => setShowModal(false)}>
               Close
             </button>
           </div>

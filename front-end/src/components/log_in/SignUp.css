@@ -34,6 +34,20 @@
   font-size: 14px;
 }
 
+.form-error {
+  color: #e63946;
+  font-size: 0.85rem;
+  margin-top: 5px;
+  margin-bottom: 10px;
+}
+
+.form-success {
+  color: #2a9d8f;
+  font-size: 0.9rem;
+  margin-bottom: 10px;
+}
+
+
 .auth-btn {
   width: 260px;
   padding: 14px;
