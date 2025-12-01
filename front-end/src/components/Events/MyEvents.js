@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { getUserHostedEvents } from '../../services/api';
 import './MyEvents.css';
 
@@ -7,23 +7,36 @@ export default function MyEvents({ navigateTo }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const fetchUserEvents = async () => {
-      try {
-        setLoading(true);
-        const hostedResponse = await getUserHostedEvents();
-        setHostedEvents(hostedResponse.data || []);
-        setError(null);
-      } catch (err) {
-        console.error('Error fetching user events:', err);
-        setError('Failed to load your events. Please try again.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUserEvents();
+  const fetchUserEvents = useCallback(async () => {
+    try {
+      setLoading(true);
+      console.log('🔍 Fetching user hosted events...');
+      const hostedResponse = await getUserHostedEvents();
+      console.log('✅ Hosted events received:', hostedResponse.data);
+      setHostedEvents(hostedResponse.data || []);
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching user events:', err);
+      setError('Failed to load your events. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchUserEvents();
+  }, [fetchUserEvents]);
+
+  // Listen for refresh events from EventCreate
+  useEffect(() => {
+    const handleRefresh = () => {
+      console.log('🔄 Refreshing my events list...');
+      fetchUserEvents();
+    };
+    
+    window.addEventListener('refreshEvents', handleRefresh);
+    return () => window.removeEventListener('refreshEvents', handleRefresh);
+  }, [fetchUserEvents]);
 
   return (
     <div className="my-events-container">
