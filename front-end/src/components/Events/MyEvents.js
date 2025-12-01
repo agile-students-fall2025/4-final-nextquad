@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getUserHostedEvents } from '../../services/api';
+import { getUserHostedEvents, deleteEvent } from '../../services/api';
 import './MyEvents.css';
 
 export default function MyEvents({ navigateTo }) {
   const [hostedEvents, setHostedEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [deleteSuccess, setDeleteSuccess] = useState(false);
 
   const fetchUserEvents = useCallback(async () => {
     try {
@@ -37,6 +38,24 @@ export default function MyEvents({ navigateTo }) {
     window.addEventListener('refreshEvents', handleRefresh);
     return () => window.removeEventListener('refreshEvents', handleRefresh);
   }, [fetchUserEvents]);
+
+  const handleDelete = async (eventId) => {
+    try {
+      await deleteEvent(eventId);
+      setDeleteSuccess(true);
+      
+      // Refresh the events list
+      await fetchUserEvents();
+      
+      // Hide success message after 3 seconds
+      setTimeout(() => {
+        setDeleteSuccess(false);
+      }, 3000);
+    } catch (err) {
+      console.error('Error deleting event:', err);
+      setError('Failed to delete event. Please try again.');
+    }
+  };
 
   return (
     <div className="my-events-container">
@@ -71,6 +90,19 @@ export default function MyEvents({ navigateTo }) {
         </div>
       )}
 
+      {deleteSuccess && (
+        <div style={{ 
+          padding: '12px', 
+          backgroundColor: '#e8f5e9', 
+          color: '#2e7d32', 
+          borderRadius: '4px',
+          margin: '16px 20px',
+          textAlign: 'center'
+        }}>
+          Event deleted successfully!
+        </div>
+      )}
+
       {!loading && !error && (
         <div className="my-events-content">
           {/* Events I'm Hosting */}
@@ -85,12 +117,27 @@ export default function MyEvents({ navigateTo }) {
                   <p className="my-events-card-info" style={{ color: '#57068c', fontWeight: '600' }}>
                     {event.rsvpCount} RSVPs
                   </p>
-                  <button 
-                    className="my-events-button"
-                    onClick={() => navigateTo('detail', event.id)}
-                  >
-                    View Details
-                  </button>
+                  <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+                    <button 
+                      className="my-events-button"
+                      onClick={() => navigateTo('detail', event.id)}
+                    >
+                      View Details
+                    </button>
+                    <button 
+                      className="my-events-button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(event.id);
+                      }}
+                      style={{ 
+                        backgroundColor: '#d32f2f',
+                        border: 'none'
+                      }}
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </div>
               ))
             ) : (
