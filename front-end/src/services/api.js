@@ -390,15 +390,24 @@ export const getPrivacyPolicy = async () => {
  * Get user's current notification settings
  */
 export const getUserSettings = async () => {
-  return fetchAPI('/settings');
+  const token = localStorage.getItem("jwt");
+  return fetchAPI("/settings", {
+    headers: {
+      Authorization: `jwt ${token}`,
+    },
+  });
 };
-
 /**
- * Update user's notification settings
+ * Update user's current notification settings
  */
 export const updateUserSettings = async (updates) => {
-  return fetchAPI('/settings', {
-    method: 'POST',
+  const token = localStorage.getItem("jwt");
+  return fetchAPI("/settings", {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `jwt ${token}`,
+    },
     body: JSON.stringify(updates),
   });
 };
@@ -441,8 +450,13 @@ export const updateAdminSettings = async (updates) => {
 };
 
 export const createReport = async (reportData) => {
+  const token = localStorage.getItem("jwt");
   return fetchAPI("/admin/reports", {
-    method: "POST",
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `jwt ${token}`,
+    },
     body: JSON.stringify(reportData),
   });
 };

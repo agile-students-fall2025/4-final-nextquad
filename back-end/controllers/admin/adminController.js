@@ -5,6 +5,7 @@ const { mockAdmins } = require("../../data/admin/mockAdminData");
 const Admin = require('../../models/Admin');
 const AdminSettings = require('../../models/AdminSettings');
 const AdminEmergencyAlert = require('../../models/AdminEmergencyAlert');
+const AdminReportUser = require('../../models/AdminReportUser');
 const { jwtSecret, jwtOptions } = require('../../config/jwt-config');
 const jwt = require('jsonwebtoken');
 
@@ -89,8 +90,8 @@ const getAllReports = (req, res) => {
   }
 };
 
-// POST create a new report
-const createReport = (req, res) => {
+// put create a new report
+const createReport = async (req, res) => {
   const { username, reason } = req.body;
 
   if (!username || !reason) {
@@ -99,17 +100,13 @@ const createReport = (req, res) => {
       error: "Username and reason are required to submit a report.",
     });
   }
-
+    const adminId = req.user.id;
   try {
-    const newReport = {
-      id: faker.string.uuid(),
+    const newReport = await AdminReportUser.create({
+      admin: adminId,
       username,
       reason,
-      reportedAt: new Date().toISOString(),
-    };
-
-    // Push into mock data
-    mockReports.push(newReport);
+    });
 
     res.status(201).json({
       success: true,
