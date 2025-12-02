@@ -10,7 +10,7 @@ export default function NotificationSettings({ navigateTo }) {
   useEffect(() => {
     getUserSettings()
       .then((data) => {
-        if (data) setSettings(data.data.notifications);
+        if (data && data.data) setSettings(data.data);
       })
       .catch((err) => console.error("Error fetching settings:", err))
       .finally(() => setLoading(false));
@@ -18,40 +18,49 @@ export default function NotificationSettings({ navigateTo }) {
 
   // check if all notifications are on
   const allEnabled = settings
-    ? Object.entries(settings)
+    ? Object.entries(settings.notifications)
         .filter(([key]) => key !== "all")
         .every(([_, value]) => value)
     : false;
 
   // Handle toggling individual notification setting
   const handleToggle = (key) => {
-    let updated = { ...settings, [key]: !settings[key] };
+    if (!settings || !settings.notifications) return;
 
-    // all button logic
+    // Copy notifications object
+    let updatedNotifications = { ...settings.notifications };
+
     if (key === "all") {
-      const newValue = !settings.all;
-      updated = Object.fromEntries(
-        Object.entries(settings).map(([k]) => [k, newValue])
+      // Toggle all notifications
+      const newValue = !updatedNotifications.all;
+      updatedNotifications = Object.fromEntries(
+        Object.keys(updatedNotifications).map((k) => [k, newValue])
       );
     } else {
-      // if all individual toggles are on, set all to true
-      const everyOn =
-        Object.entries(updated)
-          .filter(([k]) => k !== "all")
-          .every(([_, v]) => v) === true;
-      updated.all = everyOn;
+      // Toggle individual notification
+      updatedNotifications[key] = !updatedNotifications[key];
+
+      // Update "all" if all others are true
+      const others = Object.entries(updatedNotifications)
+        .filter(([k]) => k !== "all")
+        .map(([_, v]) => v);
+      updatedNotifications.all = others.every(Boolean);
     }
 
-    setSettings(updated);
+    setSettings({ ...settings, notifications: updatedNotifications });
+  };
 
-    // Send update to backend
-    updateUserSettings(updated)
-      .then((data) => {
-        if (!data) {
-          console.error(`Failed to update ${key}`);
-        }
-      })
-      .catch((err) => console.error("Error updating setting:", err));
+  // Save changes when leaving page
+  const handleBack = async () => {
+    try {
+      if (settings && settings.notifications) {
+        await updateUserSettings({ notifications: settings.notifications });
+      }
+      navigateTo("settings");
+    } catch (err) {
+      console.error("Error updating user settings:", err);
+      navigateTo("settings");
+    }
   };
 
   if (loading || !settings) {
@@ -65,13 +74,15 @@ export default function NotificationSettings({ navigateTo }) {
     );
   }
 
+  const { notifications } = settings;
+
   return (
     <div className="notification-container">
       <div className="notification-content">
         <h1 className="notification-header">Notification Settings</h1>
 
         <div className="toggle-group">
-          {Object.entries(settings).map(([key, value]) => (
+          {Object.entries(notifications).map(([key, value]) => (
             <div key={key} className="toggle-row">
               <span>{formatLabel(key)}</span>
               <label className="switch">
@@ -86,13 +97,14 @@ export default function NotificationSettings({ navigateTo }) {
           ))}
         </div>
 
-        <button className="back-button" onClick={() => navigateTo("settings")}>
+        <button className="back-button" onClick={handleBack}>
           Back to Settings
         </button>
       </div>
     </div>
   );
 }
+
 //format buttons to read as user friendly labels
 function formatLabel(key) {
   const labels = {

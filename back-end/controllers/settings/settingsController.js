@@ -1,14 +1,25 @@
 const { mockUserSettings, mockPrivacyPolicy } = require("../../data/settings/mockSettingsData");
+const UserSettings = require("../../models/UserSettings");
 
 // get user's current notification settings
-const getUserSettings = (req, res) => {
+const getUserSettings = async (req, res) => {
   try {
+    const userId = req.user._id;
+
+    let settings = await UserSettings.findOne({ user: userId });
+
+    // If no settings exist yet, create defaults automatically
+    if (!settings) {
+      settings = new UserSettings({ user: userId });
+      await settings.save();
+    }
+
     res.status(200).json({
       success: true,
-      data: mockUserSettings,
+      data: settings,
     });
   } catch (error) {
-    console.error("Error fetching settings:", error);
+    console.error("Error fetching user settings:", error);
     res.status(500).json({
       success: false,
       error: "Server error while fetching user settings",
@@ -16,37 +27,36 @@ const getUserSettings = (req, res) => {
   }
 };
 
-// update notification settings
-const updateUserSettings = (req, res) => {
-  const updates = req.body;
-
-  if (!updates || typeof updates !== "object") {
-    return res.status(400).json({
-      success: false,
-      error: "Invalid request body. Expected an object with notification updates.",
-    });
-  }
-
+// PUT request to update user's notification settings
+const updateUserSettings = async (req, res) => {
   try {
-    // Update mock settings in memory
-    Object.keys(updates).forEach((key) => {
-      if (mockUserSettings.notifications.hasOwnProperty(key)) {
-        mockUserSettings.notifications[key] = updates[key];
-      }
-    });
+    const userId = req.user._id;
+    const updates = req.body.notifications;
 
-    mockUserSettings.updatedAt = new Date().toISOString();
+    if (!updates || typeof updates !== 'object') {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid request body. Expected an object with notification updates.",
+      });
+    }
 
-    return res.status(200).json({
+    // Update notifications in DB
+    const settings = await UserSettings.findOneAndUpdate(
+      { user: userId },
+      { notifications: updates },
+      { new: true, upsert: true, setDefaultsOnInsert: true }
+    );
+
+    res.status(200).json({
       success: true,
-      data: mockUserSettings,
-      message: "User notification settings updated successfully.",
+      data: settings,
+      message: "User notification settings updated successfully",
     });
   } catch (error) {
     console.error("Error updating user settings:", error);
-    return res.status(500).json({
+    res.status(500).json({
       success: false,
-      error: "Server error while updating user settings.",
+      error: "Server error while updating user settings",
     });
   }
 };
