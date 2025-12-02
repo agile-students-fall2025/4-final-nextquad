@@ -28,7 +28,10 @@ router.put(
 );
 
 router.get("/reports", getAllReports);
-router.post("/reports", createReport);
+router.put(
+  "/reports", 
+  passport.authenticate("jwt", { session: false }),
+  createReport);
 
 
 router.get(

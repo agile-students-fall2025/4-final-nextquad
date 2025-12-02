@@ -441,8 +441,13 @@ export const updateAdminSettings = async (updates) => {
 };
 
 export const createReport = async (reportData) => {
+  const token = localStorage.getItem("jwt");
   return fetchAPI("/admin/reports", {
-    method: "POST",
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `jwt ${token}`,
+    },
     body: JSON.stringify(reportData),
   });
 };
