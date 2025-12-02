@@ -1,4 +1,5 @@
 const express = require("express");
+const { body } = require("express-validator");
 const router = express.Router();
 
 // Import controllers
@@ -11,15 +12,29 @@ const { setupProfile } = require("../../controllers/login/profileSetupController
 
 /**
  * @route   POST /api/auth/signup
- * @desc    Register a new user (mock)
+ * @desc    Register a new user
  */
-router.post("/signup", signUpUser);
+router.post(
+  "/signup",
+  [
+    body("email").isEmail().withMessage("Please provide a valid email."),
+    body("password").isLength({ min: 6 }).withMessage("Password must be at least 6 characters."),
+  ],
+  signUpUser
+);
 
 /**
  * @route   POST /api/auth/signin
- * @desc    Authenticate user and return mock data
+ * @desc    Authenticate user
  */
-router.post("/signin", signIn);
+router.post(
+  "/signin",
+  [
+    body("email").isEmail().withMessage("Please provide a valid email."),
+    body("password").notEmpty().withMessage("Password is required."),
+  ],
+  signIn
+);
 
 /**
  * @route   POST /api/auth/forgot-password

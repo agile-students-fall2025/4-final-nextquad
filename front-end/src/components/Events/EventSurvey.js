@@ -8,6 +8,7 @@ export default function EventSurvey({ navigateTo, event }) {
   const [enjoyedAspects, setEnjoyedAspects] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(false);
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [checkingStatus, setCheckingStatus] = useState(true);
 
@@ -49,6 +50,7 @@ export default function EventSurvey({ navigateTo, event }) {
     try {
       setLoading(true);
       setError(null);
+      setSuccess(false);
       
       // Call backend API
       await submitSurvey(event.id, {
@@ -57,8 +59,12 @@ export default function EventSurvey({ navigateTo, event }) {
         feedback
       });
       
-      alert('Thank you for your feedback!');
-      navigateTo('rsvps');
+      setSuccess(true);
+      
+      // Navigate after showing success message
+      setTimeout(() => {
+        navigateTo('rsvps');
+      }, 1500);
     } catch (err) {
       console.error('Error submitting survey:', err);
       setError(err.message || 'Failed to submit survey. Please try again.');
@@ -151,6 +157,19 @@ export default function EventSurvey({ navigateTo, event }) {
             marginBottom: '16px'
           }}>
             {error}
+          </div>
+        )}
+
+        {success && (
+          <div style={{ 
+            padding: '12px', 
+            backgroundColor: '#e8f5e9', 
+            color: '#2e7d32', 
+            borderRadius: '4px',
+            marginBottom: '16px',
+            textAlign: 'center'
+          }}>
+            ✓ Thank you for your feedback!
           </div>
         )}
 

@@ -6,6 +6,7 @@ export default function EventCheckIn({ navigateTo, event }) {
   const [checkedIn, setCheckedIn] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(false);
 
   const handleCheckIn = async () => {
     if (!event) return;
@@ -13,13 +14,13 @@ export default function EventCheckIn({ navigateTo, event }) {
     try {
       setLoading(true);
       setError(null);
+      setSuccess(false);
       await checkInToEvent(event.id);
       setCheckedIn(true);
-      alert('Successfully checked in to the event!');
+      setSuccess(true);
     } catch (err) {
       console.error('Error checking in:', err);
       setError(err.message || 'Failed to check in');
-      alert(`Check-in failed: ${err.message}`);
     } finally {
       setLoading(false);
     }
@@ -76,6 +77,19 @@ export default function EventCheckIn({ navigateTo, event }) {
             marginBottom: '16px'
           }}>
             {error}
+          </div>
+        )}
+
+        {success && (
+          <div style={{ 
+            padding: '12px', 
+            backgroundColor: '#e8f5e9', 
+            color: '#2e7d32', 
+            borderRadius: '4px',
+            marginBottom: '16px',
+            textAlign: 'center'
+          }}>
+            ✓ Successfully checked in to the event!
           </div>
         )}
 

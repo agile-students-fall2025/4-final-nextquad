@@ -1,5 +1,7 @@
 const { mockUserSettings, mockPrivacyPolicy } = require("../../data/settings/mockSettingsData");
 const UserSettings = require("../../models/UserSettings");
+const PrivacyPolicy = require("../../models/PrivacyPolicy");
+
 
 // get user's current notification settings
 const getUserSettings = async (req, res) => {
@@ -78,6 +80,9 @@ const getPrivacyPolicy = async (req, res) => {
     });
   }
 };
+
+module.exports = { getPrivacyPolicy };
+
 
 // change user password
 const changeUserPassword = (req, res) => {

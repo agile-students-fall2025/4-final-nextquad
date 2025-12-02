@@ -1,22 +1,36 @@
-import React, { useState } from 'react';
-import './SignIn.css';
-import googleIcon from '../../assets/log_in/google_icon.png';
+import React, { useState } from "react";
+import "./SignIn.css";
+import googleIcon from "../../assets/log_in/google_icon.png";
 
 export default function SignIn({ setActiveModule, setCurrentPage }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [generalError, setGeneralError] = useState("");
+
   const handleLogin = async () => {
-    if (!email.trim() || !password.trim()) {
-      alert("Please enter both email and password.");
+    // Reset all errors
+    setEmailError("");
+    setPasswordError("");
+    setGeneralError("");
+
+    if (!email.trim()) {
+      setEmailError("Please enter your email.");
+      return;
+    }
+
+    if (!password.trim()) {
+      setPasswordError("Please enter your password.");
       return;
     }
 
     try {
       setLoading(true);
 
-      const res = await fetch("http://localhost:3001/api/auth/signin", {
+      const res = await fetch("http://localhost:3000/api/auth/signin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -25,13 +39,22 @@ export default function SignIn({ setActiveModule, setCurrentPage }) {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || data.message || "Login failed.");
+        const msg = data.message || data.error || "Login failed.";
+
+        if (msg.toLowerCase().includes("email")) {
+          setEmailError(msg);
+        } else if (msg.toLowerCase().includes("password")) {
+          setPasswordError(msg);
+        } else {
+          setGeneralError(msg);
+        }
+        return;
       }
 
-      alert(`Welcome back, ${data.data.name}!`);
-      setActiveModule("events"); // Redirect to events module
+      // Login successful
+      setActiveModule("events");
     } catch (err) {
-      alert(err.message);
+      setGeneralError(err.message || "Unexpected network error.");
     } finally {
       setLoading(false);
     }
@@ -44,23 +67,33 @@ export default function SignIn({ setActiveModule, setCurrentPage }) {
         Log in by entering your email address and password.
       </p>
 
+      {generalError && <p className="form-error">{generalError}</p>}
+
       <input
         className="auth-input"
         type="email"
         placeholder="Email address"
         value={email}
-        onChange={(e) => setEmail(e.target.value)}
+        onChange={(e) => {
+          setEmail(e.target.value);
+          setEmailError("");
+        }}
         disabled={loading}
       />
+      {emailError && <p className="form-error">{emailError}</p>}
 
       <input
         className="auth-input"
         type="password"
         placeholder="Password"
         value={password}
-        onChange={(e) => setPassword(e.target.value)}
+        onChange={(e) => {
+          setPassword(e.target.value);
+          setPasswordError("");
+        }}
         disabled={loading}
       />
+      {passwordError && <p className="form-error">{passwordError}</p>}
 
       <p
         className="auth-link"
@@ -69,11 +102,7 @@ export default function SignIn({ setActiveModule, setCurrentPage }) {
         Forgot password?
       </p>
 
-      <button
-        className="auth-btn"
-        onClick={handleLogin}
-        disabled={loading}
-      >
+      <button className="auth-btn" onClick={handleLogin} disabled={loading}>
         {loading ? "Logging in..." : "Log in"}
       </button>
 
