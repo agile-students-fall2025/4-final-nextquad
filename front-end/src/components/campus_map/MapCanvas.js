@@ -28,6 +28,7 @@ export default function MapCanvas({ activeCategories, searchQuery }) {
   // Pan and drag handlers
   const handleMouseDown = (e) => {
     const target = e.target;
+    // Don't start dragging if clicking on interactive elements
     if (
       target.closest('.pin-btn') ||
       target.closest('.pin-info') ||
@@ -44,6 +45,15 @@ export default function MapCanvas({ activeCategories, searchQuery }) {
       y: e.clientY - pan.y
     };
     e.preventDefault();
+  };
+
+  // Handle link clicks - prevent map dragging from interfering
+  const handleLinkClick = (e) => {
+    e.stopPropagation(); // Prevent event from bubbling to map handlers
+    // Allow default link navigation behavior
+    if (!e.currentTarget.href || e.currentTarget.href === '#') {
+      e.preventDefault(); // Only prevent if link is invalid
+    }
   };
 
   // Load points from backend when filters/search change
@@ -163,6 +173,7 @@ export default function MapCanvas({ activeCategories, searchQuery }) {
                     transform: `scale(${1 / zoom}) translate(calc(-50% + var(--pin-info-shift-x)), calc(-100% + var(--pin-info-shift-y)))`,
                     transformOrigin: 'center bottom'
                   }}
+                  onClick={(e) => e.stopPropagation()}
                 >
                   <button
                     type="button"
@@ -179,17 +190,20 @@ export default function MapCanvas({ activeCategories, searchQuery }) {
                     {p.desc ?? "Lorem ipsum dolor sit amet, consectetur adipisicing elit."}
                   </p>
 
-                  <div className="pin-info-actions">
-                    <a
-                      className="pin-info-link-btn"
-                      href={""}  // placeholder link
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      aria-label={`Reserve at ${p.title}`}
-                    >
-                      Reserve
-                    </a>
-                  </div>
+                  {p.link && p.link.trim() && (
+                    <div className="pin-info-actions" onClick={(e) => e.stopPropagation()}>
+                      <a
+                        className="pin-info-link-btn"
+                        href={p.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={`Reserve at ${p.title}`}
+                        onClick={handleLinkClick}
+                      >
+                        Reserve
+                      </a>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

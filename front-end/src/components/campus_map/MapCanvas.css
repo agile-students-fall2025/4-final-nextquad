@@ -95,6 +95,7 @@
   box-shadow: 0 6px 18px rgba(0,0,0,0.15);
   padding: 12px 12px 14px;
   z-index: 1;
+  pointer-events: auto;
 }
 
 
@@ -150,8 +151,14 @@
   color: var(--brand);
   font-weight: 600;
   box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  pointer-events: auto;
+  transition: background .15s ease, transform .1s ease;
 }
-.pin-info-link-btn:hover { background: #faf7ff; }
+.pin-info-link-btn:hover { 
+  background: #faf7ff; 
+  text-decoration: none;
+}
 .pin-info-link-btn:active { transform: translateY(1px); }
 
 
