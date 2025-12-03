@@ -6,7 +6,7 @@ const PrivacyPolicy = require("../../models/PrivacyPolicy");
 // get user's current notification settings
 const getUserSettings = async (req, res) => {
   try {
-    const userId = req.user._id;
+    const userId = req.user.userId;
 
     let settings = await UserSettings.findOne({ user: userId });
 
@@ -32,7 +32,7 @@ const getUserSettings = async (req, res) => {
 // PUT request to update user's notification settings
 const updateUserSettings = async (req, res) => {
   try {
-    const userId = req.user._id;
+    const userId = req.user.userId;
     const updates = req.body.notifications;
 
     if (!updates || typeof updates !== 'object') {
