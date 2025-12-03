@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { getPostComments, addComment, updateComment, deleteComment, toggleCommentLike, togglePostLike, toggleSavePost } from '../../services/api';
+import ImageModal from './ImageModal';
 import './FeedComments.css';
 
 export default function FeedComments({ post, navigateTo, returnToPage = 'main' }) {
@@ -19,6 +20,7 @@ export default function FeedComments({ post, navigateTo, returnToPage = 'main' }
   const [editingComment, setEditingComment] = useState(null);
   const [editText, setEditText] = useState('');
   const [savingEdit, setSavingEdit] = useState(false);
+  const [expandedImage, setExpandedImage] = useState(null);
   const [sortBy, setSortBy] = useState('Newest');
   const [showSortMenu, setShowSortMenu] = useState(false);
   const menuRef = useRef(null);
@@ -239,7 +241,12 @@ export default function FeedComments({ post, navigateTo, returnToPage = 'main' }
           <h3 className="feed-comments-post-title">{postState.title}</h3>
           <p className="feed-comments-post-content">{postState.content}</p>
           {postState.image && (
-            <img src={postState.image} alt={postState.title} className="feed-post-image" />
+            <img 
+              src={postState.image} 
+              alt={postState.title} 
+              className="feed-post-image" 
+              onClick={() => setExpandedImage({ url: postState.image, alt: postState.title })}
+            />
           )}
 
           <div className="feed-post-tags">
@@ -414,6 +421,14 @@ export default function FeedComments({ post, navigateTo, returnToPage = 'main' }
             </form>
           </div>
         </div>
+      )}
+      
+      {expandedImage && (
+        <ImageModal
+          imageUrl={expandedImage.url}
+          altText={expandedImage.alt}
+          onClose={() => setExpandedImage(null)}
+        />
       )}
     </div>
   );

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { getAllPosts, togglePostLike, toggleSavePost, feedCategories, deletePost } from '../../services/api';
 import { createReport } from '../../services/api'; 
+import ImageModal from './ImageModal';
 import './FeedMain.css';
 
 export default function FeedMain({ navigateTo, isAdmin = false }) {
@@ -12,6 +13,7 @@ export default function FeedMain({ navigateTo, isAdmin = false }) {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [expandedImage, setExpandedImage] = useState(null);
   const isFetchingRef = useRef(false);
 
   // Fetch posts from backend - wrapped in useCallback
@@ -303,7 +305,12 @@ export default function FeedMain({ navigateTo, isAdmin = false }) {
             <p className="feed-post-content">{post.content}</p>
             
             {post.image && (
-              <img src={post.image} alt={post.title} className="feed-post-image" />
+              <img 
+                src={post.image} 
+                alt={post.title} 
+                className="feed-post-image" 
+                onClick={() => setExpandedImage({ url: post.image, alt: post.title })}
+              />
             )}
 
             <div className="feed-post-tags">
@@ -383,6 +390,14 @@ export default function FeedMain({ navigateTo, isAdmin = false }) {
           </div>
         ))}
       </div>
+      
+      {expandedImage && (
+        <ImageModal
+          imageUrl={expandedImage.url}
+          altText={expandedImage.alt}
+          onClose={() => setExpandedImage(null)}
+        />
+      )}
     </div>
   );
 }

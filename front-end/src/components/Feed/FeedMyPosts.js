@@ -2,6 +2,7 @@ import './FeedSavedPosts.css'; // Reuse the same styles
 import { useState, useEffect, useRef } from 'react';
 import { getAllPosts, togglePostLike, deletePost } from '../../services/api';
 import { updatePost } from '../../services/api';
+import ImageModal from './ImageModal';
 
 export default function FeedMyPosts({ navigateTo }) {
     const [editingPost, setEditingPost] = useState(null);
@@ -13,6 +14,7 @@ export default function FeedMyPosts({ navigateTo }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('Latest');
   const [showSortMenu, setShowSortMenu] = useState(false);
+  const [expandedImage, setExpandedImage] = useState(null);
   const menuRef = useRef(null);
   const sortMenuRef = useRef(null);
   const feedCategories = ['General','Marketplace','Lost and Found','Roommate Request','Safety Alerts'];
@@ -301,7 +303,12 @@ export default function FeedMyPosts({ navigateTo }) {
             <h3 className="feed-post-title">{post.title}</h3>
             <p className="feed-post-content">{post.content}</p>
             {post.image && (
-              <img src={post.image} alt={post.title} className="feed-post-image" />
+              <img 
+                src={post.image} 
+                alt={post.title} 
+                className="feed-post-image" 
+                onClick={() => setExpandedImage({ url: post.image, alt: post.title })}
+              />
             )}
             <div className="feed-post-tags">
               {post.category && (
@@ -412,6 +419,14 @@ export default function FeedMyPosts({ navigateTo }) {
             </form>
           </div>
         </div>
+      )}
+      
+      {expandedImage && (
+        <ImageModal
+          imageUrl={expandedImage.url}
+          altText={expandedImage.alt}
+          onClose={() => setExpandedImage(null)}
+        />
       )}
     </div>
   );
