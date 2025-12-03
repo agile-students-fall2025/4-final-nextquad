@@ -1,8 +1,5 @@
 const Event = require('../../models/Event');
 
-// Mock user ID (in real app, this would come from authentication)
-const MOCK_USER_ID = process.env.MOCK_USER_ID || 'user123';
-
 /**
  * POST /api/events/:id/survey
  * Submit survey feedback for an event
@@ -10,7 +7,7 @@ const MOCK_USER_ID = process.env.MOCK_USER_ID || 'user123';
 const submitSurvey = async (req, res) => {
   try {
     const { rating, enjoyedAspects, feedback } = req.body;
-    const userId = MOCK_USER_ID; // TODO: Get from auth (req.user.id)
+    const userId = req.user.userId;
     
     // Validation
     if (!rating || rating < 1 || rating > 5) {
@@ -89,7 +86,7 @@ const getEventSurveys = async (req, res) => {
     }
 
     // Check if user is the host
-    const currentUserId = MOCK_USER_ID; // Get from req.user.id
+    const currentUserId = req.user.userId;
     if (!event.isHost(currentUserId)) {
       return res.status(403).json({
         success: false,
@@ -133,7 +130,7 @@ const getEventSurveys = async (req, res) => {
  */
 const checkSurveyStatus = async (req, res) => {
   try {
-    const userId = MOCK_USER_ID; // TODO: Get from auth (req.user.id)
+    const userId = req.user.userId;
     
     // Check if event exists
     const event = await Event.findById(req.params.id);

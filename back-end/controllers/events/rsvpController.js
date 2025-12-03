@@ -1,15 +1,12 @@
 const Event = require('../../models/Event');
 
-// Mock user ID (in real app, this would come from authentication)
-const MOCK_USER_ID = process.env.MOCK_USER_ID || 'user123';
-
 /**
  * POST /api/events/:id/rsvp
  * RSVP to an event
  */
 const rsvpToEvent = async (req, res) => {
   try {
-    const userId = MOCK_USER_ID; // TODO: Get from auth middleware (req.user.id)
+    const userId = req.user.userId;
 
     // Check if event exists
     const event = await Event.findById(req.params.id);
@@ -92,7 +89,7 @@ const rsvpToEvent = async (req, res) => {
  */
 const cancelRSVP = async (req, res) => {
   try {
-    const userId = MOCK_USER_ID; // TODO: Get from auth middleware (req.user.id)
+    const userId = req.user.userId;
 
     // Check if event exists
     const event = await Event.findById(req.params.id);
@@ -151,7 +148,7 @@ const cancelRSVP = async (req, res) => {
  */
 const getEventRSVPs = async (req, res) => {
   try {
-    const userId = MOCK_USER_ID; // TODO: Get from auth middleware (req.user.id)
+    const userId = req.user.userId;
 
     // Check if event exists
     const event = await Event.findById(req.params.id);
@@ -211,7 +208,7 @@ const getEventRSVPs = async (req, res) => {
  */
 const checkRSVPStatus = async (req, res) => {
   try {
-    const userId = MOCK_USER_ID; // TODO: Get from auth middleware (req.user.id)
+    const userId = req.user.userId;
 
     // Check if event exists
     const event = await Event.findById(req.params.id);

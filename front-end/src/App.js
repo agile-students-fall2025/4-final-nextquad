@@ -169,7 +169,8 @@ export default function App() {
       navigateTo('rsvp-confirm', eventId);
     } catch (error) {
       console.error('Error RSVPing to event:', error);
-      alert('Failed to RSVP. Please try again.');
+      // Don't show alert - the event might be past or user not logged in
+      // Error will be shown on the detail page
     }
   };
 

@@ -37,4 +37,12 @@ const UserSchema = new mongoose.Schema({
   },
 });
 
+// Virtual for full name
+UserSchema.virtual('fullName').get(function() {
+  if (this.firstName && this.lastName) {
+    return `${this.firstName} ${this.lastName}`;
+  }
+  return this.email.split('@')[0]; // Use email username as fallback
+});
+
 module.exports = mongoose.model("User", UserSchema);
