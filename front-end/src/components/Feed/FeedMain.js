@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { getAllPosts, togglePostLike, toggleSavePost, feedCategories, deletePost } from '../../services/api';
 import { createReport } from '../../services/api'; 
 import ImageModal from './ImageModal';
+import ImageCarousel from './ImageCarousel';
 import './FeedMain.css';
 
 export default function FeedMain({ navigateTo, isAdmin = false }) {
@@ -304,7 +305,14 @@ export default function FeedMain({ navigateTo, isAdmin = false }) {
             <h3 className="feed-post-title">{post.title}</h3>
             <p className="feed-post-content">{post.content}</p>
             
-            {post.image && (
+            {/* Support both new images array and old single image */}
+            {(post.images && post.images.length > 0) ? (
+              <ImageCarousel 
+                images={post.images} 
+                altText={post.title}
+                onImageClick={({ url, alt }) => setExpandedImage({ url, alt })}
+              />
+            ) : post.image && (
               <img 
                 src={post.image} 
                 alt={post.title} 

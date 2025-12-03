@@ -89,7 +89,7 @@ const getPostById = async (req, res) => {
  */
 const createPost = async (req, res) => {
   try {
-    const { title, content, category, image } = req.body;
+    const { title, content, category, image, images } = req.body;
 
     if (!title || !content) {
       return res.status(400).json({ success: false, error: 'Please provide title and content' });
@@ -120,6 +120,14 @@ const createPost = async (req, res) => {
     const createdAtDate = new Date();
     const authorName = `${currentUser.firstName} ${currentUser.lastName}`;
     
+    // Handle both single image (backward compatibility) and multiple images
+    let postImages = [];
+    if (images && Array.isArray(images) && images.length > 0) {
+      postImages = images;
+    } else if (image) {
+      postImages = [image];
+    }
+    
     const doc = await Post.create({
       id: nextId,
       title,
@@ -128,7 +136,8 @@ const createPost = async (req, res) => {
       category,
       likes: 0,
       commentCount: 0,
-      image: image || null,
+      image: postImages.length > 0 ? postImages[0] : null, // Backward compatibility
+      images: postImages,
       author: {
         name: authorName,
         avatar: currentUser.profileImage || `https://picsum.photos/seed/${currentUser.userId}/50/50`,

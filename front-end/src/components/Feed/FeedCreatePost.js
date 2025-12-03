@@ -7,47 +7,66 @@ export default function FeedCreatePost({ navigateTo, onShowToast }) {
     title: '',
     content: '',
     category: '',
-    image: ''
+    images: []
   });
   const [submitting, setSubmitting] = useState(false);
   const [categoryError, setCategoryError] = useState(false);
-  const [imagePreview, setImagePreview] = useState(null);
+  const [imagePreviews, setImagePreviews] = useState([]);
 
   const categories = ['All','General','Marketplace','Lost and Found','Roommate Request','Safety Alerts'];
 
   const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
+    const files = Array.from(e.target.files);
+    
+    if (formData.images.length + files.length > 5) {
+      if (onShowToast) {
+        onShowToast({ message: 'Maximum 5 images allowed per post', type: 'error' });
+      }
+      return;
+    }
+
+    const validFiles = [];
+    const newPreviews = [];
+
+    for (const file of files) {
       // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
         if (onShowToast) {
-          onShowToast({ message: 'Image size must be less than 5MB', type: 'error' });
+          onShowToast({ message: 'Each image must be less than 5MB', type: 'error' });
         }
-        return;
+        continue;
       }
 
       // Validate file type
       if (!file.type.startsWith('image/')) {
         if (onShowToast) {
-          onShowToast({ message: 'Please upload a valid image file', type: 'error' });
+          onShowToast({ message: 'Please upload valid image files only', type: 'error' });
         }
-        return;
+        continue;
       }
 
       // Convert to base64
       const reader = new FileReader();
       reader.onloadend = () => {
         const base64String = reader.result;
-        setFormData({ ...formData, image: base64String });
-        setImagePreview(base64String);
+        validFiles.push(base64String);
+        newPreviews.push(base64String);
+        
+        if (validFiles.length === files.length || validFiles.length + formData.images.length >= 5) {
+          setFormData(prev => ({ ...prev, images: [...prev.images, ...validFiles] }));
+          setImagePreviews(prev => [...prev, ...newPreviews]);
+        }
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const removeImage = () => {
-    setFormData({ ...formData, image: '' });
-    setImagePreview(null);
+  const removeImage = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index)
+    }));
+    setImagePreviews(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e) => {
@@ -70,7 +89,7 @@ export default function FeedCreatePost({ navigateTo, onShowToast }) {
         title: formData.title,
         content: formData.content,
         category: formData.category,
-        image: formData.image || null
+        images: formData.images.length > 0 ? formData.images : null
       });
       
       // Show success toast
@@ -112,55 +131,92 @@ export default function FeedCreatePost({ navigateTo, onShowToast }) {
       </div>
 
       <form className="event-create-form" onSubmit={handleSubmit}>
-        <div 
-          className="event-create-image-upload" 
-          onClick={() => !imagePreview && document.getElementById('post-image-upload').click()}
-          style={{ cursor: imagePreview ? 'default' : 'pointer' }}
-        >
-          {imagePreview ? (
-            <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-              <img 
-                src={imagePreview} 
-                alt="Preview" 
-                style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }} 
-              />
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  removeImage();
-                }}
-                style={{
-                  position: 'absolute',
-                  top: '8px',
-                  right: '8px',
-                  background: 'rgba(0, 0, 0, 0.6)',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '50%',
-                  width: '32px',
-                  height: '32px',
-                  cursor: 'pointer',
-                  fontSize: '18px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}
-              >
-                ×
-              </button>
+        <div style={{ marginBottom: '20px' }}>
+          <p style={{ fontSize: '15px', fontWeight: '500', marginBottom: '12px', color: '#333' }}>
+            Upload Photos (Optional - Max 5)
+          </p>
+          
+          {/* Image Previews */}
+          {imagePreviews.length > 0 && (
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
+              gap: '12px',
+              marginBottom: '12px'
+            }}>
+              {imagePreviews.map((preview, index) => (
+                <div key={index} style={{ position: 'relative' }}>
+                  <img 
+                    src={preview} 
+                    alt={`Preview ${index + 1}`} 
+                    style={{ 
+                      width: '100%', 
+                      height: '150px', 
+                      objectFit: 'cover', 
+                      borderRadius: '8px',
+                      border: '2px solid #e0e0e0'
+                    }} 
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeImage(index)}
+                    style={{
+                      position: 'absolute',
+                      top: '4px',
+                      right: '4px',
+                      background: 'rgba(0, 0, 0, 0.7)',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '50%',
+                      width: '28px',
+                      height: '28px',
+                      cursor: 'pointer',
+                      fontSize: '16px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 'bold'
+                    }}
+                  >
+                    ×
+                  </button>
+                  <div style={{
+                    position: 'absolute',
+                    bottom: '4px',
+                    left: '4px',
+                    background: 'rgba(0, 0, 0, 0.6)',
+                    color: 'white',
+                    padding: '2px 8px',
+                    borderRadius: '4px',
+                    fontSize: '12px',
+                    fontWeight: '500'
+                  }}>
+                    {index + 1}/{imagePreviews.length}
+                  </div>
+                </div>
+              ))}
             </div>
-          ) : (
-            <>
-              <span style={{ fontSize: '48px' }}>+</span>
-              <p>Upload Photo (Optional)</p>
-            </>
+          )}
+          
+          {/* Upload Button */}
+          {imagePreviews.length < 5 && (
+            <div 
+              className="event-create-image-upload" 
+              onClick={() => document.getElementById('post-image-upload').click()}
+              style={{ cursor: 'pointer', height: '120px' }}
+            >
+              <span style={{ fontSize: '36px' }}>+</span>
+              <p style={{ margin: '8px 0 0 0', fontSize: '14px' }}>
+                {imagePreviews.length === 0 ? 'Add Photos' : `Add More (${imagePreviews.length}/5)`}
+              </p>
+            </div>
           )}
         </div>
         <input
           type="file"
           id="post-image-upload"
           accept="image/*"
+          multiple
           style={{ display: 'none' }}
           onChange={handleImageChange}
         />

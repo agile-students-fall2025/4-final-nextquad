@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { getPostComments, addComment, updateComment, deleteComment, toggleCommentLike, togglePostLike, toggleSavePost } from '../../services/api';
 import ImageModal from './ImageModal';
+import ImageCarousel from './ImageCarousel';
 import './FeedComments.css';
 
 export default function FeedComments({ post, navigateTo, returnToPage = 'main' }) {
@@ -240,9 +241,20 @@ export default function FeedComments({ post, navigateTo, returnToPage = 'main' }
           </div>
           <h3 className="feed-comments-post-title">{postState.title}</h3>
           <p className="feed-comments-post-content">{postState.content}</p>
-          {postState.image && (
+          {(postState.images && postState.images.length > 0) ? (
+            <ImageCarousel 
+              images={postState.images} 
+              altText={postState.title}
+              onImageClick={({ url, alt }) => setExpandedImage({ url, alt })}
+            />
+          ) : postState.image && (
             <img 
               src={postState.image} 
+              alt={postState.title} 
+              className="feed-post-image" 
+              onClick={() => setExpandedImage({ url: postState.image, alt: postState.title })}
+            />
+          )}.image} 
               alt={postState.title} 
               className="feed-post-image" 
               onClick={() => setExpandedImage({ url: postState.image, alt: postState.title })}
