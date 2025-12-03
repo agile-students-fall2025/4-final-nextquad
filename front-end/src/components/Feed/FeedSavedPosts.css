@@ -204,7 +204,19 @@
 .feed-saved-time { margin: 0; font-size: 13px; color: #999; }
 .feed-saved-titleline { margin: 8px 0 12px 0; font-size: 20px; font-weight: 600; color: #333; }
 .feed-saved-content { margin: 0 0 12px 0; font-size: 15px; color: #666; line-height: 1.6; }
-.feed-saved-image { width: 100%; height: 300px; object-fit: cover; border-radius: 8px; margin-bottom: 12px; }
+.feed-saved-image { 
+  width: 100%; 
+  max-height: 400px; 
+  object-fit: contain; 
+  background-color: #f9f9f9;
+  border-radius: 8px; 
+  margin-bottom: 12px;
+  transition: opacity 0.2s;
+}
+
+.feed-saved-image:hover {
+  opacity: 0.95;
+}
 .feed-saved-actions { display: flex; gap: 12px; border-top: 1px solid #f0f0f0; padding-top: 12px; }
 
 /* Three-dot menu styles for My Posts */

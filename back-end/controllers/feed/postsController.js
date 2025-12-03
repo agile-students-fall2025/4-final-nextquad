@@ -9,6 +9,7 @@ const Post = require('../../models/Post');
 const Comment = require('../../models/Comment');
 const PostLike = require('../../models/PostLike');
 const PostSave = require('../../models/PostSave');
+const CommentLike = require('../../models/CommentLike');
 
 /**
  * GET /api/feed/posts
@@ -32,7 +33,7 @@ const getAllPosts = async (req, res) => {
     else if (sort === 'popular') sortSpec = { likes: -1, createdAt: -1 };
 
     const posts = await Post.find(query).sort(sortSpec).lean();
-    const currentUserId = 'user123';
+    const currentUserId = req.user.userId;
     const result = await Promise.all(
       posts.map(async (p) => {
         const count = await Comment.countDocuments({ postId: p.id });
@@ -70,7 +71,7 @@ const getPostById = async (req, res) => {
     }
 
     const count = await Comment.countDocuments({ postId: post.id });
-    const currentUserId = 'user123';
+    const currentUserId = req.user.userId;
     const liked = await PostLike.findOne({ postId: post.id, userId: currentUserId }).lean();
     const saved = await PostSave.findOne({ postId: post.id, userId: currentUserId }).lean();
     const data = { ...post, commentCount: count, isLikedByUser: !!liked, isSavedByUser: !!saved, timestamp: formatRelativeTime(new Date(post.createdAt)) };
@@ -88,7 +89,7 @@ const getPostById = async (req, res) => {
  */
 const createPost = async (req, res) => {
   try {
-    const { title, content, category, image } = req.body;
+    const { title, content, category, image, images } = req.body;
 
     if (!title || !content) {
       return res.status(400).json({ success: false, error: 'Please provide title and content' });
@@ -100,10 +101,33 @@ const createPost = async (req, res) => {
       return res.status(400).json({ success: false, error: 'Invalid category' });
     }
 
+    const currentUser = req.user;
+    
+    // Check if user has completed profile setup
+    if (!currentUser.firstName || !currentUser.lastName) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Please complete your profile setup before creating posts',
+        requiresProfileSetup: true
+      });
+    }
+
     const last = await Post.findOne().sort({ id: -1 }).lean();
     const nextId = last ? last.id + 1 : 1;
+    
+    console.log(`Creating new post. Last post ID: ${last?.id || 'none'}, Next ID: ${nextId}`);
 
     const createdAtDate = new Date();
+    const authorName = `${currentUser.firstName} ${currentUser.lastName}`;
+    
+    // Handle both single image (backward compatibility) and multiple images
+    let postImages = [];
+    if (images && Array.isArray(images) && images.length > 0) {
+      postImages = images;
+    } else if (image) {
+      postImages = [image];
+    }
+    
     const doc = await Post.create({
       id: nextId,
       title,
@@ -112,11 +136,12 @@ const createPost = async (req, res) => {
       category,
       likes: 0,
       commentCount: 0,
-      image: image || null,
+      image: postImages.length > 0 ? postImages[0] : null, // Backward compatibility
+      images: postImages,
       author: {
-        name: 'Current User',
-        avatar: 'https://picsum.photos/seed/currentuser/50/50',
-        userId: 'user123',
+        name: authorName,
+        avatar: currentUser.profileImage || `https://picsum.photos/seed/${currentUser.userId}/50/50`,
+        userId: currentUser.userId,
       },
       isLikedByUser: false,
       isSavedByUser: false,
@@ -148,7 +173,7 @@ const updatePost = async (req, res) => {
       return res.status(404).json({ success: false, error: 'Post not found' });
     }
 
-    const currentUserId = 'user123';
+    const currentUserId = req.user.userId;
     if (post.author?.userId !== currentUserId) {
       return res.status(403).json({ success: false, error: 'You are not authorized to update this post' });
     }
@@ -187,21 +212,52 @@ const deletePost = async (req, res) => {
       return res.status(404).json({ success: false, error: 'Post not found' });
     }
 
-    const currentUserId = 'user123';
-    const isAdmin = true; // temporary for testing parity
+    const currentUserId = req.user.userId;
+    const isAdmin = false; // TODO: check if user has admin role
     if (post.author?.userId !== currentUserId && !isAdmin) {
       return res.status(403).json({ success: false, error: 'You are not authorized to delete this post' });
     }
 
-    await Post.deleteOne({ id: postId });
-    await Comment.deleteMany({ postId });
-    await PostSave.deleteMany({ postId });
-    await PostLike.deleteMany({ postId });
+    console.log(`[deletePost] Starting deletion for post ${postId}`);
 
+    // First, get all comment IDs for this post (before deleting them)
+    const comments = await Comment.find({ postId: postId }).select('id').lean();
+    const commentIds = comments.map(c => c.id);
+    
+    console.log(`[deletePost] Found ${comments.length} comments for post ${postId}`);
+    if (commentIds.length > 0) {
+      console.log(`[deletePost] Comment IDs: ${commentIds.join(', ')}`);
+    }
+
+    // Delete the post
+    const deletedPost = await Post.deleteOne({ id: postId });
+    console.log(`[deletePost] Deleted post: ${deletedPost.deletedCount} document(s)`);
+    
+    // Delete all comments for this post
+    const deletedComments = await Comment.deleteMany({ postId: postId });
+    console.log(`[deletePost] Deleted ${deletedComments.deletedCount} comments for post ${postId}`);
+    
+    // Delete all saves for this post
+    const deletedSaves = await PostSave.deleteMany({ postId: postId });
+    console.log(`[deletePost] Deleted ${deletedSaves.deletedCount} saves`);
+    
+    // Delete all likes for this post
+    const deletedPostLikes = await PostLike.deleteMany({ postId: postId });
+    console.log(`[deletePost] Deleted ${deletedPostLikes.deletedCount} post likes`);
+    
+    // Delete all comment likes for those comments
+    if (commentIds.length > 0) {
+      const deletedCommentLikes = await CommentLike.deleteMany({ commentId: { $in: commentIds } });
+      console.log(`[deletePost] Deleted ${deletedCommentLikes.deletedCount} comment likes`);
+    }
+
+    console.log(`✅ [deletePost] Successfully deleted post ${postId} and all associated data`);
+    
     res.status(200).json({ success: true, message: 'Post deleted successfully' });
   } catch (error) {
-    console.error('[deletePost] error:', error);
-    res.status(500).json({ success: false, error: 'Server error while deleting post' });
+    console.error('[deletePost] ERROR:', error);
+    console.error('[deletePost] Error stack:', error.stack);
+    res.status(500).json({ success: false, error: `Server error while deleting post: ${error.message}` });
   }
 };
 
@@ -212,7 +268,7 @@ const deletePost = async (req, res) => {
 const toggleSavePost = async (req, res) => {
   try {
     const postId = parseInt(req.params.id, 10);
-    const currentUserId = 'user123';
+    const currentUserId = req.user.userId;
     const post = await Post.findOne({ id: postId });
     if (!post) {
       return res.status(404).json({ success: false, error: 'Post not found' });
@@ -238,7 +294,7 @@ const toggleSavePost = async (req, res) => {
  */
 const getSavedPosts = async (req, res) => {
   try {
-    const currentUserId = 'user123';
+    const currentUserId = req.user.userId;
     const saves = await PostSave.find({ userId: currentUserId }).lean();
     const postIds = saves.map(s => s.postId);
     if (postIds.length === 0) {

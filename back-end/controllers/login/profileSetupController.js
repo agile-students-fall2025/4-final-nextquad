@@ -7,13 +7,13 @@ const jwt = require("jsonwebtoken");
  * Saves user profile to database.
  */
 const setupProfile = async (req, res) => {
-  const { firstName, lastName, nyuEmail, graduationYear, profileImage } = req.body;
+  const { email, firstName, lastName, nyuEmail, graduationYear, profileImage } = req.body;
 
   // Validate required fields
-  if (!firstName || !lastName || !nyuEmail || !graduationYear) {
+  if (!email || !firstName || !lastName || !nyuEmail || !graduationYear) {
     return res.status(400).json({
       success: false,
-      error: "First name, last name, NYU email, and graduation year are required.",
+      error: "Email, first name, last name, NYU email, and graduation year are required.",
     });
   }
 
@@ -35,59 +35,60 @@ const setupProfile = async (req, res) => {
   }
 
   try {
-    // Get user ID from token
-    const authHeader = req.headers.authorization;
-    const token = authHeader && authHeader.split(" ")[1];
+    // Find user by email and update profile
+    const user = await User.findOne({ email: email.toLowerCase() });
     
-    if (!token) {
-      return res.status(401).json({
-        success: false,
-        error: "No token provided.",
-      });
-    }
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || "dev_jwt_secret");
-    const userId = decoded.userId;
-
-    // Update user in database
-    const updatedUser = await User.findByIdAndUpdate(
-      userId,
-      {
-        firstName,
-        lastName,
-        nyuEmail,
-        graduationYear: gradYearNum,
-        profileImage: profileImage || null,
-      },
-      { new: true }
-    );
-
-    if (!updatedUser) {
+    if (!user) {
       return res.status(404).json({
         success: false,
-        error: "User not found.",
+        error: "User not found. Please sign up first.",
       });
     }
 
-    console.log("✅ Profile setup saved:", updatedUser.email);
+    // Update user profile
+    user.firstName = firstName;
+    user.lastName = lastName;
+    user.nyuEmail = nyuEmail;
+    user.graduationYear = gradYearNum;
+    if (profileImage) {
+      user.profileImage = profileImage;
+    }
+    
+    await user.save();
+
+    // Generate new JWT token with updated user info
+    const token = jwt.sign(
+      { 
+        userId: user._id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName
+      },
+      process.env.JWT_SECRET || "dev_jwt_secret",
+      { expiresIn: "5d" }
+    );
+
+    console.log("✅ Profile setup successful for:", user.email);
 
     return res.status(200).json({
       success: true,
       message: "Profile setup successful.",
+      token,
       data: {
-        id: updatedUser._id,
-        email: updatedUser.email,
-        firstName: updatedUser.firstName,
-        lastName: updatedUser.lastName,
-        nyuEmail: updatedUser.nyuEmail,
-        graduationYear: updatedUser.graduationYear,
+        id: user._id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        nyuEmail: user.nyuEmail,
+        graduationYear: user.graduationYear,
+        profileImage: user.profileImage,
       },
     });
   } catch (err) {
-    console.error("Profile setup error:", err.message);
     return res.status(500).json({
       success: false,
-      error: "Server error.",
+      error: "Server error during profile setup.",
+      message: err.message,
     });
   }
 };

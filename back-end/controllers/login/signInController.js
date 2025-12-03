@@ -40,7 +40,12 @@ const signIn = async (req, res) => {
 
     // Step 4: Create JWT token
     const token = jwt.sign(
-      { userId: user._id },
+      { 
+        userId: user._id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName
+      },
       process.env.JWT_SECRET || "dev_jwt_secret",
       { expiresIn: "5d" }
     );
@@ -53,6 +58,11 @@ const signIn = async (req, res) => {
       user: {
         id: user._id,
         email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        nyuEmail: user.nyuEmail,
+        graduationYear: user.graduationYear,
+        profileImage: user.profileImage,
         createdAt: user.createdAt,
       },
     });

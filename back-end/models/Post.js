@@ -10,7 +10,8 @@ const PostSchema = new mongoose.Schema(
     category: { type: String },
     likes: { type: Number, default: 0 },
     commentCount: { type: Number, default: 0 },
-    image: { type: String, default: null },
+    image: { type: String, default: null }, // Deprecated - keeping for backward compatibility
+    images: { type: [String], default: [] }, // New: Array of image URLs/base64
     author: {
       name: String,
       avatar: String,

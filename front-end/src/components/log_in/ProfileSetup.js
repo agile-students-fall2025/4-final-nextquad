@@ -43,23 +43,28 @@ export default function ProfileSetup({ setActiveModule }) {
       return;
     }
 
+    // Get the email from signup
+    const signupEmail = localStorage.getItem("signupEmail");
+    if (!signupEmail) {
+      alert("Session expired. Please sign up again.");
+      return;
+    }
+
     try {
       setLoading(true);
 
-      // Get token from localStorage
-      const token = localStorage.getItem("token");
-
-      const res = await fetch("http://localhost:3000/api/auth/profile-setup", {
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/auth/profile-setup`, {
         method: "POST",
         headers: { 
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
+          "Content-Type": "application/json"
         },
         body: JSON.stringify({
+          email: signupEmail,
           firstName: first,
           lastName: last,
           nyuEmail,
-          graduationYear: gradYear
+          graduationYear: gradYear,
+          profileImage: profileImage
         }),
       });
 
@@ -69,11 +74,16 @@ export default function ProfileSetup({ setActiveModule }) {
         throw new Error(data.error || data.message || "Profile setup failed.");
       }
 
-      // Update stored user info with name
-      const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
-      storedUser.firstName = first;
-      storedUser.lastName = last;
-      localStorage.setItem("user", JSON.stringify(storedUser));
+      // Store JWT token and user info
+      if (data.token) {
+        localStorage.setItem("jwt", data.token);
+      }
+      if (data.data) {
+        localStorage.setItem("user", JSON.stringify(data.data));
+      }
+      
+      // Clean up signup email
+      localStorage.removeItem("signupEmail");
 
       alert("Profile setup complete!");
       setActiveModule("events");

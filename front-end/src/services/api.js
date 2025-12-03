@@ -9,31 +9,31 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000/api
  */
 const fetchAPI = async (endpoint, options = {}) => {
   try {
-    // Get token from localStorage
-    const token = localStorage.getItem('token');
-    
-    // Build headers with token if available
-    const headers = {
-      'Content-Type': 'application/json',
-      'Cache-Control': 'no-cache',
-      ...options.headers,
-    };
-    
-    // Add Authorization header if token exists
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
+    // Get JWT token from localStorage if it exists
+    const token = localStorage.getItem('jwt');
     
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      headers,
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        ...options.headers,
+      },
       cache: 'no-store', // prevent caching
       ...options,
     });
 
-    const data = await response.json();
+    // Try to parse JSON, but handle cases where response isn't JSON
+    let data;
+    try {
+      data = await response.json();
+    } catch (parseError) {
+      // If JSON parsing fails, throw error with status text
+      throw new Error(`${response.status}: ${response.statusText}`);
+    }
 
     if (!response.ok) {
-      throw new Error(data.message || data.error || 'API request failed');
+      throw new Error(data.error || data.message || `Request failed with status ${response.status}`);
     }
 
     return data;

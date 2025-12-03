@@ -8,7 +8,7 @@ const PostLike = require('../../models/PostLike');
 const togglePostLike = async (req, res) => {
   try {
     const postId = parseInt(req.params.id, 10);
-    const currentUserId = 'user123';
+    const currentUserId = req.user.userId;
     const post = await Post.findOne({ id: postId });
     if (!post) {
       return res.status(404).json({ success: false, error: 'Post not found' });

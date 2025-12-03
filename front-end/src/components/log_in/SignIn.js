@@ -30,7 +30,7 @@ export default function SignIn({ setActiveModule, setCurrentPage }) {
     try {
       setLoading(true);
 
-      const res = await fetch("http://localhost:3000/api/auth/signin", {
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/auth/signin`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -51,14 +51,15 @@ export default function SignIn({ setActiveModule, setCurrentPage }) {
         return;
       }
 
-      // Login successful - Store token and user info
+      // Store JWT token and user info
       if (data.token) {
-        localStorage.setItem("token", data.token);
+        localStorage.setItem("jwt", data.token);
       }
       if (data.user) {
         localStorage.setItem("user", JSON.stringify(data.user));
       }
-      
+
+      // Login successful
       setActiveModule("events");
     } catch (err) {
       setGeneralError(err.message || "Unexpected network error.");

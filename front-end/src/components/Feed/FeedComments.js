@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { getPostComments, addComment, updateComment, deleteComment, toggleCommentLike, togglePostLike, toggleSavePost } from '../../services/api';
+import ImageModal from './ImageModal';
+import ImageCarousel from './ImageCarousel';
 import './FeedComments.css';
 
 export default function FeedComments({ post, navigateTo, returnToPage = 'main' }) {
@@ -19,11 +21,15 @@ export default function FeedComments({ post, navigateTo, returnToPage = 'main' }
   const [editingComment, setEditingComment] = useState(null);
   const [editText, setEditText] = useState('');
   const [savingEdit, setSavingEdit] = useState(false);
+  const [expandedImage, setExpandedImage] = useState(null);
   const [sortBy, setSortBy] = useState('Newest');
   const [showSortMenu, setShowSortMenu] = useState(false);
   const menuRef = useRef(null);
   const sortMenuRef = useRef(null);
-  const currentUserId = 'user123'; // Mock current user
+  
+  // Get current user ID from localStorage
+  const userData = localStorage.getItem('user');
+  const currentUserId = userData ? JSON.parse(userData).id : null;
 
   // Update local post state when prop changes
   useEffect(() => {
@@ -109,11 +115,6 @@ export default function FeedComments({ post, navigateTo, returnToPage = 'main' }
       const response = await toggleSavePost(postState.id);
       if (response.success) {
         const isSaved = response.data.isSavedByUser;
-        setSavedIds(prev => {
-          const newIds = isSaved ? [...prev, postState.id] : prev.filter(id => id !== postState.id);
-          localStorage.setItem('savedPostIds', JSON.stringify(newIds));
-          return newIds;
-        });
         setPostState(prev => ({
           ...prev,
           isSavedByUser: isSaved
@@ -240,8 +241,19 @@ export default function FeedComments({ post, navigateTo, returnToPage = 'main' }
           </div>
           <h3 className="feed-comments-post-title">{postState.title}</h3>
           <p className="feed-comments-post-content">{postState.content}</p>
-          {postState.image && (
-            <img src={postState.image} alt={postState.title} className="feed-post-image" />
+          {(postState.images && postState.images.length > 0) ? (
+            <ImageCarousel 
+              images={postState.images} 
+              altText={postState.title}
+              onImageClick={({ url, alt }) => setExpandedImage({ url, alt })}
+            />
+          ) : postState.image && (
+            <img 
+              src={postState.image} 
+              alt={postState.title} 
+              className="feed-post-image" 
+              onClick={() => setExpandedImage({ url: postState.image, alt: postState.title })}
+            />
           )}
 
           <div className="feed-post-tags">
@@ -270,7 +282,7 @@ export default function FeedComments({ post, navigateTo, returnToPage = 'main' }
               className="feed-post-action-button"
               onClick={handleSavePost}
             >
-              {savedIds.includes(postState.id) ? '✓ Saved' : 'Save'}
+              {postState.isSavedByUser ? '✓ Saved' : 'Save'}
             </button>
           </div>
         </div>
@@ -416,6 +428,14 @@ export default function FeedComments({ post, navigateTo, returnToPage = 'main' }
             </form>
           </div>
         </div>
+      )}
+      
+      {expandedImage && (
+        <ImageModal
+          imageUrl={expandedImage.url}
+          altText={expandedImage.alt}
+          onClose={() => setExpandedImage(null)}
+        />
       )}
     </div>
   );

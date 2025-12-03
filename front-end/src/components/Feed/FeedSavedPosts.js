@@ -1,49 +1,35 @@
 import './FeedSavedPosts.css';
 import { useState, useEffect, useRef } from 'react';
-import { getPostById, togglePostLike } from '../../services/api';
+import { getSavedPosts, togglePostLike, toggleSavePost } from '../../services/api';
+import ImageCarousel from './ImageCarousel';
+import ImageModal from './ImageModal';
 
 export default function FeedSavedPosts({ navigateTo }) {
-  const [savedIds, setSavedIds] = useState(() => JSON.parse(localStorage.getItem('savedPostIds') || '[]'));
   const [savedPosts, setSavedPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('Latest');
   const [showSortMenu, setShowSortMenu] = useState(false);
+  const [expandedImage, setExpandedImage] = useState(null);
   const sortMenuRef = useRef(null);
 
   useEffect(() => {
     const fetchSavedPosts = async () => {
       setLoading(true);
       try {
-        // Fetch each saved post from backend
-        const posts = await Promise.all(
-          savedIds.map(async (id) => {
-            try {
-              const response = await getPostById(id);
-              return response.data;
-            } catch (err) {
-              console.error(`Error fetching post ${id}:`, err);
-              return null;
-            }
-          })
-        );
-        // Filter out null values (posts that failed to fetch)
-        setSavedPosts(posts.filter(p => p !== null));
+        // Fetch saved posts from backend (user-specific)
+        const response = await getSavedPosts();
+        setSavedPosts(response.data || []);
       } catch (err) {
         console.error('Error fetching saved posts:', err);
+        setSavedPosts([]);
       } finally {
         setLoading(false);
       }
     };
 
-    if (savedIds.length > 0) {
-      fetchSavedPosts();
-    } else {
-      // Clear the list when there are no saved IDs to reflect immediately in UI
-      setSavedPosts([]);
-      setLoading(false);
-    }
-  }, [savedIds]);
+    fetchSavedPosts();
+  }, []);
 
   // Close sort menu when clicking outside
   useEffect(() => {
@@ -184,8 +170,20 @@ export default function FeedSavedPosts({ navigateTo }) {
             </div>
             <h3 className="feed-saved-titleline">{post.title}</h3>
             <p className="feed-saved-content">{post.content}</p>
-            {post.image && (
-              <img src={post.image} alt={post.title} className="feed-saved-image" />
+            {(post.images && post.images.length > 0) ? (
+              <ImageCarousel 
+                images={post.images} 
+                altText={post.title}
+                onImageClick={({ url, alt }) => setExpandedImage({ url, alt })}
+              />
+            ) : post.image && (
+              <img 
+                src={post.image} 
+                alt={post.title} 
+                className="feed-saved-image" 
+                onClick={() => setExpandedImage({ url: post.image, alt: post.title })}
+                style={{ cursor: 'pointer' }}
+              />
             )}
 
             <div className="feed-post-tags">
@@ -211,18 +209,33 @@ export default function FeedSavedPosts({ navigateTo }) {
               >
                 {post.isLikedByUser ? '❤️' : '🤍'} {post.likes}
               </button>
-              <button className="feed-post-action-button" onClick={() => {
-                const key = 'savedPostIds';
-                const next = savedIds.filter(id => id !== post.id);
-                localStorage.setItem(key, JSON.stringify(next));
-                // Update both the savedIds (source of truth) and the rendered list immediately
-                setSavedIds(next);
-                setSavedPosts(prev => prev.filter(p => p.id !== post.id));
-              }}>Remove</button>
+              <button 
+                className="feed-post-action-button" 
+                onClick={async () => {
+                  try {
+                    await toggleSavePost(post.id);
+                    // Remove from local state after successful unsave
+                    setSavedPosts(prev => prev.filter(p => p.id !== post.id));
+                  } catch (err) {
+                    console.error('Error removing saved post:', err);
+                    alert('Failed to remove saved post');
+                  }
+                }}
+              >
+                Remove
+              </button>
             </div>
           </div>
         ))}
       </div>
+      
+      {expandedImage && (
+        <ImageModal
+          imageUrl={expandedImage.url}
+          altText={expandedImage.alt}
+          onClose={() => setExpandedImage(null)}
+        />
+      )}
     </div>
   );
 }

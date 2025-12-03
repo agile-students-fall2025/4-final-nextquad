@@ -2,6 +2,8 @@ import './FeedSavedPosts.css'; // Reuse the same styles
 import { useState, useEffect, useRef } from 'react';
 import { getAllPosts, togglePostLike, deletePost } from '../../services/api';
 import { updatePost } from '../../services/api';
+import ImageModal from './ImageModal';
+import ImageCarousel from './ImageCarousel';
 
 export default function FeedMyPosts({ navigateTo }) {
     const [editingPost, setEditingPost] = useState(null);
@@ -13,6 +15,7 @@ export default function FeedMyPosts({ navigateTo }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('Latest');
   const [showSortMenu, setShowSortMenu] = useState(false);
+  const [expandedImage, setExpandedImage] = useState(null);
   const menuRef = useRef(null);
   const sortMenuRef = useRef(null);
   const feedCategories = ['General','Marketplace','Lost and Found','Roommate Request','Safety Alerts'];
@@ -52,12 +55,22 @@ export default function FeedMyPosts({ navigateTo }) {
     const fetchMyPosts = async () => {
       setLoading(true);
       try {
-        // Fetch all posts and filter by current user (user123)
+        // Get current user ID from localStorage
+        const userData = localStorage.getItem('user');
+        const currentUserId = userData ? JSON.parse(userData).id : null;
+        
+        if (!currentUserId) {
+          console.error('No user logged in');
+          setLoading(false);
+          return;
+        }
+
+        // Fetch all posts and filter by current user
         const response = await getAllPosts();
         const allPosts = response.data || [];
         
-        // Filter posts created by current user (user123)
-        const userPosts = allPosts.filter(post => post.author.userId === 'user123');
+        // Filter posts created by current user
+        const userPosts = allPosts.filter(post => post.author.userId === currentUserId);
         setMyPosts(userPosts);
       } catch (err) {
         console.error('Error fetching my posts:', err);
@@ -89,12 +102,24 @@ export default function FeedMyPosts({ navigateTo }) {
   const handleDeletePost = async (postId) => {
     if (window.confirm('Are you sure you want to delete this post? This action cannot be undone.')) {
       try {
-        await deletePost(postId);
-        setMyPosts(prevPosts => prevPosts.filter(post => post.id !== postId));
-        setOpenMenuId(null);
+        const response = await deletePost(postId);
+        
+        // Check if deletion was successful
+        if (response && response.success) {
+          // Only remove from UI if deletion succeeded
+          setMyPosts(prevPosts => prevPosts.filter(post => post.id !== postId));
+          setOpenMenuId(null);
+          // Also update main feed if available
+          if (window.updateFeedMainAfterDelete) {
+            window.updateFeedMainAfterDelete(postId);
+          }
+        } else {
+          alert(`Failed to delete post: ${response?.error || 'Unknown error'}`);
+        }
       } catch (err) {
         console.error('Error deleting post:', err);
-        alert('Failed to delete post. Please try again.');
+        alert(`Failed to delete post: ${err.message}`);
+        // Don't remove from UI if deletion failed
       }
     }
   };
@@ -278,8 +303,19 @@ export default function FeedMyPosts({ navigateTo }) {
             </div>
             <h3 className="feed-post-title">{post.title}</h3>
             <p className="feed-post-content">{post.content}</p>
-            {post.image && (
-              <img src={post.image} alt={post.title} className="feed-post-image" />
+            {(post.images && post.images.length > 0) ? (
+              <ImageCarousel 
+                images={post.images} 
+                altText={post.title}
+                onImageClick={({ url, alt }) => setExpandedImage({ url, alt })}
+              />
+            ) : post.image && (
+              <img 
+                src={post.image} 
+                alt={post.title} 
+                className="feed-post-image" 
+                onClick={() => setExpandedImage({ url: post.image, alt: post.title })}
+              />
             )}
             <div className="feed-post-tags">
               {post.category && (
@@ -308,24 +344,58 @@ export default function FeedMyPosts({ navigateTo }) {
           <div className="feed-edit-modal">
             <h2>Edit Post</h2>
             <form onSubmit={handleEditFormSubmit}>
-              <div
-                className="event-create-image-upload"
-                style={{ marginBottom: '18px' }}
-                onClick={() => alert('Photo uploads not supported yet.')}
-              >
-                <span style={{ fontSize: '48px' }}>+</span>
-                <p>Upload Photo (Optional)</p>
-                {editForm.image && (
-                  <div style={{ marginTop: '10px' }}>
-                    <img src={editForm.image} alt="Post" style={{ maxWidth: '100%', maxHeight: '180px', borderRadius: '8px' }} />
+              <div style={{ marginBottom: '18px' }}>
+                <p style={{ fontSize: '14px', fontWeight: '500', marginBottom: '8px', color: '#555' }}>
+                  Upload Photo (Optional)
+                </p>
+                {editForm.image ? (
+                  <div style={{ position: 'relative' }}>
+                    <img 
+                      src={editForm.image} 
+                      alt="Post preview" 
+                      style={{ 
+                        width: '100%', 
+                        maxHeight: '200px', 
+                        objectFit: 'contain',
+                        borderRadius: '8px',
+                        backgroundColor: '#f9f9f9',
+                        border: '1px solid #e0e0e0'
+                      }} 
+                    />
                     <button
                       type="button"
-                      className="feed-edit-cancel"
-                      style={{ marginTop: '8px' }}
-                      onClick={(e) => { e.stopPropagation(); setEditForm(f => ({ ...f, image: '' })); }}
+                      onClick={(e) => { 
+                        e.stopPropagation(); 
+                        setEditForm(f => ({ ...f, image: '' })); 
+                      }}
+                      style={{
+                        marginTop: '8px',
+                        padding: '6px 12px',
+                        background: '#fee',
+                        color: '#c53030',
+                        border: '1px solid #fca',
+                        borderRadius: '6px',
+                        fontSize: '13px',
+                        cursor: 'pointer',
+                        fontWeight: '500'
+                      }}
                     >
-                      Remove Image
+                      🗑️ Remove Image
                     </button>
+                  </div>
+                ) : (
+                  <div 
+                    style={{ 
+                      border: '2px dashed #ddd',
+                      borderRadius: '8px',
+                      padding: '20px',
+                      textAlign: 'center',
+                      color: '#999',
+                      fontSize: '14px',
+                      backgroundColor: '#fafafa'
+                    }}
+                  >
+                    Photo upload not yet supported
                   </div>
                 )}
               </div>
@@ -390,6 +460,14 @@ export default function FeedMyPosts({ navigateTo }) {
             </form>
           </div>
         </div>
+      )}
+      
+      {expandedImage && (
+        <ImageModal
+          imageUrl={expandedImage.url}
+          altText={expandedImage.alt}
+          onClose={() => setExpandedImage(null)}
+        />
       )}
     </div>
   );

@@ -123,11 +123,43 @@
   margin-bottom: 24px;
 }
 
+.event-create-categories.error {
+  padding: 16px;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  animation: shake 0.4s ease;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-8px); }
+  75% { transform: translateX(8px); }
+}
+
 .event-create-categories-title {
   font-size: 16px;
   font-weight: 600;
   margin-bottom: 12px;
   color: #333;
+}
+
+.event-create-categories.error .event-create-categories-title {
+  color: #dc2626;
+}
+
+.category-required-text {
+  color: #dc2626;
+  font-size: 14px;
+  font-weight: 500;
+  margin-left: 8px;
+}
+
+.category-error-message {
+  color: #dc2626;
+  font-size: 14px;
+  margin: 0 0 12px 0;
+  font-weight: 500;
 }
 
 .event-create-categories-list {

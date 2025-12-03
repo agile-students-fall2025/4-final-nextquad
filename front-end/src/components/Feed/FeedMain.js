@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { getAllPosts, togglePostLike, toggleSavePost, feedCategories, deletePost } from '../../services/api';
 import { createReport } from '../../services/api'; 
+import ImageModal from './ImageModal';
+import ImageCarousel from './ImageCarousel';
 import './FeedMain.css';
 
 export default function FeedMain({ navigateTo, isAdmin = false }) {
@@ -12,14 +14,7 @@ export default function FeedMain({ navigateTo, isAdmin = false }) {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  // Track saved post ids locally and persist to localStorage
-  const [savedIds, setSavedIds] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem('savedPostIds') || '[]');
-    } catch {
-      return [];
-    }
-  });
+  const [expandedImage, setExpandedImage] = useState(null);
   const isFetchingRef = useRef(false);
 
   // Fetch posts from backend - wrapped in useCallback
@@ -60,15 +55,6 @@ export default function FeedMain({ navigateTo, isAdmin = false }) {
     fetchPosts();
   }, [fetchPosts]);
 
-  // Persist savedIds to localStorage when they change
-  useEffect(() => {
-    try {
-      localStorage.setItem('savedPostIds', JSON.stringify(savedIds));
-    } catch (e) {
-      console.error('Failed to persist saved posts:', e);
-    }
-  }, [savedIds]);
-
   const handleLike = async (postId) => {
     try {
       const response = await togglePostLike(postId);
@@ -95,8 +81,12 @@ export default function FeedMain({ navigateTo, isAdmin = false }) {
         )
       );
     };
+    window.updateFeedMainAfterDelete = (deletedPostId) => {
+      setPosts(prevPosts => prevPosts.filter(post => post.id !== deletedPostId));
+    };
     return () => {
       delete window.updateFeedMainPost;
+      delete window.updateFeedMainAfterDelete;
     };
   }, []);
 
@@ -315,8 +305,20 @@ export default function FeedMain({ navigateTo, isAdmin = false }) {
             <h3 className="feed-post-title">{post.title}</h3>
             <p className="feed-post-content">{post.content}</p>
             
-            {post.image && (
-              <img src={post.image} alt={post.title} className="feed-post-image" />
+            {/* Support both new images array and old single image */}
+            {(post.images && post.images.length > 0) ? (
+              <ImageCarousel 
+                images={post.images} 
+                altText={post.title}
+                onImageClick={({ url, alt }) => setExpandedImage({ url, alt })}
+              />
+            ) : post.image && (
+              <img 
+                src={post.image} 
+                alt={post.title} 
+                className="feed-post-image" 
+                onClick={() => setExpandedImage({ url: post.image, alt: post.title })}
+              />
             )}
 
             <div className="feed-post-tags">
@@ -356,9 +358,7 @@ export default function FeedMain({ navigateTo, isAdmin = false }) {
             const response = await toggleSavePost(post.id);
             if (response.success) {
               const isSaved = response.data.isSavedByUser;
-              setSavedIds(prev => {
-                return isSaved ? [...prev, post.id] : prev.filter(id => id !== post.id);
-              });
+              // Update the post's saved status in the UI
               setPosts(prevPosts => prevPosts.map(p => p.id === post.id ? { ...p, isSavedByUser: isSaved } : p));
             }
           } catch (error) {
@@ -366,7 +366,7 @@ export default function FeedMain({ navigateTo, isAdmin = false }) {
           }
         }}
       >
-        {savedIds.includes(post.id) ? '✓ Saved' : 'Save'}
+        {post.isSavedByUser ? '✓ Saved' : 'Save'}
       </button>
     </>
   )}
@@ -398,6 +398,14 @@ export default function FeedMain({ navigateTo, isAdmin = false }) {
           </div>
         ))}
       </div>
+      
+      {expandedImage && (
+        <ImageModal
+          imageUrl={expandedImage.url}
+          altText={expandedImage.alt}
+          onClose={() => setExpandedImage(null)}
+        />
+      )}
     </div>
   );
 }

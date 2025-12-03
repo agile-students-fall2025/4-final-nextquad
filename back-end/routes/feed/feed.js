@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const authenticateToken = require('../../middleware/authenticateToken');
 
 // Import controllers
 const {
@@ -29,24 +30,24 @@ const {
 router.get('/categories', getCategories);
 
 // Post routes
-router.get('/posts', getAllPosts);
-router.get('/posts/:id', getPostById);
-router.post('/posts', createPost);
-router.put('/posts/:id', updatePost);
-router.delete('/posts/:id', deletePost);
+router.get('/posts', authenticateToken, getAllPosts);
+router.get('/posts/:id', authenticateToken, getPostById);
+router.post('/posts', authenticateToken, createPost);
+router.put('/posts/:id', authenticateToken, updatePost);
+router.delete('/posts/:id', authenticateToken, deletePost);
 
 // Saved posts routes
-router.get('/saved', getSavedPosts);
-router.post('/posts/:id/save', toggleSavePost);
+router.get('/saved', authenticateToken, getSavedPosts);
+router.post('/posts/:id/save', authenticateToken, toggleSavePost);
 
 // Like routes
-router.post('/posts/:id/like', togglePostLike);
+router.post('/posts/:id/like', authenticateToken, togglePostLike);
 
 // Comment routes
-router.get('/posts/:id/comments', getPostComments);
-router.post('/posts/:id/comments', addComment);
-router.put('/comments/:commentId', updateComment);
-router.delete('/comments/:commentId', deleteComment);
-router.post('/comments/:commentId/like', toggleCommentLike);
+router.get('/posts/:id/comments', authenticateToken, getPostComments);
+router.post('/posts/:id/comments', authenticateToken, addComment);
+router.put('/comments/:commentId', authenticateToken, updateComment);
+router.delete('/comments/:commentId', authenticateToken, deleteComment);
+router.post('/comments/:commentId/like', authenticateToken, toggleCommentLike);
 
 module.exports = router;
