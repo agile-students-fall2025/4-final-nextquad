@@ -1,6 +1,8 @@
 const express = require("express");
-const passport = require("passport");
 const router = express.Router();
+
+const authenticateToken = require("../../middleware/authenticateToken");
+
 const {
   getUserSettings,
   updateUserSettings,
@@ -8,16 +10,16 @@ const {
   changeUserPassword,
 } = require("../../controllers/settings/settingsController");
 
-router.get(
-  "/",
-  passport.authenticate("jwt", { session: false }),
-  getUserSettings);
+// Get user settings
+router.get("/", authenticateToken, getUserSettings);
 
-router.put("/",
-  passport.authenticate("jwt", { session: false }),
-  updateUserSettings);
+// Update user settings
+router.put("/", authenticateToken, updateUserSettings);
 
+// Public privacy policy
 router.get("/privacy-policy", getPrivacyPolicy);
-router.post("/change-password", changeUserPassword);
+
+// Change password
+router.put("/change-password", authenticateToken, changeUserPassword);
 
 module.exports = router;
