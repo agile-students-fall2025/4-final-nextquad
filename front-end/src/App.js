@@ -19,6 +19,7 @@ import EventAnalytics from './components/Events/EventAnalytics';
 import FeedMain from './components/Feed/FeedMain';
 import FeedCreatePost from './components/Feed/FeedCreatePost';
 import FeedComments from './components/Feed/FeedComments';
+import Toast from './components/Feed/Toast';
 import FeedSavedPosts from './components/Feed/FeedSavedPosts';
 import FeedMyPosts from './components/Feed/FeedMyPosts';
 import FilterDropdown from './components/campus_map/FilterDropdown';
@@ -60,6 +61,7 @@ export default function App() {
   // For now, we track RSVP'd events in local state
   const [rsvpedEventIds, setRsvpedEventIds] = useState([2, 3]); // Mock: user has RSVP'd to events 2 and 3
   const [activeCats, setActiveCats] = useState(new Set());
+  const [toast, setToast] = useState(null); // { message, type }
 
   // Load categories once and set all selected by default
   useEffect(() => {
@@ -289,7 +291,7 @@ export default function App() {
           />
         );
       case 'create':
-        return <FeedCreatePost navigateTo={navigateTo} />;
+        return <FeedCreatePost navigateTo={navigateTo} onShowToast={setToast} />;
       case 'main':
       default:
         return <FeedMain navigateTo={navigateTo} />;
@@ -487,6 +489,13 @@ export default function App() {
         </>
       )}
       <div className="module-body">{renderActiveModule()}</div>
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   );
 }
