@@ -254,11 +254,6 @@ export default function FeedComments({ post, navigateTo, returnToPage = 'main' }
               className="feed-post-image" 
               onClick={() => setExpandedImage({ url: postState.image, alt: postState.title })}
             />
-          )}.image} 
-              alt={postState.title} 
-              className="feed-post-image" 
-              onClick={() => setExpandedImage({ url: postState.image, alt: postState.title })}
-            />
           )}
 
           <div className="feed-post-tags">

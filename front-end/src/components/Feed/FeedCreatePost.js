@@ -15,7 +15,7 @@ export default function FeedCreatePost({ navigateTo, onShowToast }) {
 
   const categories = ['All','General','Marketplace','Lost and Found','Roommate Request','Safety Alerts'];
 
-  const handleImageChange = (e) => {
+  const handleImageChange = async (e) => {
     const files = Array.from(e.target.files);
     
     if (formData.images.length + files.length > 5) {
@@ -26,7 +26,6 @@ export default function FeedCreatePost({ navigateTo, onShowToast }) {
     }
 
     const validFiles = [];
-    const newPreviews = [];
 
     for (const file of files) {
       // Validate file size (max 5MB)
@@ -45,19 +44,21 @@ export default function FeedCreatePost({ navigateTo, onShowToast }) {
         continue;
       }
 
-      // Convert to base64
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = reader.result;
-        validFiles.push(base64String);
-        newPreviews.push(base64String);
-        
-        if (validFiles.length === files.length || validFiles.length + formData.images.length >= 5) {
-          setFormData(prev => ({ ...prev, images: [...prev.images, ...validFiles] }));
-          setImagePreviews(prev => [...prev, ...newPreviews]);
-        }
-      };
-      reader.readAsDataURL(file);
+      // Convert to base64 - wrap in Promise to wait for it
+      const base64String = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      
+      validFiles.push(base64String);
+    }
+
+    // Update state with all valid files at once
+    if (validFiles.length > 0) {
+      setFormData(prev => ({ ...prev, images: [...prev.images, ...validFiles] }));
+      setImagePreviews(prev => [...prev, ...validFiles]);
     }
   };
 

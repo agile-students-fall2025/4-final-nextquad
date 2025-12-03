@@ -1,6 +1,8 @@
 import './FeedSavedPosts.css';
 import { useState, useEffect, useRef } from 'react';
 import { getSavedPosts, togglePostLike, toggleSavePost } from '../../services/api';
+import ImageCarousel from './ImageCarousel';
+import ImageModal from './ImageModal';
 
 export default function FeedSavedPosts({ navigateTo }) {
   const [savedPosts, setSavedPosts] = useState([]);
@@ -8,6 +10,7 @@ export default function FeedSavedPosts({ navigateTo }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('Latest');
   const [showSortMenu, setShowSortMenu] = useState(false);
+  const [expandedImage, setExpandedImage] = useState(null);
   const sortMenuRef = useRef(null);
 
   useEffect(() => {
@@ -167,8 +170,20 @@ export default function FeedSavedPosts({ navigateTo }) {
             </div>
             <h3 className="feed-saved-titleline">{post.title}</h3>
             <p className="feed-saved-content">{post.content}</p>
-            {post.image && (
-              <img src={post.image} alt={post.title} className="feed-saved-image" />
+            {(post.images && post.images.length > 0) ? (
+              <ImageCarousel 
+                images={post.images} 
+                altText={post.title}
+                onImageClick={({ url, alt }) => setExpandedImage({ url, alt })}
+              />
+            ) : post.image && (
+              <img 
+                src={post.image} 
+                alt={post.title} 
+                className="feed-saved-image" 
+                onClick={() => setExpandedImage({ url: post.image, alt: post.title })}
+                style={{ cursor: 'pointer' }}
+              />
             )}
 
             <div className="feed-post-tags">
@@ -213,6 +228,14 @@ export default function FeedSavedPosts({ navigateTo }) {
           </div>
         ))}
       </div>
+      
+      {expandedImage && (
+        <ImageModal
+          imageUrl={expandedImage.url}
+          altText={expandedImage.alt}
+          onClose={() => setExpandedImage(null)}
+        />
+      )}
     </div>
   );
 }
