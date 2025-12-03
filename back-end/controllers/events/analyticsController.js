@@ -1,8 +1,5 @@
 const Event = require('../../models/Event');
 
-// Mock user ID (in real app, this would come from authentication)
-const MOCK_USER_ID = process.env.MOCK_USER_ID || 'user123';
-
 /**
  * GET /api/events/:id/analytics
  * Get analytics data for a specific event (host only)
@@ -159,7 +156,7 @@ const getEventAnalytics = async (req, res) => {
  */
 const checkInToEvent = async (req, res) => {
   try {
-    const userId = MOCK_USER_ID; // Mock user ID - Get from req.user.id
+    const userId = req.user.userId;
     
     // Check if event exists
     const event = await Event.findById(req.params.id);
