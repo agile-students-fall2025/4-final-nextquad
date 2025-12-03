@@ -1,9 +1,12 @@
+const User = require("../../models/User");
+const jwt = require("jsonwebtoken");
+
 /**
  * Handles profile setup after registration.
  * POST /api/auth/profile-setup
- * Simulates saving a new user profile.
+ * Saves user profile to database.
  */
-const setupProfile = (req, res) => {
+const setupProfile = async (req, res) => {
   const { firstName, lastName, nyuEmail, graduationYear, profileImage } = req.body;
 
   // Validate required fields
@@ -31,23 +34,62 @@ const setupProfile = (req, res) => {
     });
   }
 
-  // Simulate saving to database
-  const userProfile = {
-    id: Date.now(),
-    firstName,
-    lastName,
-    nyuEmail,
-    graduationYear: gradYearNum,
-    profileImage: profileImage || null, 
-  };
+  try {
+    // Get user ID from token
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(" ")[1];
+    
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        error: "No token provided.",
+      });
+    }
 
-  console.log("✅ Profile setup received:", userProfile);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || "dev_jwt_secret");
+    const userId = decoded.userId;
 
-  return res.status(201).json({
-    success: true,
-    message: "Profile setup successful.",
-    data: userProfile,
-  });
+    // Update user in database
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      {
+        firstName,
+        lastName,
+        nyuEmail,
+        graduationYear: gradYearNum,
+        profileImage: profileImage || null,
+      },
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({
+        success: false,
+        error: "User not found.",
+      });
+    }
+
+    console.log("✅ Profile setup saved:", updatedUser.email);
+
+    return res.status(200).json({
+      success: true,
+      message: "Profile setup successful.",
+      data: {
+        id: updatedUser._id,
+        email: updatedUser.email,
+        firstName: updatedUser.firstName,
+        lastName: updatedUser.lastName,
+        nyuEmail: updatedUser.nyuEmail,
+        graduationYear: updatedUser.graduationYear,
+      },
+    });
+  } catch (err) {
+    console.error("Profile setup error:", err.message);
+    return res.status(500).json({
+      success: false,
+      error: "Server error.",
+    });
+  }
 };
 
 module.exports = { setupProfile };
