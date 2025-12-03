@@ -7,11 +7,7 @@ const jwt = require("jsonwebtoken");
  * Saves user profile to database.
  */
 const setupProfile = async (req, res) => {
-<<<<<<< HEAD
   const { email, firstName, lastName, nyuEmail, graduationYear, profileImage } = req.body;
-=======
-  const { firstName, lastName, nyuEmail, graduationYear, profileImage } = req.body;
->>>>>>> 4c1edc4e2e63bb50d1734d5c58498aa093f1b114
 
   // Validate required fields
   if (!email || !firstName || !lastName || !nyuEmail || !graduationYear) {
@@ -39,7 +35,6 @@ const setupProfile = async (req, res) => {
   }
 
   try {
-<<<<<<< HEAD
     // Find user by email and update profile
     const user = await User.findOne({ email: email.toLowerCase() });
     
@@ -74,48 +69,10 @@ const setupProfile = async (req, res) => {
     );
 
     console.log("✅ Profile setup successful for:", user.email);
-=======
-    // Get user ID from token
-    const authHeader = req.headers.authorization;
-    const token = authHeader && authHeader.split(" ")[1];
-    
-    if (!token) {
-      return res.status(401).json({
-        success: false,
-        error: "No token provided.",
-      });
-    }
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || "dev_jwt_secret");
-    const userId = decoded.userId;
-
-    // Update user in database
-    const updatedUser = await User.findByIdAndUpdate(
-      userId,
-      {
-        firstName,
-        lastName,
-        nyuEmail,
-        graduationYear: gradYearNum,
-        profileImage: profileImage || null,
-      },
-      { new: true }
-    );
-
-    if (!updatedUser) {
-      return res.status(404).json({
-        success: false,
-        error: "User not found.",
-      });
-    }
-
-    console.log("✅ Profile setup saved:", updatedUser.email);
->>>>>>> 4c1edc4e2e63bb50d1734d5c58498aa093f1b114
 
     return res.status(200).json({
       success: true,
       message: "Profile setup successful.",
-<<<<<<< HEAD
       token,
       data: {
         id: user._id,
@@ -132,22 +89,6 @@ const setupProfile = async (req, res) => {
       success: false,
       error: "Server error during profile setup.",
       message: err.message,
-=======
-      data: {
-        id: updatedUser._id,
-        email: updatedUser.email,
-        firstName: updatedUser.firstName,
-        lastName: updatedUser.lastName,
-        nyuEmail: updatedUser.nyuEmail,
-        graduationYear: updatedUser.graduationYear,
-      },
-    });
-  } catch (err) {
-    console.error("Profile setup error:", err.message);
-    return res.status(500).json({
-      success: false,
-      error: "Server error.",
->>>>>>> 4c1edc4e2e63bb50d1734d5c58498aa093f1b114
     });
   }
 };

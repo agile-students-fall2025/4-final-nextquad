@@ -66,18 +66,8 @@ export default function SignUp({ setActiveModule, setCurrentPage }) {
         return;
       }
 
-<<<<<<< HEAD
       // Store email for profile setup
       localStorage.setItem("signupEmail", email);
-=======
-      // Save token and user info to localStorage
-      if (data.token) {
-        localStorage.setItem("token", data.token);
-      }
-      if (data.user) {
-        localStorage.setItem("user", JSON.stringify(data.user));
-      }
->>>>>>> 4c1edc4e2e63bb50d1734d5c58498aa093f1b114
 
       setSuccess("Account created successfully!");
       setTimeout(() => {

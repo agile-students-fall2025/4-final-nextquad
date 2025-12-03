@@ -9,7 +9,6 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000/api
  */
 const fetchAPI = async (endpoint, options = {}) => {
   try {
-<<<<<<< HEAD
     // Get JWT token from localStorage if it exists
     const token = localStorage.getItem('jwt');
     
@@ -20,25 +19,6 @@ const fetchAPI = async (endpoint, options = {}) => {
         ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
         ...options.headers,
       },
-=======
-    // Get token from localStorage
-    const token = localStorage.getItem('token');
-    
-    // Build headers with token if available
-    const headers = {
-      'Content-Type': 'application/json',
-      'Cache-Control': 'no-cache',
-      ...options.headers,
-    };
-    
-    // Add Authorization header if token exists
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-    
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      headers,
->>>>>>> 4c1edc4e2e63bb50d1734d5c58498aa093f1b114
       cache: 'no-store', // prevent caching
       ...options,
     });
@@ -53,11 +33,7 @@ const fetchAPI = async (endpoint, options = {}) => {
     }
 
     if (!response.ok) {
-<<<<<<< HEAD
       throw new Error(data.error || data.message || `Request failed with status ${response.status}`);
-=======
-      throw new Error(data.message || data.error || 'API request failed');
->>>>>>> 4c1edc4e2e63bb50d1734d5c58498aa093f1b114
     }
 
     return data;

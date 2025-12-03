@@ -53,18 +53,10 @@ export default function ProfileSetup({ setActiveModule }) {
     try {
       setLoading(true);
 
-<<<<<<< HEAD
       const res = await fetch(`${process.env.REACT_APP_API_URL}/auth/profile-setup`, {
-=======
-      // Get token from localStorage
-      const token = localStorage.getItem("token");
-
-      const res = await fetch("http://localhost:3000/api/auth/profile-setup", {
->>>>>>> 4c1edc4e2e63bb50d1734d5c58498aa093f1b114
         method: "POST",
         headers: { 
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
+          "Content-Type": "application/json"
         },
         body: JSON.stringify({
           email: signupEmail,
@@ -82,7 +74,6 @@ export default function ProfileSetup({ setActiveModule }) {
         throw new Error(data.error || data.message || "Profile setup failed.");
       }
 
-<<<<<<< HEAD
       // Store JWT token and user info
       if (data.token) {
         localStorage.setItem("jwt", data.token);
@@ -93,13 +84,6 @@ export default function ProfileSetup({ setActiveModule }) {
       
       // Clean up signup email
       localStorage.removeItem("signupEmail");
-=======
-      // Update stored user info with name
-      const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
-      storedUser.firstName = first;
-      storedUser.lastName = last;
-      localStorage.setItem("user", JSON.stringify(storedUser));
->>>>>>> 4c1edc4e2e63bb50d1734d5c58498aa093f1b114
 
       alert("Profile setup complete!");
       setActiveModule("events");

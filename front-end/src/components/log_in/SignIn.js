@@ -51,25 +51,15 @@ export default function SignIn({ setActiveModule, setCurrentPage }) {
         return;
       }
 
-<<<<<<< HEAD
       // Store JWT token and user info
       if (data.token) {
         localStorage.setItem("jwt", data.token);
-=======
-      // Login successful - Store token and user info
-      if (data.token) {
-        localStorage.setItem("token", data.token);
->>>>>>> 4c1edc4e2e63bb50d1734d5c58498aa093f1b114
       }
       if (data.user) {
         localStorage.setItem("user", JSON.stringify(data.user));
       }
-<<<<<<< HEAD
 
       // Login successful
-=======
-      
->>>>>>> 4c1edc4e2e63bb50d1734d5c58498aa093f1b114
       setActiveModule("events");
     } catch (err) {
       setGeneralError(err.message || "Unexpected network error.");
