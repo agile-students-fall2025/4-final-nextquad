@@ -46,9 +46,15 @@ export default function ProfileSetup({ setActiveModule }) {
     try {
       setLoading(true);
 
+      // Get token from localStorage
+      const token = localStorage.getItem("token");
+
       const res = await fetch("http://localhost:3000/api/auth/profile-setup", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
         body: JSON.stringify({
           firstName: first,
           lastName: last,
@@ -62,6 +68,12 @@ export default function ProfileSetup({ setActiveModule }) {
       if (!res.ok) {
         throw new Error(data.error || data.message || "Profile setup failed.");
       }
+
+      // Update stored user info with name
+      const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+      storedUser.firstName = first;
+      storedUser.lastName = last;
+      localStorage.setItem("user", JSON.stringify(storedUser));
 
       alert("Profile setup complete!");
       setActiveModule("events");

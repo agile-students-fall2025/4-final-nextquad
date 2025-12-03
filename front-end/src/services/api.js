@@ -5,15 +5,27 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000/api
 
 /**
  * Generic fetch wrapper with error handling
+ * Automatically adds Authorization header if token exists
  */
 const fetchAPI = async (endpoint, options = {}) => {
   try {
+    // Get token from localStorage
+    const token = localStorage.getItem('token');
+    
+    // Build headers with token if available
+    const headers = {
+      'Content-Type': 'application/json',
+      'Cache-Control': 'no-cache',
+      ...options.headers,
+    };
+    
+    // Add Authorization header if token exists
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      headers: {
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-cache',
-        ...options.headers,
-      },
+      headers,
       cache: 'no-store', // prevent caching
       ...options,
     });
@@ -21,7 +33,7 @@ const fetchAPI = async (endpoint, options = {}) => {
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.error || 'API request failed');
+      throw new Error(data.message || data.error || 'API request failed');
     }
 
     return data;

@@ -13,6 +13,15 @@ export default function RSVPsDashboard({ navigateTo }) {
     const fetchRSVPData = async () => {
       try {
         setLoading(true);
+        
+        // Check if user is logged in
+        const token = localStorage.getItem('token');
+        if (!token) {
+          setError('Please log in to view your RSVPs.');
+          setLoading(false);
+          return;
+        }
+        
         const [attentionResponse, attendingResponse, pastResponse] = await Promise.all([
           getEventsNeedingAttention(),
           getUserRSVPedEvents(),
@@ -32,7 +41,12 @@ export default function RSVPsDashboard({ navigateTo }) {
         setError(null);
       } catch (err) {
         console.error('Error fetching RSVP data:', err);
-        setError('Failed to load RSVP data. Please try again.');
+        const errMsg = err.message?.toLowerCase() || '';
+        if (errMsg.includes('token') || errMsg.includes('log in') || errMsg.includes('unauthorized')) {
+          setError('Please log in to view your RSVPs.');
+        } else {
+          setError('Failed to load RSVP data. Please try again.');
+        }
       } finally {
         setLoading(false);
       }

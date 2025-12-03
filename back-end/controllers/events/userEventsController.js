@@ -1,16 +1,13 @@
 const Event = require('../../models/Event');
 
-// Mock user ID (in real app, this would come from authentication)
-const MOCK_USER_ID = process.env.MOCK_USER_ID || 'user123';
-
 /**
  * GET /api/events/user/rsvps
  * Get events the user has RSVP'd to (attending) - only upcoming events
  */
 const getUserRSVPedEvents = async (req, res) => {
   try {
-    // TODO: Get userId from authentication middleware (req.user.id)
-    const userId = MOCK_USER_ID;
+    // Get userId from authentication middleware
+    const userId = req.user.userId;
 
     const today = new Date().toISOString().split('T')[0]; // "YYYY-MM-DD"
 
@@ -42,8 +39,8 @@ const getUserRSVPedEvents = async (req, res) => {
  */
 const getUserHostedEvents = async (req, res) => {
   try {
-    // TODO: Get userId from authentication middleware (req.user.id)
-    const userId = MOCK_USER_ID;
+    // Get userId from authentication middleware
+    const userId = req.user.userId;
 
     // Find all events where user is the host (no date filter)
     const hostedEvents = await Event.find({
@@ -102,8 +99,8 @@ const parseEventDateTime = (dateStr, timeStr) => {
  */
 const getEventsNeedingAttention = async (req, res) => {
   try {
-    // TODO: Get userId from authentication middleware (req.user.id)
-    const userId = MOCK_USER_ID;
+    // Get userId from authentication middleware
+    const userId = req.user.userId;
 
     const now = new Date();
     const todayMidnight = new Date();
@@ -120,30 +117,20 @@ const getEventsNeedingAttention = async (req, res) => {
     const needsSurvey = [];
 
     for (const event of allUserEvents) {
-      // Parse date with time for accurate check-in window calculation
-      const eventDateTime = parseEventDateTime(event.date, event.time);
-      if (!eventDateTime) continue; // Skip if parsing failed
-      
-      const eventDateOnly = new Date(event.date);
-      const isPast = event.date < todayStr;
+      const eventDateOnly = event.date; // "YYYY-MM-DD" string
+      const isPastDate = eventDateOnly < todayStr;
+      const isUpcoming = eventDateOnly >= todayStr; // Today or future
 
-      // For upcoming events: check if it's within 24 hours (needs check-in)
-      // And user hasn't checked in yet
-      if (!isPast) {
-        const hoursDiff = (eventDateTime - now) / (1000 * 60 * 60);
-        const withinCheckInWindow = hoursDiff <= 24 && hoursDiff >= 0;
-        const hasCheckedIn = event.hasUserCheckedIn(userId);
-        
-        if (withinCheckInWindow && !hasCheckedIn) {
-          needsCheckIn.push({
-            ...event.toObject(),
-            needsCheckIn: true
-          });
-        }
+      // For upcoming events (today or future): show in check-in list
+      if (isUpcoming) {
+        needsCheckIn.push({
+          ...event.toObject(),
+          needsCheckIn: true
+        });
       }
 
-      // For past events: check if survey hasn't been completed
-      if (isPast) {
+      // For past events: check if user hasn't completed survey
+      if (isPastDate) {
         const hasSubmittedSurvey = event.hasUserSubmittedSurvey(userId);
         
         if (!hasSubmittedSurvey) {
@@ -176,8 +163,8 @@ const getEventsNeedingAttention = async (req, res) => {
  */
 const getUserPastEvents = async (req, res) => {
   try {
-    // TODO: Get userId from authentication middleware (req.user.id)
-    const userId = MOCK_USER_ID;
+    // Get userId from authentication middleware
+    const userId = req.user.userId;
 
     const today = new Date().toISOString().split('T')[0]; // "YYYY-MM-DD"
 

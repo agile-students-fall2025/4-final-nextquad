@@ -1,8 +1,6 @@
 const Event = require('../../models/Event');
+const User = require('../../models/User');
 const mongoose = require('mongoose');
-
-// Mock user ID (in real app, this would come from authentication)
-const MOCK_USER_ID = process.env.MOCK_USER_ID || 'user123';
 
 /**
  * GET /api/events
@@ -28,8 +26,11 @@ const getAllEvents = async (req, res) => {
     // Filter past events (by default, only show upcoming)
     if (showPast !== 'true') {
       const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const todayStr = today.toISOString().split('T')[0];
+      // Use local date format YYYY-MM-DD
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, '0');
+      const day = String(today.getDate()).padStart(2, '0');
+      const todayStr = `${year}-${month}-${day}`;
       query.date = { $gte: todayStr };
     }
 
@@ -130,6 +131,17 @@ const createEvent = async (req, res) => {
     today.setHours(0, 0, 0, 0);
     const isPast = eventDate < today;
 
+    // Get user info for host name
+    const user = await User.findById(req.user.userId);
+    let hostName = 'Current User';
+    if (user) {
+      if (user.firstName && user.lastName) {
+        hostName = `${user.firstName} ${user.lastName}`;
+      } else {
+        hostName = user.email.split('@')[0]; // Use email username as fallback
+      }
+    }
+
     // Create new event
     const newEvent = new Event({
       title,
@@ -141,9 +153,9 @@ const createEvent = async (req, res) => {
       image: image || `https://picsum.photos/seed/event${Date.now()}/400/300`,
       rsvpCount: 0,
       host: {
-        name: 'Current User', // TODO: Get from auth
+        name: hostName,
         avatar: 'https://picsum.photos/seed/currentuser/50/50',
-        userId: MOCK_USER_ID // TODO: Get from auth
+        userId: req.user.userId
       },
       isPast: isPast
     });
@@ -189,9 +201,8 @@ const updateEvent = async (req, res) => {
       });
     }
 
-    // Check if user is the host (simple auth check)
-    // TODO: Implement proper authentication
-    const currentUserId = MOCK_USER_ID;
+    // Check if user is the host
+    const currentUserId = req.user.userId;
     if (!event.isHost(currentUserId)) {
       return res.status(403).json({
         success: false,
@@ -259,7 +270,7 @@ const deleteEvent = async (req, res) => {
     }
 
     // Check if user is the host
-    const currentUserId = MOCK_USER_ID;
+    const currentUserId = req.user.userId;
     if (!event.isHost(currentUserId)) {
       return res.status(403).json({
         success: false,

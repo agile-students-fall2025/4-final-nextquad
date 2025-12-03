@@ -51,7 +51,14 @@ export default function SignIn({ setActiveModule, setCurrentPage }) {
         return;
       }
 
-      // Login successful
+      // Login successful - Store token and user info
+      if (data.token) {
+        localStorage.setItem("token", data.token);
+      }
+      if (data.user) {
+        localStorage.setItem("user", JSON.stringify(data.user));
+      }
+      
       setActiveModule("events");
     } catch (err) {
       setGeneralError(err.message || "Unexpected network error.");
