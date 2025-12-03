@@ -1,16 +1,55 @@
+import { useState } from 'react';
+import { changeUserPassword } from '../../services/api';
 import './ChangePassword.css';
 
 export default function ChangePasswordForm({ navigateTo }) {
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
-  const handleSubmit = (e) => {
+  const [errorMessage, setErrorMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Password changed (mock)');
-    alert('Password changed successfully!');
+    setErrorMessage('');
+    setSuccessMessage('');
 
-    // Navigate back to login after short delay
-    setTimeout(() => {
-      if (navigateTo) navigateTo('auth');
-    }, 1500);
+    // verify in js 
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setErrorMessage('All fields are required.');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setErrorMessage('New password and confirmation do not match.');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const res = await changeUserPassword(currentPassword, newPassword, confirmPassword);
+
+      if (!res.success) {
+        setErrorMessage(res.error || 'Failed to change password.');
+        return;
+      }
+
+      setSuccessMessage('Password changed successfully.');
+
+      setTimeout(() => {
+        //bring user back to login
+        navigateTo('auth');
+      }, 1500);
+
+    } catch (err) {
+      console.error(err);
+      setErrorMessage('Server error. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -21,27 +60,57 @@ export default function ChangePasswordForm({ navigateTo }) {
         <form className="change-password-form" onSubmit={handleSubmit}>
           <div className="form-group">
             <label>Current Password</label>
-            <input type="password" placeholder="Enter current password" />
+            <input
+              type="password"
+              placeholder="Enter current password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+            />
           </div>
 
           <div className="form-group">
             <label>New Password</label>
-            <input type="password" placeholder="Enter new password" />
+            <input
+              type="password"
+              placeholder="Enter new password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+            />
           </div>
 
           <div className="form-group">
             <label>Confirm New Password</label>
-            <input type="password" placeholder="Confirm new password" />
+            <input
+              type="password"
+              placeholder="Confirm new password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+            />
           </div>
 
-          <button type="submit" className="submit-button">Change Password</button>
-          <button
-            type="button"
-            className="cancel-button"
-            onClick={() => navigateTo('settings')}
-          >
-            Cancel
+          {errorMessage && (
+            <p style={{ color: 'red' }}>
+              {errorMessage}
+            </p>
+          )}
+
+          {successMessage && (
+            <p style={{ color: 'green'}}>
+              {successMessage}
+            </p>
+          )}
+
+          <button type="submit" className="submit-button" disabled={loading}>
+            {loading ? 'Changing...' : 'Change Password'}
           </button>
+
+            <button
+              type="button"
+              className="cancel-button"
+              onClick={() => navigateTo('settings')}
+            >
+              Cancel
+            </button>
         </form>
       </div>
     </div>

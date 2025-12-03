@@ -429,7 +429,7 @@ export const updateUserSettings = async (updates) => {
  */
 export const changeUserPassword = async (currentPassword, newPassword, confirmPassword) => {
   return fetchAPI('/settings/change-password', {
-    method: 'POST',
+    method: 'PUT',
     body: JSON.stringify({
       currentPassword,
       newPassword,
@@ -437,6 +437,7 @@ export const changeUserPassword = async (currentPassword, newPassword, confirmPa
     }),
   });
 };
+
 
 // ============================================
 // Admin APIs
