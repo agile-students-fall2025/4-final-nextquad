@@ -1,6 +1,8 @@
-const { mockUserSettings, mockPrivacyPolicy } = require("../../data/settings/mockSettingsData");
+const User = require("../../models/User");
+const bcrypt = require("bcrypt");
 const UserSettings = require("../../models/UserSettings");
 const PrivacyPolicy = require("../../models/PrivacyPolicy");
+
 
 
 // get user's current notification settings
@@ -83,51 +85,65 @@ const getPrivacyPolicy = async (req, res) => {
 
 module.exports = { getPrivacyPolicy };
 
-
 // change user password
-const changeUserPassword = (req, res) => {
-  const { currentPassword, newPassword, confirmPassword } = req.body;
-
-  if (!currentPassword || !newPassword || !confirmPassword) {
-    return res.status(400).json({
-      success: false,
-      error: "All password fields are required.",
-    });
-  }
-
-  if (newPassword !== confirmPassword) {
-    return res.status(400).json({
-      success: false,
-      error: "New password and confirmation do not match.",
-    });
-  }
-
+const changeUserPassword = async (req, res) => {
   try {
-    // UPDATE WHEN PROF SHOWS PASSWORD HANDLING
-    const mockCurrentPassword = "Password123";
+    const { currentPassword, newPassword, confirmPassword } = req.body;
 
-    if (currentPassword !== mockCurrentPassword) {
+    // basic validation
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        error: "All password fields are required.",
+      });
+    }
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        error: "New password and confirmation do not match.",
+      });
+    }
+
+    // find user 
+    const user = await User.findById(req.user.userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: "User not found.",
+      });
+    }
+
+    // check current password
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+
+    if (!isMatch) {
       return res.status(401).json({
         success: false,
         error: "Current password is incorrect.",
       });
     }
 
-    // Mock updating password
-    console.log("Password successfully changed to:", newPassword);
+    // hash and update password 
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+    await user.save();
 
     return res.status(200).json({
       success: true,
       message: "Password changed successfully.",
     });
-  } catch (error) {
-    console.error("Error changing password:", error);
+
+  } catch (err) {
+    console.error("Error changing password:", err);
     return res.status(500).json({
       success: false,
       error: "Server error while changing password.",
     });
   }
 };
+
 
 module.exports = {
   getUserSettings,
