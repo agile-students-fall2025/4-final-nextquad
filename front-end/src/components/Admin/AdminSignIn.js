@@ -18,7 +18,7 @@ export default function SignIn({ setActiveModule, setCurrentPage }) {
     try {
       setLoading(true);
 
-      const res = await fetch("http://localhost:3000/api/admin/signin", {
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/admin/signin`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -54,6 +54,7 @@ export default function SignIn({ setActiveModule, setCurrentPage }) {
         placeholder="Email address"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
+        disabled={loading}
       />
 
       <input
@@ -62,15 +63,16 @@ export default function SignIn({ setActiveModule, setCurrentPage }) {
         placeholder="Password"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
+        disabled={loading}
       />
 
       <p className="auth-link"
-         onClick={() => setCurrentPage('forgot')}>
+         onClick={() => !loading && setCurrentPage('forgot')}>
         Forgot password?
       </p>
 
-      <button className="auth-btn" onClick={handleLogin}>
-        Log in
+      <button className="auth-btn" onClick={handleLogin} disabled={loading}>
+        {loading ? "Logging in..." : "Log in"}
       </button>
 
       <div className="auth-divider">
@@ -79,14 +81,14 @@ export default function SignIn({ setActiveModule, setCurrentPage }) {
         <span></span>
       </div>
 
-      <button className="google-btn">
+      <button className="google-btn" disabled={loading}>
         <img src={googleIcon} alt="Google" className="google-icon" />
         Continue with Google
       </button>
 
       <p
         className="auth-link"
-        onClick={() => setCurrentPage('userSignIn')} 
+        onClick={() => !loading && setCurrentPage('userSignIn')} 
       >
         Not an admin? Go back
       </p>

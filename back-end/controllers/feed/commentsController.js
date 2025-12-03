@@ -17,7 +17,13 @@ const getPostComments = async (req, res) => {
       return res.status(404).json({ success: false, error: 'Post not found' });
     }
     const comments = await Comment.find({ postId }).sort({ createdAt: -1 }).lean();
-    const currentUserId = 'user123';
+    
+    console.log(`Fetching comments for post ${postId}: Found ${comments.length} comments`);
+    if (comments.length > 0) {
+      console.log(`Comment IDs: ${comments.map(c => c.id).join(', ')}`);
+    }
+    
+    const currentUserId = req.user.userId;
     const withLikeFlag = await Promise.all(
       comments.map(async c => {
         const liked = await CommentLike.findOne({ commentId: c.id, userId: currentUserId }).lean();
@@ -47,9 +53,24 @@ const addComment = async (req, res) => {
       return res.status(404).json({ success: false, error: 'Post not found' });
     }
 
+    const currentUser = req.user;
+    
+    // Check if user has completed profile setup
+    if (!currentUser.firstName || !currentUser.lastName) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Please complete your profile setup before commenting',
+        requiresProfileSetup: true
+      });
+    }
+
     const last = await Comment.findOne().sort({ id: -1 }).lean();
     const nextId = last ? last.id + 1 : 1;
     const createdAtDate = new Date();
+    const authorName = `${currentUser.firstName} ${currentUser.lastName}`;
+    
+    console.log(`Creating comment for post ${postId}. Last comment ID: ${last?.id || 'none'}, Next comment ID: ${nextId}`);
+    
     const doc = await Comment.create({
       id: nextId,
       postId,
@@ -57,9 +78,9 @@ const addComment = async (req, res) => {
       createdAt: createdAtDate.getTime(),
       likes: 0,
       author: {
-        name: 'Current User',
-        avatar: 'https://picsum.photos/seed/currentuser/50/50',
-        userId: 'user123'
+        name: authorName,
+        avatar: currentUser.profileImage || `https://picsum.photos/seed/${currentUser.userId}/50/50`,
+        userId: currentUser.userId
       },
       isLikedByUser: false,
       editCount: 0,
@@ -87,7 +108,7 @@ const updateComment = async (req, res) => {
     if (!comment) {
       return res.status(404).json({ success: false, error: 'Comment not found' });
     }
-    const currentUserId = 'user123';
+    const currentUserId = req.user.userId;
     if (comment.author?.userId !== currentUserId) {
       return res.status(403).json({ success: false, error: 'You are not authorized to update this comment' });
     }
@@ -119,7 +140,7 @@ const deleteComment = async (req, res) => {
     if (!comment) {
       return res.status(404).json({ success: false, error: 'Comment not found' });
     }
-    const currentUserId = 'user123';
+    const currentUserId = req.user.userId;
     if (comment.author?.userId !== currentUserId) {
       return res.status(403).json({ success: false, error: 'You are not authorized to delete this comment' });
     }
@@ -138,7 +159,7 @@ const deleteComment = async (req, res) => {
 const toggleCommentLike = async (req, res) => {
   try {
     const commentId = parseInt(req.params.commentId, 10);
-    const currentUserId = 'user123';
+    const currentUserId = req.user.userId;
     const comment = await Comment.findOne({ id: commentId });
     if (!comment) {
       return res.status(404).json({ success: false, error: 'Comment not found' });

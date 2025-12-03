@@ -1,16 +1,19 @@
+const User = require("../../models/User");
+const jwt = require("jsonwebtoken");
+
 /**
  * Handles profile setup after registration.
  * POST /api/auth/profile-setup
- * Simulates saving a new user profile.
+ * Saves user profile to database.
  */
-const setupProfile = (req, res) => {
-  const { firstName, lastName, nyuEmail, graduationYear, profileImage } = req.body;
+const setupProfile = async (req, res) => {
+  const { email, firstName, lastName, nyuEmail, graduationYear, profileImage } = req.body;
 
   // Validate required fields
-  if (!firstName || !lastName || !nyuEmail || !graduationYear) {
+  if (!email || !firstName || !lastName || !nyuEmail || !graduationYear) {
     return res.status(400).json({
       success: false,
-      error: "First name, last name, NYU email, and graduation year are required.",
+      error: "Email, first name, last name, NYU email, and graduation year are required.",
     });
   }
 
@@ -31,23 +34,63 @@ const setupProfile = (req, res) => {
     });
   }
 
-  // Simulate saving to database
-  const userProfile = {
-    id: Date.now(),
-    firstName,
-    lastName,
-    nyuEmail,
-    graduationYear: gradYearNum,
-    profileImage: profileImage || null, 
-  };
+  try {
+    // Find user by email and update profile
+    const user = await User.findOne({ email: email.toLowerCase() });
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: "User not found. Please sign up first.",
+      });
+    }
 
-  console.log("✅ Profile setup received:", userProfile);
+    // Update user profile
+    user.firstName = firstName;
+    user.lastName = lastName;
+    user.nyuEmail = nyuEmail;
+    user.graduationYear = gradYearNum;
+    if (profileImage) {
+      user.profileImage = profileImage;
+    }
+    
+    await user.save();
 
-  return res.status(201).json({
-    success: true,
-    message: "Profile setup successful.",
-    data: userProfile,
-  });
+    // Generate new JWT token with updated user info
+    const token = jwt.sign(
+      { 
+        userId: user._id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName
+      },
+      process.env.JWT_SECRET || "dev_jwt_secret",
+      { expiresIn: "5d" }
+    );
+
+    console.log("✅ Profile setup successful for:", user.email);
+
+    return res.status(200).json({
+      success: true,
+      message: "Profile setup successful.",
+      token,
+      data: {
+        id: user._id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        nyuEmail: user.nyuEmail,
+        graduationYear: user.graduationYear,
+        profileImage: user.profileImage,
+      },
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      error: "Server error during profile setup.",
+      message: err.message,
+    });
+  }
 };
 
 module.exports = { setupProfile };

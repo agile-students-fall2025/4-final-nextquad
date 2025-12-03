@@ -23,7 +23,10 @@ export default function FeedComments({ post, navigateTo, returnToPage = 'main' }
   const [showSortMenu, setShowSortMenu] = useState(false);
   const menuRef = useRef(null);
   const sortMenuRef = useRef(null);
-  const currentUserId = 'user123'; // Mock current user
+  
+  // Get current user ID from localStorage
+  const userData = localStorage.getItem('user');
+  const currentUserId = userData ? JSON.parse(userData).id : null;
 
   // Update local post state when prop changes
   useEffect(() => {

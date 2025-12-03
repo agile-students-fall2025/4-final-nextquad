@@ -49,7 +49,7 @@ export default function SignUp({ setActiveModule, setCurrentPage }) {
     try {
       setLoading(true);
 
-      const res = await fetch("http://localhost:3000/api/auth/signup", {
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/auth/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -65,6 +65,9 @@ export default function SignUp({ setActiveModule, setCurrentPage }) {
         }
         return;
       }
+
+      // Store email for profile setup
+      localStorage.setItem("signupEmail", email);
 
       setSuccess("Account created successfully!");
       setTimeout(() => {

@@ -52,12 +52,22 @@ export default function FeedMyPosts({ navigateTo }) {
     const fetchMyPosts = async () => {
       setLoading(true);
       try {
-        // Fetch all posts and filter by current user (user123)
+        // Get current user ID from localStorage
+        const userData = localStorage.getItem('user');
+        const currentUserId = userData ? JSON.parse(userData).id : null;
+        
+        if (!currentUserId) {
+          console.error('No user logged in');
+          setLoading(false);
+          return;
+        }
+
+        // Fetch all posts and filter by current user
         const response = await getAllPosts();
         const allPosts = response.data || [];
         
-        // Filter posts created by current user (user123)
-        const userPosts = allPosts.filter(post => post.author.userId === 'user123');
+        // Filter posts created by current user
+        const userPosts = allPosts.filter(post => post.author.userId === currentUserId);
         setMyPosts(userPosts);
       } catch (err) {
         console.error('Error fetching my posts:', err);

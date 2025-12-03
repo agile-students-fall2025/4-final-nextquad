@@ -8,10 +8,14 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000/api
  */
 const fetchAPI = async (endpoint, options = {}) => {
   try {
+    // Get JWT token from localStorage if it exists
+    const token = localStorage.getItem('jwt');
+    
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       headers: {
         'Content-Type': 'application/json',
         'Cache-Control': 'no-cache',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
         ...options.headers,
       },
       cache: 'no-store', // prevent caching
@@ -21,7 +25,7 @@ const fetchAPI = async (endpoint, options = {}) => {
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.error || 'API request failed');
+      throw new Error(data.error || data.message || 'API request failed');
     }
 
     return data;
