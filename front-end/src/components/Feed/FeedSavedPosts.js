@@ -1,6 +1,6 @@
 import './FeedSavedPosts.css';
 import { useState, useEffect, useRef } from 'react';
-import { getSavedPosts, togglePostLike } from '../../services/api';
+import { getSavedPosts, togglePostLike, toggleSavePost } from '../../services/api';
 
 export default function FeedSavedPosts({ navigateTo }) {
   const [savedPosts, setSavedPosts] = useState([]);
@@ -194,14 +194,21 @@ export default function FeedSavedPosts({ navigateTo }) {
               >
                 {post.isLikedByUser ? '❤️' : '🤍'} {post.likes}
               </button>
-              <button className="feed-post-action-button" onClick={() => {
-                const key = 'savedPostIds';
-                const next = savedIds.filter(id => id !== post.id);
-                localStorage.setItem(key, JSON.stringify(next));
-                // Update both the savedIds (source of truth) and the rendered list immediately
-                setSavedIds(next);
-                setSavedPosts(prev => prev.filter(p => p.id !== post.id));
-              }}>Remove</button>
+              <button 
+                className="feed-post-action-button" 
+                onClick={async () => {
+                  try {
+                    await toggleSavePost(post.id);
+                    // Remove from local state after successful unsave
+                    setSavedPosts(prev => prev.filter(p => p.id !== post.id));
+                  } catch (err) {
+                    console.error('Error removing saved post:', err);
+                    alert('Failed to remove saved post');
+                  }
+                }}
+              >
+                Remove
+              </button>
             </div>
           </div>
         ))}
