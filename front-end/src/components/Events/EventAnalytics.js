@@ -14,12 +14,26 @@ export default function EventAnalytics({ navigateTo, event }) {
 
       try {
         setLoading(true);
+        
+        // Check if user is logged in
+        const token = localStorage.getItem('token');
+        if (!token) {
+          setError('Please log in to view analytics.');
+          setLoading(false);
+          return;
+        }
+        
         const response = await getEventAnalytics(event.id);
         setAnalytics(response.data);
         setError(null);
       } catch (err) {
         console.error('Error fetching analytics:', err);
-        setError(err.message || 'Failed to load analytics');
+        const errMsg = err.message?.toLowerCase() || '';
+        if (errMsg.includes('token') || errMsg.includes('log in') || errMsg.includes('unauthorized')) {
+          setError('Please log in to view analytics.');
+        } else {
+          setError(err.message || 'Failed to load analytics');
+        }
       } finally {
         setLoading(false);
       }

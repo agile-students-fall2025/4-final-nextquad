@@ -5,11 +5,29 @@ import './EventDetail.css';
 export default function EventDetail({ event, navigateTo, onRSVP, previousPage = 'main' }) {
   const [rsvpStatus, setRsvpStatus] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [rsvpError, setRsvpError] = useState(null);
+
+  // Check if event is past
+  const isPastEvent = () => {
+    if (!event?.date) return false;
+    const eventDate = new Date(event.date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return eventDate < today;
+  };
 
   // Fetch RSVP status from backend
   useEffect(() => {
     const fetchRSVPStatus = async () => {
       if (!event) return;
+      
+      // Check if user is logged in
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setRsvpStatus({ hasRSVPd: false, isHost: false, canRSVP: false, needsLogin: true });
+        setLoading(false);
+        return;
+      }
       
       try {
         setLoading(true);
@@ -25,6 +43,15 @@ export default function EventDetail({ event, navigateTo, onRSVP, previousPage = 
 
     fetchRSVPStatus();
   }, [event]);
+
+  const handleRSVPClick = async () => {
+    setRsvpError(null);
+    try {
+      await onRSVP(event.id);
+    } catch (error) {
+      setRsvpError('Failed to RSVP. Please try again.');
+    }
+  };
 
   if (!event) return null;
   
@@ -75,10 +102,32 @@ export default function EventDetail({ event, navigateTo, onRSVP, previousPage = 
             </div>
           </div>
 
+          {/* RSVP Error Message */}
+          {rsvpError && (
+            <div style={{ 
+              padding: '12px', 
+              backgroundColor: '#ffebee', 
+              color: '#c62828', 
+              borderRadius: '4px',
+              marginBottom: '16px',
+              textAlign: 'center'
+            }}>
+              {rsvpError}
+            </div>
+          )}
+
           {/* RSVP Button based on backend status */}
           {loading ? (
             <button className="event-detail-rsvp-button-disabled" disabled>
               Loading...
+            </button>
+          ) : isPastEvent() ? (
+            <button className="event-detail-rsvp-button-disabled" disabled>
+              Event has ended
+            </button>
+          ) : rsvpStatus?.needsLogin ? (
+            <button className="event-detail-rsvp-button-disabled" disabled>
+              Please log in to RSVP
             </button>
           ) : rsvpStatus && (rsvpStatus.hasRSVPd || rsvpStatus.isHost) ? (
             <button className="event-detail-rsvp-button-disabled" disabled>
@@ -87,7 +136,7 @@ export default function EventDetail({ event, navigateTo, onRSVP, previousPage = 
           ) : (
             <button 
               className="event-detail-rsvp-button"
-              onClick={() => onRSVP(event.id)}
+              onClick={handleRSVPClick}
             >
               RSVP TO EVENT
             </button>

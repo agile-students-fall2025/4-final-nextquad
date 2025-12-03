@@ -11,6 +11,15 @@ export default function MyEvents({ navigateTo }) {
   const fetchUserEvents = useCallback(async () => {
     try {
       setLoading(true);
+      
+      // Check if user is logged in
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('Please log in to view your events.');
+        setLoading(false);
+        return;
+      }
+      
       console.log('🔍 Fetching user hosted events...');
       const hostedResponse = await getUserHostedEvents();
       console.log('✅ Hosted events received:', hostedResponse.data);
@@ -18,7 +27,13 @@ export default function MyEvents({ navigateTo }) {
       setError(null);
     } catch (err) {
       console.error('Error fetching user events:', err);
-      setError('Failed to load your events. Please try again.');
+      // Check if it's an authentication error
+      const errMsg = err.message?.toLowerCase() || '';
+      if (errMsg.includes('token') || errMsg.includes('log in') || errMsg.includes('unauthorized')) {
+        setError('Please log in to view your events.');
+      } else {
+        setError('Failed to load your events. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
