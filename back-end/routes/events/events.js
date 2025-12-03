@@ -1,5 +1,7 @@
 const express = require('express');
 const router = express.Router();
+const authenticateToken = require('../../middleware/authenticateToken');
+
 const {
   getAllEvents,
   getEventById,
@@ -29,33 +31,36 @@ const {
   checkInToEvent
 } = require('../../controllers/events/analyticsController');
 
-// User-specific event routes (must come before /:id route)
-router.get('/user/rsvps', getUserRSVPedEvents);
-router.get('/user/hosting', getUserHostedEvents);
-router.get('/user/needs-attention', getEventsNeedingAttention);
-router.get('/user/past', getUserPastEvents);
-
-// Core event routes
+// Public routes (no authentication required)
 router.get('/', getAllEvents);
 router.get('/:id', getEventById);
-router.post('/', createEvent);
-router.put('/:id', updateEvent);
-router.delete('/:id', deleteEvent);
 
-// RSVP routes (must come after core routes but before catch-all)
-router.post('/:id/rsvp', rsvpToEvent);
-router.delete('/:id/rsvp', cancelRSVP);
-router.get('/:id/rsvps', getEventRSVPs);
-router.get('/:id/rsvp-status', checkRSVPStatus);
+// Protected routes (authentication required)
+// User-specific event routes
+router.get('/user/rsvps', authenticateToken, getUserRSVPedEvents);
+router.get('/user/hosting', authenticateToken, getUserHostedEvents);
+router.get('/user/needs-attention', authenticateToken, getEventsNeedingAttention);
+router.get('/user/past', authenticateToken, getUserPastEvents);
+
+// Core event routes (create/update/delete require auth)
+router.post('/', authenticateToken, createEvent);
+router.put('/:id', authenticateToken, updateEvent);
+router.delete('/:id', authenticateToken, deleteEvent);
+
+// RSVP routes
+router.post('/:id/rsvp', authenticateToken, rsvpToEvent);
+router.delete('/:id/rsvp', authenticateToken, cancelRSVP);
+router.get('/:id/rsvps', authenticateToken, getEventRSVPs);
+router.get('/:id/rsvp-status', authenticateToken, checkRSVPStatus);
 
 // Survey routes
-router.post('/:id/survey', submitSurvey);
-router.get('/:id/surveys', getEventSurveys);
-router.get('/:id/survey-status', checkSurveyStatus);
+router.post('/:id/survey', authenticateToken, submitSurvey);
+router.get('/:id/surveys', authenticateToken, getEventSurveys);
+router.get('/:id/survey-status', authenticateToken, checkSurveyStatus);
 
 // Analytics routes
-router.get('/:id/analytics', getEventAnalytics);
-router.post('/:id/checkin', checkInToEvent);
+router.get('/:id/analytics', authenticateToken, getEventAnalytics);
+router.post('/:id/checkin', authenticateToken, checkInToEvent);
 
 module.exports = router;
 
