@@ -99,12 +99,24 @@ export default function FeedMyPosts({ navigateTo }) {
   const handleDeletePost = async (postId) => {
     if (window.confirm('Are you sure you want to delete this post? This action cannot be undone.')) {
       try {
-        await deletePost(postId);
-        setMyPosts(prevPosts => prevPosts.filter(post => post.id !== postId));
-        setOpenMenuId(null);
+        const response = await deletePost(postId);
+        
+        // Check if deletion was successful
+        if (response && response.success) {
+          // Only remove from UI if deletion succeeded
+          setMyPosts(prevPosts => prevPosts.filter(post => post.id !== postId));
+          setOpenMenuId(null);
+          // Also update main feed if available
+          if (window.updateFeedMainAfterDelete) {
+            window.updateFeedMainAfterDelete(postId);
+          }
+        } else {
+          alert(`Failed to delete post: ${response?.error || 'Unknown error'}`);
+        }
       } catch (err) {
         console.error('Error deleting post:', err);
-        alert('Failed to delete post. Please try again.');
+        alert(`Failed to delete post: ${err.message}`);
+        // Don't remove from UI if deletion failed
       }
     }
   };

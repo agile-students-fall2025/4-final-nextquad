@@ -9,6 +9,7 @@ const Post = require('../../models/Post');
 const Comment = require('../../models/Comment');
 const PostLike = require('../../models/PostLike');
 const PostSave = require('../../models/PostSave');
+const CommentLike = require('../../models/CommentLike');
 
 /**
  * GET /api/feed/posts
@@ -208,36 +209,46 @@ const deletePost = async (req, res) => {
       return res.status(403).json({ success: false, error: 'You are not authorized to delete this post' });
     }
 
+    console.log(`[deletePost] Starting deletion for post ${postId}`);
+
     // First, get all comment IDs for this post (before deleting them)
     const comments = await Comment.find({ postId: postId }).select('id').lean();
     const commentIds = comments.map(c => c.id);
     
-    console.log(`Deleting post ${postId} with ${comments.length} comments`);
+    console.log(`[deletePost] Found ${comments.length} comments for post ${postId}`);
+    if (commentIds.length > 0) {
+      console.log(`[deletePost] Comment IDs: ${commentIds.join(', ')}`);
+    }
 
     // Delete the post
-    await Post.deleteOne({ id: postId });
+    const deletedPost = await Post.deleteOne({ id: postId });
+    console.log(`[deletePost] Deleted post: ${deletedPost.deletedCount} document(s)`);
     
     // Delete all comments for this post
     const deletedComments = await Comment.deleteMany({ postId: postId });
-    console.log(`Deleted ${deletedComments.deletedCount} comments for post ${postId}`);
+    console.log(`[deletePost] Deleted ${deletedComments.deletedCount} comments for post ${postId}`);
     
     // Delete all saves for this post
-    await PostSave.deleteMany({ postId: postId });
+    const deletedSaves = await PostSave.deleteMany({ postId: postId });
+    console.log(`[deletePost] Deleted ${deletedSaves.deletedCount} saves`);
     
     // Delete all likes for this post
-    await PostLike.deleteMany({ postId: postId });
+    const deletedPostLikes = await PostLike.deleteMany({ postId: postId });
+    console.log(`[deletePost] Deleted ${deletedPostLikes.deletedCount} post likes`);
     
     // Delete all comment likes for those comments
     if (commentIds.length > 0) {
-      await CommentLike.deleteMany({ commentId: { $in: commentIds } });
+      const deletedCommentLikes = await CommentLike.deleteMany({ commentId: { $in: commentIds } });
+      console.log(`[deletePost] Deleted ${deletedCommentLikes.deletedCount} comment likes`);
     }
 
-    console.log(`✅ Successfully deleted post ${postId} and all associated data`);
+    console.log(`✅ [deletePost] Successfully deleted post ${postId} and all associated data`);
     
     res.status(200).json({ success: true, message: 'Post deleted successfully' });
   } catch (error) {
-    console.error('[deletePost] error:', error);
-    res.status(500).json({ success: false, error: 'Server error while deleting post' });
+    console.error('[deletePost] ERROR:', error);
+    console.error('[deletePost] Error stack:', error.stack);
+    res.status(500).json({ success: false, error: `Server error while deleting post: ${error.message}` });
   }
 };
 

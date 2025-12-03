@@ -12,14 +12,6 @@ export default function FeedMain({ navigateTo, isAdmin = false }) {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  // Track saved post ids locally and persist to localStorage
-  const [savedIds, setSavedIds] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem('savedPostIds') || '[]');
-    } catch {
-      return [];
-    }
-  });
   const isFetchingRef = useRef(false);
 
   // Fetch posts from backend - wrapped in useCallback
@@ -60,15 +52,6 @@ export default function FeedMain({ navigateTo, isAdmin = false }) {
     fetchPosts();
   }, [fetchPosts]);
 
-  // Persist savedIds to localStorage when they change
-  useEffect(() => {
-    try {
-      localStorage.setItem('savedPostIds', JSON.stringify(savedIds));
-    } catch (e) {
-      console.error('Failed to persist saved posts:', e);
-    }
-  }, [savedIds]);
-
   const handleLike = async (postId) => {
     try {
       const response = await togglePostLike(postId);
@@ -95,8 +78,12 @@ export default function FeedMain({ navigateTo, isAdmin = false }) {
         )
       );
     };
+    window.updateFeedMainAfterDelete = (deletedPostId) => {
+      setPosts(prevPosts => prevPosts.filter(post => post.id !== deletedPostId));
+    };
     return () => {
       delete window.updateFeedMainPost;
+      delete window.updateFeedMainAfterDelete;
     };
   }, []);
 
@@ -356,9 +343,7 @@ export default function FeedMain({ navigateTo, isAdmin = false }) {
             const response = await toggleSavePost(post.id);
             if (response.success) {
               const isSaved = response.data.isSavedByUser;
-              setSavedIds(prev => {
-                return isSaved ? [...prev, post.id] : prev.filter(id => id !== post.id);
-              });
+              // Update the post's saved status in the UI
               setPosts(prevPosts => prevPosts.map(p => p.id === post.id ? { ...p, isSavedByUser: isSaved } : p));
             }
           } catch (error) {
@@ -366,7 +351,7 @@ export default function FeedMain({ navigateTo, isAdmin = false }) {
           }
         }}
       >
-        {savedIds.includes(post.id) ? '✓ Saved' : 'Save'}
+        {post.isSavedByUser ? '✓ Saved' : 'Save'}
       </button>
     </>
   )}

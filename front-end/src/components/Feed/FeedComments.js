@@ -112,11 +112,6 @@ export default function FeedComments({ post, navigateTo, returnToPage = 'main' }
       const response = await toggleSavePost(postState.id);
       if (response.success) {
         const isSaved = response.data.isSavedByUser;
-        setSavedIds(prev => {
-          const newIds = isSaved ? [...prev, postState.id] : prev.filter(id => id !== postState.id);
-          localStorage.setItem('savedPostIds', JSON.stringify(newIds));
-          return newIds;
-        });
         setPostState(prev => ({
           ...prev,
           isSavedByUser: isSaved
@@ -273,7 +268,7 @@ export default function FeedComments({ post, navigateTo, returnToPage = 'main' }
               className="feed-post-action-button"
               onClick={handleSavePost}
             >
-              {savedIds.includes(postState.id) ? '✓ Saved' : 'Save'}
+              {postState.isSavedByUser ? '✓ Saved' : 'Save'}
             </button>
           </div>
         </div>

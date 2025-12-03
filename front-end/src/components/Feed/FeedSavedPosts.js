@@ -1,9 +1,8 @@
 import './FeedSavedPosts.css';
 import { useState, useEffect, useRef } from 'react';
-import { getPostById, togglePostLike } from '../../services/api';
+import { getSavedPosts, togglePostLike } from '../../services/api';
 
 export default function FeedSavedPosts({ navigateTo }) {
-  const [savedIds, setSavedIds] = useState(() => JSON.parse(localStorage.getItem('savedPostIds') || '[]'));
   const [savedPosts, setSavedPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -15,35 +14,19 @@ export default function FeedSavedPosts({ navigateTo }) {
     const fetchSavedPosts = async () => {
       setLoading(true);
       try {
-        // Fetch each saved post from backend
-        const posts = await Promise.all(
-          savedIds.map(async (id) => {
-            try {
-              const response = await getPostById(id);
-              return response.data;
-            } catch (err) {
-              console.error(`Error fetching post ${id}:`, err);
-              return null;
-            }
-          })
-        );
-        // Filter out null values (posts that failed to fetch)
-        setSavedPosts(posts.filter(p => p !== null));
+        // Fetch saved posts from backend (user-specific)
+        const response = await getSavedPosts();
+        setSavedPosts(response.data || []);
       } catch (err) {
         console.error('Error fetching saved posts:', err);
+        setSavedPosts([]);
       } finally {
         setLoading(false);
       }
     };
 
-    if (savedIds.length > 0) {
-      fetchSavedPosts();
-    } else {
-      // Clear the list when there are no saved IDs to reflect immediately in UI
-      setSavedPosts([]);
-      setLoading(false);
-    }
-  }, [savedIds]);
+    fetchSavedPosts();
+  }, []);
 
   // Close sort menu when clicking outside
   useEffect(() => {

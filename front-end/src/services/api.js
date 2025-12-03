@@ -22,10 +22,17 @@ const fetchAPI = async (endpoint, options = {}) => {
       ...options,
     });
 
-    const data = await response.json();
+    // Try to parse JSON, but handle cases where response isn't JSON
+    let data;
+    try {
+      data = await response.json();
+    } catch (parseError) {
+      // If JSON parsing fails, throw error with status text
+      throw new Error(`${response.status}: ${response.statusText}`);
+    }
 
     if (!response.ok) {
-      throw new Error(data.error || data.message || 'API request failed');
+      throw new Error(data.error || data.message || `Request failed with status ${response.status}`);
     }
 
     return data;
