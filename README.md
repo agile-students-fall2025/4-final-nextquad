@@ -1,7 +1,7 @@
 # NextQuad
 
 ## Product Vision Statement
-NextQuad is a verified campus community platform that connects NYU students with study spaces and each other, creating a safe, efficient environment for academic collaboration and campus life management.
+NextQuad is a verified campus community platform that connects NYU students through study space discovery, event management, social feed, and marketplace features, all within a safe, authenticated environment for academic collaboration and campus life.
 
 ## Team Roles
 **Developers**
@@ -27,14 +27,18 @@ NextQuad is a verified campus community platform that connects NYU students with
 - Scrum Master: [Haroon Shafi](https://github.com/haroonshafi)
 - Product Owner: [Laura Liu](https://github.com/lauraliu518)
 
-## Project History
-NextQuad was born from the common frustration of NYU students struggling to:
-- Find available study spaces during peak hours
-- Connect safely with verified campus community members
-- Stay informed about dorm-specific events and announcements
-- Buy/sell items within a trusted student network
+**Sprint 4 Roles:**
+- Scrum Master: [Laura Liu](https://github.com/lauraliu518)
+- Product Owner: [Milan Engineer](https://github.com/MilanEngineer)
 
-Our team came together in Oct 2025 as part of the Agile Software Development & DevOps course to build a solution that addresses these pain points.
+## Project History
+NextQuad was developed in response to the challenges NYU students face in campus life:
+- **Study Space Discovery**: Difficulty finding available study spaces during peak hours
+- **Event Management**: Lack of a centralized platform for campus events and RSVPs
+- **Community Connection**: Need for a safe, verified way to connect with other students
+- **Campus Resources**: Limited access to dorm-specific information, marketplace, and campus map features
+
+Our team came together in October 2025 as part of the Agile Software Development & DevOps course to build a solution that addresses these pain points through a single, integrated platform.
 
 ## Core Features
 
@@ -70,11 +74,12 @@ npm start
 
 The application will open automatically at `http://localhost:3000`
 
-### Sprint 2 - Backend Development
+### Sprint 2 & 3 - Backend Development & Database Integration
 
 **Backend Prerequisites:**
 - Node.js (v16 or higher)
 - npm
+- MongoDB (local or cloud instance like MongoDB Atlas)
 
 **Backend Setup and Run:**
 ```bash
@@ -84,9 +89,8 @@ cd back-end
 # Install dependencies
 npm install
 
-# Create .env file with configuration (for both frontend and backend)
-# /back-end/.env (PORT, NODE_ENV, API_VERSION, MOCK_USER_ID)
-# /front-end/.env (REACT_APP_API_URL)
+# Create .env file with configuration (see Environment Variables section below)
+# Refer to the example .env configuration in this README and create your .env file
 
 # Start development server with auto-reload
 npm run dev
@@ -96,6 +100,23 @@ npm start
 ```
 
 The backend API will be available at `http://localhost:3000`
+
+**Frontend Setup:**
+```bash
+# Navigate to frontend directory
+cd front-end
+
+# Install dependencies
+npm install
+
+# Create .env file with configuration (see Environment Variables section below)
+# Refer to the example .env configuration in this README and create your .env file
+
+# Start development server
+npm start
+```
+
+The frontend will be available at `http://localhost:3000` (or another port if 3000 is taken)
 
 **Running Backend Tests:**
 ```bash
@@ -108,6 +129,74 @@ npm test
 npm run test:coverage
 ```
 
+## Environment Variables
+
+Both backend and frontend require `.env` files for configuration. Here are the required variables:
+
+### Backend Environment Variables (`back-end/.env`)
+
+Create a `.env` file in the `back-end/` directory with the following variables:
+
+```env
+# Server Configuration
+PORT=3000
+NODE_ENV=development
+
+# Database
+MONGODB_URI=mongodb://localhost:27017/nextquad
+# Or for MongoDB Atlas:
+# MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/nextquad?retryWrites=true&w=majority
+
+# Authentication
+JWT_SECRET=your_jwt_secret_key_here
+JWT_EXP_DAYS=60
+
+# Google Maps API (for campus map feature)
+# See [GOOGLE_MAPS_SETUP.md](./GOOGLE_MAPS_SETUP.md) for detailed setup instructions
+GOOGLE_MAPS_API_KEY=your_google_maps_api_key_here
+```
+
+**Note:** For Google Maps API key setup, please refer to [GOOGLE_MAPS_SETUP.md](./GOOGLE_MAPS_SETUP.md) for detailed instructions on obtaining and configuring your API key.
+
+### Frontend Environment Variables (`front-end/.env`)
+
+Create a `.env` file in the `front-end/` directory with the following variables:
+
+```env
+# Backend API URL
+REACT_APP_API_URL=http://localhost:3000/api
+
+# Google Maps API (for campus map feature)
+# See GOOGLE_MAPS_SETUP.md for detailed setup instructions
+REACT_APP_GOOGLE_MAPS_API_KEY=your_google_maps_api_key_here
+```
+
+**Note:** 
+- Frontend environment variables must be prefixed with `REACT_APP_` to be accessible in React
+- For Google Maps API key setup, please refer to [GOOGLE_MAPS_SETUP.md](./GOOGLE_MAPS_SETUP.md) for detailed instructions
+
+### Creating .env Files
+
+Create `.env` files in both `back-end/` and `front-end/` directories using the examples below:
+
+**Create `back-end/.env`:**
+```env
+PORT=3000
+NODE_ENV=development
+MONGODB_URI=mongodb://localhost:27017/nextquad
+JWT_SECRET=dev_jwt_secret_key_change_in_production
+JWT_EXP_DAYS=60
+GOOGLE_MAPS_API_KEY=your_google_maps_api_key_here
+```
+
+**Create `front-end/.env`:**
+```env
+REACT_APP_API_URL=http://localhost:3000/api
+REACT_APP_GOOGLE_MAPS_API_KEY=your_google_maps_api_key_here
+```
+
+Replace the placeholder values (especially `your_google_maps_api_key_here`) with your actual configuration values.
+
 ## Additional Documentation
 
 - UX Design
@@ -119,13 +208,23 @@ npm run test:coverage
     - [Product Backlog](https://github.com/orgs/agile-students-fall2025/projects/40/views/1)
     - [Sprint 0 Backlog](https://github.com/orgs/agile-students-fall2025/projects/40/views/2)
     - [Sprint 0 Task Board](https://github.com/orgs/agile-students-fall2025/projects/40/views/3)
+    - [Sprint 1 Backlog](https://github.com/orgs/agile-students-fall2025/projects/40/views/4)
+    - [Sprint 1 Task Board](https://github.com/orgs/agile-students-fall2025/projects/40/views/5)
+    - [Sprint 2 Backlog](https://github.com/orgs/agile-students-fall2025/projects/40/views/6)
+    - [Sprint 2 Task Board](https://github.com/orgs/agile-students-fall2025/projects/40/views/7)
+    - [Sprint 3 Backlog](https://github.com/orgs/agile-students-fall2025/projects/40/views/8)
+    - [Sprint 3 Task Board](https://github.com/orgs/agile-students-fall2025/projects/40/views/9)
+    - [Sprint 4 Backlog](https://github.com/orgs/agile-students-fall2025/projects/40/views/10)
+    - [Sprint 4 Task Board](https://github.com/orgs/agile-students-fall2025/projects/40/views/11)
 
 ## Technology Stack
 
-- Frontend: React
-- Backend: Node.js/Express
-- Database: MongoDB
-- Maps API: [TBD]
+- **Frontend**: React
+- **Backend**: Node.js/Express
+- **Database**: MongoDB
+- **Maps API**: Google Maps JavaScript API & Geocoding API
+- **Authentication**: JWT (JSON Web Tokens)
+- **Password Hashing**: bcryptjs
 
 ## License
 This project is licensed under the GNU General Public License v3.0 - see [LICENSE.md](./LICENSE.md)
