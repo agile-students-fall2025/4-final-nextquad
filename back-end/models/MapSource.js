@@ -59,7 +59,7 @@ const mapSourceSchema = new mongoose.Schema(
   },
   { 
     timestamps: true,
-    collection: 'mapsource' 
+    collection: 'mappins' 
   }
 );
 
