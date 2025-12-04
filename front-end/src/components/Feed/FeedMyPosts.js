@@ -139,10 +139,11 @@ export default function FeedMyPosts({ navigateTo }) {
   // Edit handlers (moved to top-level)
   const handleEditPost = (post) => {
     setEditingPost(post);
+    const postImages = (post.images && post.images.length > 0) ? post.images : (post.image ? [post.image] : []);
     setEditForm({
       title: post.title,
       content: post.content,
-      image: post.image || '',
+      images: postImages,
       category: post.category,
       resolved: !!post.resolved // Always boolean
     });
@@ -150,8 +151,52 @@ export default function FeedMyPosts({ navigateTo }) {
     setOpenMenuId(null);
   };
 
+  const handleEditImageChange = async (e) => {
+    const files = Array.from(e.target.files || []);
+    const currentCount = editForm.images?.length || 0;
+    const remaining = 5 - currentCount;
+    if (files.length > remaining) {
+      alert(`You can only add ${remaining} more image(s). Maximum is 5.`);
+      return;
+    }
+
+    const validFiles = [];
+    for (const file of files) {
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Each image must be less than 5MB');
+        continue;
+      }
+      if (!file.type.startsWith('image/')) {
+        alert('Please upload valid image files only');
+        continue;
+      }
+
+      const base64String = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      validFiles.push(base64String);
+    }
+
+    if (validFiles.length > 0) {
+      setEditForm(prev => ({
+        ...prev,
+        images: [...(prev.images || []), ...validFiles]
+      }));
+    }
+  };
+
+  const handleEditRemoveImage = (index) => {
+    setEditForm(prev => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index)
+    }));
+  };
+
   const handleEditFormChange = (e) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value, checked } = e.target;
     setEditForm(form => ({
       ...form,
       [name]: name === 'resolved' ? checked : value
@@ -171,7 +216,7 @@ export default function FeedMyPosts({ navigateTo }) {
       const payload = {
         title: editForm.title,
         content: editForm.content,
-        image: editForm.image,
+        images: editForm.images?.length > 0 ? editForm.images : null,
         category: editForm.category,
         resolved: editForm.resolved
       };
@@ -356,113 +401,126 @@ export default function FeedMyPosts({ navigateTo }) {
           <div className="feed-edit-modal">
             <h2>Edit Post</h2>
             <form onSubmit={handleEditFormSubmit}>
-              <div style={{ marginBottom: '18px' }}>
-                <p style={{ fontSize: '14px', fontWeight: '500', marginBottom: '8px', color: '#555' }}>
-                  Upload Photo (Optional)
-                </p>
-                {editForm.image ? (
-                  <div style={{ position: 'relative' }}>
-                    <img 
-                      src={editForm.image} 
-                      alt="Post preview" 
-                      style={{ 
-                        width: '100%', 
-                        maxHeight: '200px', 
-                        objectFit: 'contain',
-                        borderRadius: '8px',
-                        backgroundColor: '#f9f9f9',
-                        border: '1px solid #e0e0e0'
-                      }} 
-                    />
-                    <button
-                      type="button"
-                      onClick={(e) => { 
-                        e.stopPropagation(); 
-                        setEditForm(f => ({ ...f, image: '' })); 
-                      }}
+              <div className="feed-edit-modal-body">
+                <div style={{ marginBottom: '18px' }}>
+                  <p style={{ fontSize: '14px', fontWeight: '500', marginBottom: '8px', color: '#555' }}>
+                    Upload Photos (Optional - Max 5)
+                  </p>
+                  
+                  {editForm.images && editForm.images.length > 0 && (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '12px', marginBottom: '12px' }}>
+                      {editForm.images.map((img, idx) => (
+                        <div key={idx} style={{ position: 'relative', borderRadius: '8px', overflow: 'hidden', border: '1px solid #e0e0e0' }}>
+                          <img 
+                            src={img} 
+                            alt={`Preview ${idx + 1}`} 
+                            style={{ width: '100%', height: '120px', objectFit: 'cover', display: 'block' }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleEditRemoveImage(idx)}
+                            style={{
+                              position: 'absolute',
+                              top: '4px',
+                              right: '4px',
+                              background: 'rgba(220, 38, 38, 0.9)',
+                              color: '#fff',
+                              border: 'none',
+                              borderRadius: '50%',
+                              width: '24px',
+                              height: '24px',
+                              cursor: 'pointer',
+                              fontSize: '14px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {(!editForm.images || editForm.images.length < 5) && (
+                    <label
                       style={{
-                        marginTop: '8px',
-                        padding: '6px 12px',
-                        background: '#fee',
-                        color: '#c53030',
-                        border: '1px solid #fca',
-                        borderRadius: '6px',
-                        fontSize: '13px',
-                        cursor: 'pointer',
-                        fontWeight: '500'
+                        display: 'block',
+                        border: '2px dashed #ddd',
+                        borderRadius: '8px',
+                        padding: '16px',
+                        textAlign: 'center',
+                        color: '#666',
+                        fontSize: '14px',
+                        backgroundColor: '#fafafa',
+                        cursor: 'pointer'
                       }}
                     >
-                      🗑️ Remove Image
-                    </button>
-                  </div>
-                ) : (
-                  <div 
-                    style={{ 
-                      border: '2px dashed #ddd',
-                      borderRadius: '8px',
-                      padding: '20px',
-                      textAlign: 'center',
-                      color: '#999',
-                      fontSize: '14px',
-                      backgroundColor: '#fafafa'
-                    }}
-                  >
-                    Photo upload not yet supported
-                  </div>
-                )}
-              </div>
-              <input
-                type="text"
-                placeholder="Post Title"
-                name="title"
-                value={editForm.title}
-                onChange={handleEditFormChange}
-                required
-                className="event-create-input"
-              />
-              <textarea
-                placeholder="What's on your mind?"
-                name="content"
-                value={editForm.content}
-                onChange={handleEditFormChange}
-                required
-                className="event-create-textarea"
-              />
-              <div className="event-create-categories">
-                <p className="event-create-categories-title">Category</p>
-                <div className="event-create-categories-list">
-                  {feedCategories.map(cat => (
-                    <button
-                      key={cat}
-                      type="button"
-                      className={editCategory === cat ? 'event-create-category-button-active' : 'event-create-category-button'}
-                      onClick={() => handleEditCategoryClick(cat)}
-                    >
-                      #{cat}
-                    </button>
-                  ))}
+                      📷 Click to upload ({editForm.images?.length || 0}/5)
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={handleEditImageChange}
+                        style={{ display: 'none' }}
+                      />
+                    </label>
+                  )}
                 </div>
-              </div>
-              {/* Resolved state selector */}
-              <div style={{ margin: '18px 0' }}>
-                <p style={{ fontWeight: 500, marginBottom: '8px' }}>Resolved Status</p>
-                <div style={{ display: 'flex', gap: '12px' }}>
-                  <button
-                    type="button"
-                    className={editForm.resolved ? 'event-create-category-button-active' : 'event-create-category-button'}
-                    style={{ minWidth: 120 }}
-                    onClick={() => setEditForm(form => ({ ...form, resolved: true }))}
-                  >
-                    Mark as Resolved
-                  </button>
-                  <button
-                    type="button"
-                    className={!editForm.resolved ? 'event-create-category-button-active' : 'event-create-category-button'}
-                    style={{ minWidth: 120 }}
-                    onClick={() => setEditForm(form => ({ ...form, resolved: false }))}
-                  >
-                    Mark as Unresolved
-                  </button>
+                <input
+                  type="text"
+                  placeholder="Post Title"
+                  name="title"
+                  value={editForm.title}
+                  onChange={handleEditFormChange}
+                  required
+                  className="event-create-input"
+                />
+                <textarea
+                  placeholder="What's on your mind?"
+                  name="content"
+                  value={editForm.content}
+                  onChange={handleEditFormChange}
+                  required
+                  className="event-create-textarea"
+                />
+                <div className="event-create-categories">
+                  <p className="event-create-categories-title">Category</p>
+                  <div className="event-create-categories-list">
+                    {feedCategories.map(cat => (
+                      <button
+                        key={cat}
+                        type="button"
+                        className={editCategory === cat ? 'event-create-category-button-active' : 'event-create-category-button'}
+                        onClick={() => handleEditCategoryClick(cat)}
+                      >
+                        #{cat}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                {/* Resolved state selector */}
+                <div style={{ margin: '18px 0' }}>
+                  <p style={{ fontWeight: 500, marginBottom: '8px' }}>Resolved Status</p>
+                  <div style={{ display: 'flex', gap: '12px' }}>
+                    <button
+                      type="button"
+                      className={editForm.resolved ? 'event-create-category-button-active' : 'event-create-category-button'}
+                      style={{ minWidth: 120 }}
+                      onClick={() => setEditForm(form => ({ ...form, resolved: true }))}
+                    >
+                      Mark as Resolved
+                    </button>
+                    <button
+                      type="button"
+                      className={!editForm.resolved ? 'event-create-category-button-active' : 'event-create-category-button'}
+                      style={{ minWidth: 120 }}
+                      onClick={() => setEditForm(form => ({ ...form, resolved: false }))}
+                    >
+                      Mark as Unresolved
+                    </button>
+                  </div>
                 </div>
               </div>
               <div className="feed-edit-modal-actions">
