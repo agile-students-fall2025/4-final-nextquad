@@ -4,7 +4,7 @@ import ImageModal from './ImageModal';
 import ImageCarousel from './ImageCarousel';
 import './FeedComments.css';
 
-export default function FeedComments({ post, navigateTo, returnToPage = 'main' }) {
+export default function FeedComments({ post, navigateTo,isAdmin = false, returnToPage = 'main' }) {
   const [commentText, setCommentText] = useState('');
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -24,6 +24,8 @@ export default function FeedComments({ post, navigateTo, returnToPage = 'main' }
   const [expandedImage, setExpandedImage] = useState(null);
   const [sortBy, setSortBy] = useState('Newest');
   const [showSortMenu, setShowSortMenu] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
   const menuRef = useRef(null);
   const sortMenuRef = useRef(null);
   
@@ -35,6 +37,16 @@ export default function FeedComments({ post, navigateTo, returnToPage = 'main' }
   useEffect(() => {
     setPostState(post);
   }, [post]);
+
+  // Prevent background scroll when delete modal is open
+  useEffect(() => {
+    if (deleteTarget) {
+      document.body.classList.add('modal-open');
+    } else {
+      document.body.classList.remove('modal-open');
+    }
+    return () => document.body.classList.remove('modal-open');
+  }, [deleteTarget]);
 
   // Fetch comments when component mounts or post changes
   useEffect(() => {
@@ -173,13 +185,26 @@ export default function FeedComments({ post, navigateTo, returnToPage = 'main' }
     }
   };
 
-  const handleDeleteComment = async (commentId) => {
-    if (!window.confirm('Are you sure you want to delete this comment?')) return;
+  const promptDeleteComment = (comment) => {
+    setDeleteTarget(comment);
+    setOpenMenuId(null);
+  };
+
+  const cancelDeleteComment = () => {
+    if (deleting) return;
+    setDeleteTarget(null);
+  };
+
+  const handleDeleteComment = async () => {
+    if (!deleteTarget || deleting) return;
+    setDeleting(true);
+    const commentId = deleteTarget.id;
 
     try {
       await deleteComment(commentId);
       setComments(prevComments => prevComments.filter(c => c.id !== commentId));
       setOpenMenuId(null);
+      setDeleteTarget(null);
       // Update main feed post comment count
       if (window.updateFeedMainPost) {
         const nextCount = Math.max(0, (post.commentCount || 0) - 1);
@@ -188,6 +213,8 @@ export default function FeedComments({ post, navigateTo, returnToPage = 'main' }
     } catch (err) {
       console.error('Error deleting comment:', err);
       alert('Failed to delete comment. Please try again.');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -271,7 +298,8 @@ export default function FeedComments({ post, navigateTo, returnToPage = 'main' }
             )}
           </div>
 
-          <div className="feed-post-actions">
+          {!isAdmin && (
+          <>
             <button 
               className="feed-post-action-button"
               onClick={handleLikePost}
@@ -284,7 +312,8 @@ export default function FeedComments({ post, navigateTo, returnToPage = 'main' }
             >
               {postState.isSavedByUser ? '✓ Saved' : 'Save'}
             </button>
-          </div>
+          </>
+        )}
         </div>
       )}
 
@@ -323,6 +352,7 @@ export default function FeedComments({ post, navigateTo, returnToPage = 'main' }
           </div>
         </div>
 
+        {!isAdmin && (
         <form className="feed-comments-form" onSubmit={handleSubmit}>
           <textarea
             placeholder="Add a comment..."
@@ -334,6 +364,7 @@ export default function FeedComments({ post, navigateTo, returnToPage = 'main' }
             Post Comment
           </button>
         </form>
+        )}
 
         {loading && (
           <div style={{ padding: '20px', textAlign: 'center', color: '#666' }}>
@@ -359,7 +390,8 @@ export default function FeedComments({ post, navigateTo, returnToPage = 'main' }
                 <div className="feed-comment-header">
                   <p className="feed-comment-author">{comment.author.name}</p>
                   <p className="feed-comment-timestamp">{comment.timestamp}</p>
-                  {comment.author.userId === currentUserId && (
+                      {/* Menu for editing/deleting */}
+                  {(comment.author.userId === currentUserId || isAdmin) && (
                     <div ref={openMenuId === comment.id ? menuRef : null}>
                       <button
                         className="feed-post-menu-button"
@@ -369,8 +401,10 @@ export default function FeedComments({ post, navigateTo, returnToPage = 'main' }
                       </button>
                       {openMenuId === comment.id && (
                         <div className="feed-post-menu-dropdown" style={{ right: 0, left: 'auto', top: '36px' }}>
-                          <button className="feed-post-menu-item" onClick={() => handleEditComment(comment)}>✏️ Edit Comment</button>
-                          <button className="feed-post-menu-item" onClick={() => handleDeleteComment(comment.id)}>🗑️ Delete Comment</button>
+                          {comment.author.userId === currentUserId && (
+                            <button className="feed-post-menu-item" onClick={() => handleEditComment(comment)}>✏️ Edit Comment</button>
+                          )}
+                          <button className="feed-post-menu-item" onClick={() => promptDeleteComment(comment.id)}>🗑️ Delete Comment</button>
                         </div>
                       )}
                     </div>
@@ -380,12 +414,15 @@ export default function FeedComments({ post, navigateTo, returnToPage = 'main' }
                 {typeof comment.editCount === 'number' && comment.editCount > 0 && (
                   <span className="feed-comment-edit-tag">Edited {comment.editCount} {comment.editCount === 1 ? 'time' : 'times'}</span>
                 )}
-                <button 
-                  className="feed-comment-like-button"
-                  onClick={() => handleLikeComment(comment.id)}
-                >
-                  {comment.isLikedByUser ? '❤️' : '🤍'} {comment.likes}
-                </button>
+                {/* Like button only for non-admins */}
+                {!isAdmin && (
+                  <button 
+                    className="feed-comment-like-button"
+                    onClick={() => handleLikeComment(comment.id)}
+                  >
+                    {comment.isLikedByUser ? '❤️' : '🤍'} {comment.likes}
+                  </button>
+                )}
               </div>
             </div>
           ))}
@@ -398,13 +435,16 @@ export default function FeedComments({ post, navigateTo, returnToPage = 'main' }
           <div className="feed-edit-modal">
             <h2>Edit Comment</h2>
             <form onSubmit={handleUpdateComment}>
-              <textarea
-                value={editText}
-                onChange={(e) => setEditText(e.target.value)}
-                required
-                className="feed-edit-textarea"
-                placeholder="Edit your comment..."
-              />
+              <div className="feed-edit-modal-body">
+                <textarea
+                  value={editText}
+                  onChange={(e) => setEditText(e.target.value)}
+                  required
+                  className="event-create-textarea"
+                  placeholder="Edit your comment..."
+                  style={{ marginBottom: '0' }}
+                />
+              </div>
               <div className="feed-edit-modal-actions">
                 <button
                   type="button"
@@ -436,6 +476,33 @@ export default function FeedComments({ post, navigateTo, returnToPage = 'main' }
           altText={expandedImage.alt}
           onClose={() => setExpandedImage(null)}
         />
+      )}
+
+      {deleteTarget && (
+        <div className="confirm-modal-backdrop" onClick={cancelDeleteComment}>
+          <div className="confirm-modal" onClick={(e) => e.stopPropagation()}>
+            <h4>Delete this comment?</h4>
+            <p style={{ margin: '8px 0 16px', color: '#4a4a4a' }}>
+              Are you sure you want to delete this comment? This action cannot be undone.
+            </p>
+            <div className="confirm-modal-actions">
+              <button
+                className="confirm-modal-btn secondary"
+                onClick={cancelDeleteComment}
+                disabled={deleting}
+              >
+                Cancel
+              </button>
+              <button
+                className="confirm-modal-btn danger"
+                onClick={handleDeleteComment}
+                disabled={deleting}
+              >
+                {deleting ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

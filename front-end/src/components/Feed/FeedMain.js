@@ -101,10 +101,20 @@ export default function FeedMain({ navigateTo, isAdmin = false }) {
       setShowCategoryMenu(false);
       setShowResolvedMenu(false);
     };
+
+    const handleScroll = () => {
+      setShowSortMenu(false);
+      setShowCategoryMenu(false);
+      setShowResolvedMenu(false);
+    };
     
     if (showSortMenu || showCategoryMenu || showResolvedMenu) {
       document.addEventListener('click', handleClickOutside);
-      return () => document.removeEventListener('click', handleClickOutside);
+      window.addEventListener('scroll', handleScroll, true);
+      return () => {
+        document.removeEventListener('click', handleClickOutside);
+        window.removeEventListener('scroll', handleScroll, true);
+      };
     }
   }, [showSortMenu, showCategoryMenu, showResolvedMenu]);
 
@@ -218,6 +228,7 @@ const handleReportUser = async (username, postId) => {
                 e.stopPropagation();
                 setShowCategoryMenu(!showCategoryMenu);
                 setShowSortMenu(false);
+                setShowResolvedMenu(false);
               }}
             >
               Category: {selectedCategory} ▼
@@ -282,6 +293,7 @@ const handleReportUser = async (username, postId) => {
                 e.stopPropagation();
                 setShowSortMenu(!showSortMenu);
                 setShowCategoryMenu(false);
+                setShowResolvedMenu(false);
               }}
             >
               Sort: {sortBy} ▼

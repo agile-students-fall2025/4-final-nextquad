@@ -178,12 +178,28 @@ const updatePost = async (req, res) => {
       return res.status(403).json({ success: false, error: 'You are not authorized to update this post' });
     }
 
-    const { title, content, category, image, resolved } = req.body;
+    const { title, content, category, image, images, resolved } = req.body;
     let edited = false;
     if (title && title !== post.title) { post.title = title; edited = true; }
     if (content && content !== post.content) { post.content = content; edited = true; }
     if (category && categories.includes(category) && category !== 'All' && category !== post.category) { post.category = category; edited = true; }
-    if (image !== undefined && image !== post.image) { post.image = image; edited = true; }
+    
+    // Handle images array (new multi-image support)
+    if (images !== undefined) {
+      const newImages = Array.isArray(images) ? images : [];
+      const currentImages = post.images || [];
+      if (JSON.stringify(newImages) !== JSON.stringify(currentImages)) {
+        post.images = newImages;
+        // Also set first image to legacy 'image' field for backward compatibility
+        post.image = newImages.length > 0 ? newImages[0] : null;
+        edited = true;
+      }
+    } else if (image !== undefined && image !== post.image) {
+      // Fallback for single image (legacy support)
+      post.image = image;
+      edited = true;
+    }
+    
     if (typeof resolved === 'boolean' && resolved !== post.resolved) { post.resolved = resolved; edited = true; }
 
     if (edited) {
