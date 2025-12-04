@@ -13,6 +13,8 @@ export default function FeedMain({ navigateTo, isAdmin = false }) {
   const [sortBy, setSortBy] = useState('Latest');
   const [showSortMenu, setShowSortMenu] = useState(false);
   const [showCategoryMenu, setShowCategoryMenu] = useState(false);
+  const [showResolvedMenu, setShowResolvedMenu] = useState(false);
+  const [resolvedFilter, setResolvedFilter] = useState('All'); // All | Resolved | Unresolved
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -97,22 +99,31 @@ export default function FeedMain({ navigateTo, isAdmin = false }) {
     const handleClickOutside = () => {
       setShowSortMenu(false);
       setShowCategoryMenu(false);
+      setShowResolvedMenu(false);
     };
     
-    if (showSortMenu || showCategoryMenu) {
+    if (showSortMenu || showCategoryMenu || showResolvedMenu) {
       document.addEventListener('click', handleClickOutside);
       return () => document.removeEventListener('click', handleClickOutside);
     }
-  }, [showSortMenu, showCategoryMenu]);
+  }, [showSortMenu, showCategoryMenu, showResolvedMenu]);
+
+  const categorySupportsResolved = ['Marketplace', 'Lost and Found', 'Roommate Request'].includes(selectedCategory);
 
   // Client-side search filter
-  const filteredPosts = posts.filter(post => {
-    if (!searchTerm) return true;
-    const term = searchTerm.toLowerCase();
-    return post.title.toLowerCase().includes(term) ||
-      post.content.toLowerCase().includes(term) ||
-      post.author.name.toLowerCase().includes(term);
-  });
+  const filteredPosts = posts
+    .filter(post => {
+      if (!searchTerm) return true;
+      const term = searchTerm.toLowerCase();
+      return post.title.toLowerCase().includes(term) ||
+        post.content.toLowerCase().includes(term) ||
+        post.author.name.toLowerCase().includes(term);
+    })
+    .filter(post => {
+      if (!categorySupportsResolved || resolvedFilter === 'All') return true;
+      const isResolved = !!post.resolved;
+      return resolvedFilter === 'Resolved' ? isResolved : !isResolved;
+    });
 
   // Sort by comment count (since backend doesn't support this yet)
   const sortedPosts = sortBy === 'Most Comments' 
@@ -219,6 +230,7 @@ const handleReportUser = async (username, postId) => {
                     className="feed-main-sort-option"
                     onClick={() => { 
                       setSelectedCategory(cat); 
+                      setResolvedFilter('All');
                       setShowCategoryMenu(false); 
                     }}
                   >
@@ -228,6 +240,39 @@ const handleReportUser = async (username, postId) => {
               </div>
             )}
           </div>
+
+          {/* Resolved Filter Dropdown */}
+          {categorySupportsResolved && (
+            <div className="feed-main-sort-container">
+              <button 
+                className="feed-main-sort-button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowResolvedMenu(!showResolvedMenu);
+                  setShowSortMenu(false);
+                  setShowCategoryMenu(false);
+                }}
+              >
+                Status: {resolvedFilter} ▼
+              </button>
+              {showResolvedMenu && (
+                <div className="feed-main-sort-menu">
+                  {['All', 'Resolved', 'Unresolved'].map(option => (
+                    <div 
+                      key={option} 
+                      className="feed-main-sort-option"
+                      onClick={() => { 
+                        setResolvedFilter(option); 
+                        setShowResolvedMenu(false); 
+                      }}
+                    >
+                      {option}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
           
           {/* Sort Dropdown */}
           <div className="feed-main-sort-container">

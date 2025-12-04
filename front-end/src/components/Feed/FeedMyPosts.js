@@ -16,6 +16,8 @@ export default function FeedMyPosts({ navigateTo }) {
   const [sortBy, setSortBy] = useState('Latest');
   const [showSortMenu, setShowSortMenu] = useState(false);
   const [expandedImage, setExpandedImage] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
   const menuRef = useRef(null);
   const sortMenuRef = useRef(null);
   const feedCategories = ['General','Marketplace','Lost and Found','Roommate Request','Safety Alerts'];
@@ -23,13 +25,13 @@ export default function FeedMyPosts({ navigateTo }) {
 
   // Prevent background scroll when edit modal is open
   useEffect(() => {
-    if (editingPost) {
+    if (editingPost || deleteTarget) {
       document.body.classList.add('modal-open');
     } else {
       document.body.classList.remove('modal-open');
     }
     return () => document.body.classList.remove('modal-open');
-  }, [editingPost]);
+  }, [editingPost, deleteTarget]);
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -99,28 +101,38 @@ export default function FeedMyPosts({ navigateTo }) {
     }
   };
 
-  const handleDeletePost = async (postId) => {
-    if (window.confirm('Are you sure you want to delete this post? This action cannot be undone.')) {
-      try {
-        const response = await deletePost(postId);
-        
-        // Check if deletion was successful
-        if (response && response.success) {
-          // Only remove from UI if deletion succeeded
-          setMyPosts(prevPosts => prevPosts.filter(post => post.id !== postId));
-          setOpenMenuId(null);
-          // Also update main feed if available
-          if (window.updateFeedMainAfterDelete) {
-            window.updateFeedMainAfterDelete(postId);
-          }
-        } else {
-          alert(`Failed to delete post: ${response?.error || 'Unknown error'}`);
+  const promptDeletePost = (post) => {
+    setDeleteTarget(post);
+    setOpenMenuId(null);
+  };
+
+  const cancelDeletePost = () => {
+    if (deleting) return;
+    setDeleteTarget(null);
+  };
+
+  const handleDeletePost = async () => {
+    if (!deleteTarget || deleting) return;
+    setDeleting(true);
+    const postId = deleteTarget.id;
+    try {
+      const response = await deletePost(postId);
+      
+      if (response && response.success) {
+        setMyPosts(prevPosts => prevPosts.filter(post => post.id !== postId));
+        setOpenMenuId(null);
+        if (window.updateFeedMainAfterDelete) {
+          window.updateFeedMainAfterDelete(postId);
         }
-      } catch (err) {
-        console.error('Error deleting post:', err);
-        alert(`Failed to delete post: ${err.message}`);
-        // Don't remove from UI if deletion failed
+        setDeleteTarget(null);
+      } else {
+        alert(`Failed to delete post: ${response?.error || 'Unknown error'}`);
       }
+    } catch (err) {
+      console.error('Error deleting post:', err);
+      alert(`Failed to delete post: ${err.message}`);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -296,7 +308,7 @@ export default function FeedMyPosts({ navigateTo }) {
                 {openMenuId === post.id && (
                   <div className="feed-post-menu-dropdown" style={{ right: 0, left: 'auto', top: '36px' }}>
                     <button className="feed-post-menu-item" onClick={() => handleEditPost(post)}>✏️ Edit Post</button>
-                    <button className="feed-post-menu-item" onClick={() => handleDeletePost(post.id)}>🗑️ Delete Post</button>
+                    <button className="feed-post-menu-item" onClick={() => promptDeletePost(post)}>🗑️ Delete Post</button>
                   </div>
                 )}
               </div>
@@ -468,6 +480,33 @@ export default function FeedMyPosts({ navigateTo }) {
           altText={expandedImage.alt}
           onClose={() => setExpandedImage(null)}
         />
+      )}
+
+      {deleteTarget && (
+        <div className="confirm-modal-backdrop" onClick={cancelDeletePost}>
+          <div className="confirm-modal" onClick={(e) => e.stopPropagation()}>
+            <h4>Delete this post?</h4>
+            <p style={{ margin: '8px 0 16px', color: '#4a4a4a' }}>
+              Are you sure you want to delete this post? This action cannot be undone.
+            </p>
+            <div className="confirm-modal-actions">
+              <button
+                className="confirm-modal-btn secondary"
+                onClick={cancelDeletePost}
+                disabled={deleting}
+              >
+                Cancel
+              </button>
+              <button
+                className="confirm-modal-btn danger"
+                onClick={handleDeletePost}
+                disabled={deleting}
+              >
+                {deleting ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
