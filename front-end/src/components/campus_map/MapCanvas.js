@@ -215,41 +215,26 @@ export default function MapCanvas({ activeCategories, searchQuery }) {
                     }}
                   >
                     <div className="pin-info">
+                      {point.categories && point.categories.length > 0 && (
+                        <div className="pin-info-categories">
+                          {point.categories.map((category, index) => (
+                            <span key={index} className="category-tag">
+                              {category}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                       <h4 className="pin-info-title">
                         {point.title}
                       </h4>
-                      {point.address && (
-                        <div className="meta">
-                          <strong>Address:</strong> {point.address}
-                        </div>
-                      )}
-                      {point.building && (
-                        <div className="meta">
-                          <strong>Building:</strong> {point.building}
-                        </div>
-                      )}
-                      {point.hours && (
-                        <div className="meta">
-                          <strong>Hours:</strong> {point.hours}
-                        </div>
-                      )}
                       {point.desc && (
                         <p className="pin-info-desc">
                           {point.desc}
                         </p>
                       )}
-                      {point.link && point.link.trim() && (
-                        <div className="pin-info-actions">
-                          <a
-                            className="pin-info-link-btn"
-                            href={point.link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            aria-label={`Reserve at ${point.title}`}
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            Reserve
-                          </a>
+                      {point.address && (
+                        <div className="meta">
+                          <strong>Address:</strong> {point.address}
                         </div>
                       )}
                     </div>
