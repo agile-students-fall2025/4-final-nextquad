@@ -278,3 +278,68 @@
   border-radius: 8px;
 }
 
+/* Delete confirmation modal */
+.confirm-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+}
+
+.confirm-modal {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px 24px 20px;
+  width: 100%;
+  max-width: 380px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.confirm-modal h4 {
+  margin: 0;
+  font-size: 18px;
+  color: #1f2937;
+}
+
+.confirm-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.confirm-modal-btn {
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.2s;
+}
+
+.confirm-modal-btn.secondary {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.confirm-modal-btn.danger {
+  background: #dc2626;
+  color: #fff;
+  box-shadow: 0 6px 16px rgba(220, 38, 38, 0.25);
+}
+
+.confirm-modal-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.confirm-modal-btn:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+
