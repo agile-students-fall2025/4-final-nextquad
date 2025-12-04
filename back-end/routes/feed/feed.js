@@ -5,6 +5,7 @@ const authenticateToken = require('../../middleware/authenticateToken');
 // Import controllers
 const {
   getAllPosts,
+  searchPosts,
   getPostById,
   createPost,
   updatePost,
@@ -30,6 +31,7 @@ const {
 router.get('/categories', getCategories);
 
 // Post routes
+router.get('/posts/search', authenticateToken, searchPosts); // Must come before /posts/:id
 router.get('/posts', authenticateToken, getAllPosts);
 router.get('/posts/:id', authenticateToken, getPostById);
 router.post('/posts', authenticateToken, createPost);
