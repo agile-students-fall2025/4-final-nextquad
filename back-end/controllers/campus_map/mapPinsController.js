@@ -29,7 +29,7 @@ const getPoints = async (req, res) => {
     const pins = await MapSource.find(query).lean();
     console.log('[getPoints] Found', pins.length, 'pins');
 
-    // Geocode all addresses - process all points in parallel
+    // Geocode all addresses
     console.log(`[getPoints] Geocoding ${pins.length} addresses...`);
     
     const formattedPins = await Promise.all(pins.map(async (pin) => {
@@ -44,14 +44,14 @@ const getPoints = async (req, res) => {
             lat = coords.lat;
             lng = coords.lng;
 
-            // Update database with geocoded coordinates (even if fallback, to avoid repeated API calls)
+            // Update database with geocoded coordinates 
             await MapSource.findByIdAndUpdate(pin._id, {
               latitude: lat,
               longitude: lng
             });
             
             if (lat !== 40.7308 || lng !== -73.9973) {
-              console.log(`[getPoints] ✅ Geocoded: ${pin.title} -> ${lat}, ${lng}`);
+              console.log(`[getPoints] Geocoded: ${pin.title} -> ${lat}, ${lng}`);
             }
           } catch (error) {
             console.error(`[getPoints] Geocoding failed for ${pin.title}:`, error.message);
@@ -82,10 +82,10 @@ const getPoints = async (req, res) => {
     
     // Log summary
     const uniqueCoords = new Set(formattedPins.map(p => `${p.latitude},${p.longitude}`));
-    console.log(`[getPoints] ✅ Processed ${formattedPins.length} points with ${uniqueCoords.size} unique coordinates`);
+    console.log(`[getPoints] Processed ${formattedPins.length} points with ${uniqueCoords.size} unique coordinates`);
     
     if (uniqueCoords.size === 1 && formattedPins.length > 1) {
-      console.warn('[getPoints] ⚠️  WARNING: All points have the same coordinates! Check geocoding API key.');
+      console.warn('[getPoints] WARNING: All points have the same coordinates! Check geocoding API key.');
     }
 
     return res.status(200).json({

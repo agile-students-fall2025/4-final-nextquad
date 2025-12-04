@@ -36,6 +36,43 @@ export default function MapCanvas({ activeCategories, searchQuery }) {
   const [map, setMap] = useState(null);
   const [center, setCenter] = useState(DEFAULT_CENTER);
 
+  // Inject styles to override Google Maps InfoWindow defaults
+  useEffect(() => {
+    const styleId = 'map-infowindow-overrides';
+    if (document.getElementById(styleId)) return; 
+
+    const style = document.createElement('style');
+    style.id = styleId;
+    style.textContent = `
+      .gm-style .gm-style-iw-c {
+        padding: 0 !important;
+        border-radius: 12px !important;
+        max-width: 320px !important;
+      }
+      .gm-style .gm-style-iw-d {
+        overflow: visible !important;
+        max-width: 320px !important;
+      }
+      .gm-style-iw-t::after {
+        background: #fff !important;
+      }
+      @media (max-width: 480px) {
+        .gm-style .gm-style-iw-c,
+        .gm-style .gm-style-iw-d {
+          max-width: 280px !important;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+
+    return () => {
+      const existingStyle = document.getElementById(styleId);
+      if (existingStyle) {
+        existingStyle.remove();
+      }
+    };
+  }, []);
+
   // Load points from backend when filters/search change
   useEffect(() => {
     (async () => {
@@ -173,106 +210,43 @@ export default function MapCanvas({ activeCategories, searchQuery }) {
                       lng: lng
                     }}
                     options={{
-                      maxWidth: 400
+                      maxWidth: 320,
+                      disableAutoPan: false
                     }}
                   >
-                    <div className="pin-info" style={{ 
-                      minWidth: '320px', 
-                      maxWidth: '400px',
-                      padding: '16px 20px',
-                      fontSize: '14px'
-                    }}>
-                      <button
-                        type="button"
-                        className="pin-info-close"
-                        aria-label="Close"
-                        onClick={() => setOpenId(null)}
-                        style={{
-                          position: 'absolute',
-                          top: '8px',
-                          right: '12px',
-                          border: 'none',
-                          background: 'transparent',
-                          fontSize: '20px',
-                          cursor: 'pointer',
-                          color: '#666',
-                          lineHeight: '1',
-                          padding: '4px 8px'
-                        }}
-                      >
-                        ×
-                      </button>
-                      <h4 className="pin-info-title" style={{
-                        margin: '0 32px 10px 0',
-                        fontSize: '18px',
-                        fontWeight: '700',
-                        color: '#333',
-                        lineHeight: '1.3'
-                      }}>
+                    <div className="pin-info">
+                      <h4 className="pin-info-title">
                         {point.title}
                       </h4>
                       {point.address && (
-                        <div className="meta" style={{
-                          fontSize: '14px',
-                          color: '#666',
-                          marginBottom: '8px',
-                          lineHeight: '1.5'
-                        }}>
+                        <div className="meta">
                           <strong>Address:</strong> {point.address}
                         </div>
                       )}
                       {point.building && (
-                        <div className="meta" style={{
-                          fontSize: '14px',
-                          color: '#666',
-                          marginBottom: '8px',
-                          lineHeight: '1.5'
-                        }}>
+                        <div className="meta">
                           <strong>Building:</strong> {point.building}
                         </div>
                       )}
                       {point.hours && (
-                        <div className="meta" style={{
-                          fontSize: '14px',
-                          color: '#666',
-                          marginBottom: '8px',
-                          lineHeight: '1.5'
-                        }}>
+                        <div className="meta">
                           <strong>Hours:</strong> {point.hours}
                         </div>
                       )}
                       {point.desc && (
-                        <p className="pin-info-desc" style={{
-                          margin: '10px 0 0 0',
-                          fontSize: '14px',
-                          color: '#333',
-                          lineHeight: '1.6'
-                        }}>
+                        <p className="pin-info-desc">
                           {point.desc}
                         </p>
                       )}
                       {point.link && point.link.trim() && (
-                        <div className="pin-info-actions" style={{ marginTop: '12px' }}>
+                        <div className="pin-info-actions">
                           <a
                             className="pin-info-link-btn"
                             href={point.link}
                             target="_blank"
                             rel="noopener noreferrer"
                             aria-label={`Reserve at ${point.title}`}
-                            style={{
-                              display: 'inline-block',
-                              padding: '10px 16px',
-                              borderRadius: '8px',
-                              border: '1px solid #e5e5e5',
-                              background: '#fff',
-                              color: '#6B46C1',
-                              fontWeight: '600',
-                              textDecoration: 'none',
-                              fontSize: '14px',
-                              transition: 'background 0.15s ease'
-                            }}
-                            onMouseEnter={(e) => e.target.style.background = '#faf7ff'}
-                            onMouseLeave={(e) => e.target.style.background = '#fff'}
+                            onClick={(e) => e.stopPropagation()}
                           >
                             Reserve
                           </a>

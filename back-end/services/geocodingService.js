@@ -14,7 +14,7 @@ async function geocodeAddress(address) {
   const apiKey = process.env.GOOGLE_MAPS_API_KEY;
   
   if (!apiKey) {
-    console.warn('[geocodeAddress] ⚠️  GOOGLE_MAPS_API_KEY not set in environment variables!');
+    console.warn('[geocodeAddress] GOOGLE_MAPS_API_KEY not set in environment variables!');
     console.warn('[geocodeAddress] Add GOOGLE_MAPS_API_KEY to your back-end/.env file');
     // Return default NYU campus coordinates as fallback
     return { lat: 40.7308, lng: -73.9973 };
@@ -31,7 +31,7 @@ async function geocodeAddress(address) {
       const location = response.data.results[0].geometry.location;
       return { lat: location.lat, lng: location.lng };
     } else if (response.data.status === 'REQUEST_DENIED') {
-      console.error(`[geocodeAddress] ❌ API request denied. Check your API key and ensure Geocoding API is enabled.`);
+      console.error(`[geocodeAddress] API request denied. Check your API key and ensure Geocoding API is enabled.`);
       console.error(`[geocodeAddress] Status: ${response.data.status}, Error: ${response.data.error_message || 'Unknown error'}`);
       return { lat: 40.7308, lng: -73.9973 };
     } else {

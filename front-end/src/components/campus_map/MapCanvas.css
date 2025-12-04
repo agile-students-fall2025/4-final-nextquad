@@ -84,11 +84,10 @@
 }
 
 .pin-info {
-  position: absolute;
-  transform: translate(calc(-50% + var(--pin-info-shift-x)), calc(-100% + var(--pin-info-shift-y)));
-  transform-origin: center bottom;
+  position: relative;
   min-width: 220px;
   max-width: 280px;
+  width: 100%;
   background: var(--card);
   color: var(--text);
   border-radius: 12px;
@@ -96,6 +95,16 @@
   padding: 12px 12px 14px;
   z-index: 1;
   pointer-events: auto;
+  box-sizing: border-box;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+
+.map-inner .pin-info {
+  position: absolute;
+  transform: translate(calc(-50% + var(--pin-info-shift-x)), calc(-100% + var(--pin-info-shift-y)));
+  transform-origin: center bottom;
 }
 
 
@@ -114,17 +123,23 @@
 
 
 .pin-info-title {
-  margin: 0 24px 6px 0; 
+  margin: 0 0 6px 0; 
   font-size: 16px;
   font-weight: 700;
   color: var(--text);
   letter-spacing: .2px;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-width: 100%;
 }
 
 .pin-info .meta {
   font-size: 13px;
   color: var(--muted);
   margin-bottom: 8px;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-width: 100%;
 }
 
 .pin-info-desc {
@@ -132,6 +147,9 @@
   font-size: 13px;
   color: var(--text);
   line-height: 1.55;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-width: 100%;
 }
 
 
