@@ -56,7 +56,7 @@ export default function AdminReportedUsers({ navigateTo }) {
             <tbody>
               {reports.map((report) => (
                 <tr key={report._id}>
-                  <td>{report.user?.email || "N/A"}</td>
+                  <td>{report.username || "N/A"}</td>
                   <td>{report.admin?.email || "N/A"}</td>
                   <td>{report.reason}</td>
                   <td>{new Date(report.createdAt).toLocaleString()}</td>
