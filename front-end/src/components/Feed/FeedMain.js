@@ -395,14 +395,15 @@ const handleReportUser = async (username, postId) => {
             </div>
 
             <div className="feed-post-actions">
-  {!isAdmin && (
-    <>
+ 
       <button 
         className="feed-post-action-button"
         onClick={() => navigateTo('comments', post.id, 'main')}
       >
         💬 {post.commentCount}
       </button>
+    {!isAdmin && (
+      <>
       <button 
         className="feed-post-action-button"
         onClick={() => handleLike(post.id)}
