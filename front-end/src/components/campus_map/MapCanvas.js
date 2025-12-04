@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { GoogleMap, LoadScript, Marker, InfoWindow } from "@react-google-maps/api";
+import { GoogleMap, useLoadScript, Marker, InfoWindow } from "@react-google-maps/api";
 import "./MapCanvas.css";
 import { getMapPoints } from "../../services/api";
 
@@ -36,6 +36,14 @@ export default function MapCanvas({ activeCategories, searchQuery }) {
   const [map, setMap] = useState(null);
   const [center, setCenter] = useState(DEFAULT_CENTER);
 
+  // Get Google Maps API key from environment
+  const googleMapsApiKey = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
+
+  const { isLoaded, loadError } = useLoadScript({
+    googleMapsApiKey: googleMapsApiKey || '',
+    id: 'google-map-script'
+  });
+
   // Inject styles to override Google Maps InfoWindow defaults
   useEffect(() => {
     const styleId = 'map-infowindow-overrides';
@@ -70,6 +78,20 @@ export default function MapCanvas({ activeCategories, searchQuery }) {
       if (existingStyle) {
         existingStyle.remove();
       }
+    };
+  }, []);
+
+  // Reset state when component mounts/unmounts
+  useEffect(() => {
+    // Reset to defaults when component mounts
+    setOpenId(null);
+    setCenter(DEFAULT_CENTER);
+    
+    return () => {
+      // Cleanup on unmount
+      setOpenId(null);
+      setPoints([]);
+      setMap(null);
     };
   }, []);
 
@@ -138,9 +160,7 @@ export default function MapCanvas({ activeCategories, searchQuery }) {
 
   const visible = useMemo(() => points, [points]);
 
-  // Get Google Maps API key from environment
-  const googleMapsApiKey = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
-
+  // Show error if API key is missing
   if (!googleMapsApiKey) {
     return (
       <div className="map-canvas map-error">
@@ -152,16 +172,45 @@ export default function MapCanvas({ activeCategories, searchQuery }) {
     );
   }
 
+  // Show loading state while script is loading
+  if (!isLoaded) {
+    return (
+      <div className="map-canvas">
+        <div style={{ 
+          position: 'absolute', 
+          top: '50%', 
+          left: '50%', 
+          transform: 'translate(-50%, -50%)',
+          textAlign: 'center',
+          color: '#666'
+        }}>
+          <p>Loading map...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error if script failed to load
+  if (loadError) {
+    return (
+      <div className="map-canvas map-error">
+        <div className="map-error-message">
+          <h3>Error Loading Google Maps</h3>
+          <p>Failed to load Google Maps script. Please check your API key.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="map-canvas">
-      <LoadScript googleMapsApiKey={googleMapsApiKey}>
-        <GoogleMap
-          mapContainerStyle={mapContainerStyle}
-          center={center}
-          zoom={15}
-          options={defaultOptions}
-          onLoad={onMapLoad}
-        >
+      <GoogleMap
+        mapContainerStyle={mapContainerStyle}
+        center={center}
+        zoom={15}
+        options={defaultOptions}
+        onLoad={onMapLoad}
+      >
           {visible.length === 0 && (
             <div style={{ 
               position: 'absolute', 
@@ -243,8 +292,7 @@ export default function MapCanvas({ activeCategories, searchQuery }) {
               </Marker>
             );
           })}
-        </GoogleMap>
-      </LoadScript>
+      </GoogleMap>
     </div>
   );
 }
