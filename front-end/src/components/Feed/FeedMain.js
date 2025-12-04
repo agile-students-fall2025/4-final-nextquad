@@ -6,6 +6,8 @@ import ImageCarousel from './ImageCarousel';
 import './FeedMain.css';
 
 export default function FeedMain({ navigateTo, isAdmin = false }) {
+  const [showReportInput, setShowReportInput] = useState({});
+  const [reportReasons, setReportReasons] = useState({}); 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [sortBy, setSortBy] = useState('Latest');
@@ -118,25 +120,36 @@ export default function FeedMain({ navigateTo, isAdmin = false }) {
     : filteredPosts;
   
   //report a user (admin feature)
-  const handleReportUser = async (username) => {
-  const reason = prompt(`Enter reason for reporting ${username}:`);
-
+const handleReportUser = async (username, postId) => {
+  const reason = reportReasons[username];
+  
+  // if no reason provided, do nothing
   if (!reason || !reason.trim()) {
-    alert("Report cancelled — reason required.");
-    return;
+    return; 
   }
 
   try {
     const response = await createReport({ username, reason });
 
     if (response && response.success) {
-      alert(`Report for ${username} submitted successfully.`);
-    } else {
-      alert("Failed to submit report. Please try again.");
+      // clear input and show success message
+      setReportReasons(prev => ({ ...prev, [username]: '' }));
+      setShowReportInput(prev => ({
+        ...prev,
+        [postId]: false,             
+        [`${postId}-success`]: true  
+      }));
+
+      // hide the success message after 3 seconds
+      setTimeout(() => {
+        setShowReportInput(prev => ({
+          ...prev,
+          [`${postId}-success`]: false
+        }));
+      }, 3000);
     }
   } catch (error) {
     console.error("Error reporting user:", error);
-    alert("Server error. Please try again later.");
   }
 };
   // Delete post (admin feature)
@@ -371,26 +384,56 @@ export default function FeedMain({ navigateTo, isAdmin = false }) {
     </>
   )}
 
-  {isAdmin && (
+{isAdmin && (
   <>
     {/* Delete Post (Admin Only) */}
     <button 
       className="feed-post-action-button"
       onClick={() => handleAdminDelete(post.id)}
-
     >
       🗑 Delete
     </button>
 
     {/* Report User */}
+<button 
+  className="feed-post-action-button"
+  onClick={() => setShowReportInput(prev => ({
+    ...prev,
+    [post.id]: true
+  }))}
+>
+  ⚠️ Report User
+</button>
+
+{showReportInput[post.id] && (
+  <div className="feed-post-report-container">
+    <input
+      type="text"
+      placeholder="Reason for report..."
+      value={reportReasons[post.author.name] || ''}
+      onChange={(e) =>
+        setReportReasons(prev => ({ ...prev, [post.author.name]: e.target.value }))
+      }
+    />
     <button 
       className="feed-post-action-button"
-      onClick={() => handleReportUser(post.author.name)}
+      onClick={() => handleReportUser(post.author.name, post.id)}
     >
-      ⚠️ Report User
+      Submit
     </button>
+  </div>
+)}
+
+{/* Success message */}
+{showReportInput[`${post.id}-success`] && (
+  <div style={{ marginTop: '8px', color: '#276749'}}>
+    User reported successfully 
+  </div>
+)}
+
   </>
 )}
+
 
 
 </div>

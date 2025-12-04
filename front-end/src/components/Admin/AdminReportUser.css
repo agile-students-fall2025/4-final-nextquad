@@ -41,10 +41,11 @@
   cursor: pointer;
   font-size: 16px;
   transition: background-color 0.2s ease;
+  margin-top: 10px;
 }
 
 .admin-dashboard-button:hover {
-  background-color: #6B46C1;
+  background-color: #5a36a8;
 }
 
 .admin-dashboard-button.alert {
@@ -53,4 +54,31 @@
 
 .admin-dashboard-button.alert:hover {
   background-color: #c53030;
+}
+
+/* Table styling for reported users */
+.reports-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.reports-table th {
+  background-color: #6B46C1;
+  color: white;
+  padding: 10px;
+  text-align: left;
+}
+
+.reports-table td {
+  padding: 10px;
+  border-bottom: 1px solid #ccc;
+}
+
+.reports-table tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.reports-table tr:hover {
+  background-color: #eaeaea;
 }

@@ -1,79 +1,74 @@
-import React, { useState } from "react";
-import { createReport } from "../../services/api"; 
+import React, { useEffect, useState } from "react";
+import { getAllReports } from "../../services/api"; 
 import "./AdminReportUser.css";
 
-export default function AdminReportUser({ navigateTo }) {
-  const [username, setUsername] = useState("");
-  const [reason, setReason] = useState("");
-  const [loading, setLoading] = useState(false);
+export default function AdminReportedUsers({ navigateTo }) {
+  const [reports, setReports] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const handleSubmitReport = async () => {
-    // Simple validation
-    if (!username.trim() || !reason.trim()) {
-      setError("Please fill in both fields before submitting.");
-      return;
-    }
-
-    setLoading(true);
-    setError("");
-
-    try {
-      const response = await createReport({ username, reason });
-
-      if (response && response.success) {
-        alert("User report submitted successfully!");
-        navigateTo("dashboard");
-      } else {
-        setError("Failed to submit the report. Please try again.");
+  useEffect(() => {
+    const fetchReports = async () => {
+      setLoading(true);
+      setError("");
+      try {
+        const response = await getAllReports();
+        if (response && response.success) {
+          setReports(response.data);
+        } else {
+          setError("Failed to fetch reports. Please try again.");
+        }
+      } catch (err) {
+        console.error("Error fetching reports:", err);
+        setError("Server error — please try again later.");
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.error("Error submitting report:", err);
-      setError("Server error — please try again later.");
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+
+    fetchReports();
+  }, []);
 
   return (
     <div className="admin-dashboard-container">
       <div className="admin-dashboard-header">
-        <h1>Report a User</h1>
+        <h1>Reported Users</h1>
       </div>
 
       <div className="admin-dashboard-content">
-        <p>Enter details of the user report:</p>
-
-        <input
-          type="text"
-          placeholder="Username of user"
-          className="report-input"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-        />
-
-        <textarea
-          placeholder="Reason for report..."
-          rows={5}
-          className="report-textarea"
-          value={reason}
-          onChange={(e) => setReason(e.target.value)}
-        ></textarea>
-
+        {loading && <p>Loading reports...</p>}
         {error && <p className="error-text">{error}</p>}
 
-        <button
-          className="admin-dashboard-button alert"
-          onClick={handleSubmitReport}
-          disabled={loading}
-        >
-          {loading ? "Submitting..." : "Submit Report"}
-        </button>
+        {!loading && !error && reports.length === 0 && (
+          <p>No reports found.</p>
+        )}
+
+        {!loading && reports.length > 0 && (
+          <table className="reports-table">
+            <thead>
+              <tr>
+                <th>Reported User</th>
+                <th>Reported By (Admin)</th>
+                <th>Reason</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {reports.map((report) => (
+                <tr key={report._id}>
+                  <td>{report.user?.email || "N/A"}</td>
+                  <td>{report.admin?.email || "N/A"}</td>
+                  <td>{report.reason}</td>
+                  <td>{new Date(report.createdAt).toLocaleString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
 
         <button
           className="admin-dashboard-button"
           onClick={() => navigateTo("dashboard")}
-          disabled={loading}
         >
           Back to Dashboard
         </button>

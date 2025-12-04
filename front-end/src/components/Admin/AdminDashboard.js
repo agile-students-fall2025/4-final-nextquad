@@ -37,7 +37,7 @@ export default function AdminDashboard({ navigateTo }) {
         </button>
 
         <button className="settings-button" onClick={handleReportUser}>
-          Report User
+          Reported Users
         </button>
 
         <button className="settings-button" onClick={handleFeed}>

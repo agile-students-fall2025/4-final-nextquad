@@ -1,7 +1,4 @@
-const { faker } = require("@faker-js/faker");
-const { mockReports } = require("../../data/admin/mockReportData");
-const { mockAlerts } = require("../../data/admin/mockAlertData");
-const { mockAdmins } = require("../../data/admin/mockAdminData");
+
 const Admin = require('../../models/Admin');
 const AdminSettings = require('../../models/AdminSettings');
 const AdminEmergencyAlert = require('../../models/AdminEmergencyAlert');
@@ -75,11 +72,16 @@ const updateAdminSettings = async (req, res) => {
 //admin user reports
 
 // GET all reports
-const getAllReports = (req, res) => {
+const getAllReports = async (req, res) => {
   try {
+    // Fetch all reports from the database
+    const reports = await AdminReportUser.find()
+      .populate("admin", "username email")
+      .sort({ createdAt: -1 }); 
+
     res.status(200).json({
       success: true,
-      data: mockReports,
+      data: reports,
     });
   } catch (error) {
     console.error("Error fetching reports:", error);
@@ -89,6 +91,7 @@ const getAllReports = (req, res) => {
     });
   }
 };
+
 
 // put create a new report
 const createReport = async (req, res) => {
