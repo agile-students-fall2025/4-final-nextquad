@@ -256,3 +256,16 @@
   color: #6B46C1;
 }
 
+.feed-post-report-container {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.feed-post-report-container input {
+  flex: 1;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  font-size: 14px;
+}
