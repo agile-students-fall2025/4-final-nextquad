@@ -181,18 +181,20 @@ export default function FeedMyPosts({ navigateTo }) {
     }
 
     if (validFiles.length > 0) {
-      setEditForm(prev => ({
-        ...prev,
-        images: [...(prev.images || []), ...validFiles]
-      }));
+      setEditForm(prev => {
+        const newImages = [...(prev.images || []), ...validFiles];
+        console.log('✅ Added images, new count:', newImages.length);
+        return { ...prev, images: newImages };
+      });
     }
   };
 
   const handleEditRemoveImage = (index) => {
-    setEditForm(prev => ({
-      ...prev,
-      images: prev.images.filter((_, i) => i !== index)
-    }));
+    setEditForm(prev => {
+      const newImages = prev.images.filter((_, i) => i !== index);
+      console.log('🗑️ Removed image at index', index, 'new count:', newImages.length);
+      return { ...prev, images: newImages };
+    });
   };
 
   const handleEditFormChange = (e) => {
@@ -220,7 +222,9 @@ export default function FeedMyPosts({ navigateTo }) {
         category: editForm.category,
         resolved: editForm.resolved
       };
+      console.log('📤 Submitting post update with payload:', { ...payload, images: payload.images ? `[${payload.images.length} images]` : 'null' });
       const updated = await updatePost(editingPost.id, payload);
+      console.log('✅ Post updated successfully');
       setMyPosts(prevPosts => prevPosts.map(post => post.id === editingPost.id ? updated.data : post));
       // Also update main feed if available
       if (window.updateFeedMainPost) {
@@ -228,6 +232,7 @@ export default function FeedMyPosts({ navigateTo }) {
       }
       setEditingPost(null);
     } catch (err) {
+      console.error('❌ Failed to update post:', err);
       alert('Failed to update post.');
     } finally {
       setSavingEdit(false);
