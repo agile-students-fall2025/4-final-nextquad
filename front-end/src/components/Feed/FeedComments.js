@@ -425,13 +425,16 @@ export default function FeedComments({ post, navigateTo, returnToPage = 'main' }
           <div className="feed-edit-modal">
             <h2>Edit Comment</h2>
             <form onSubmit={handleUpdateComment}>
-              <textarea
-                value={editText}
-                onChange={(e) => setEditText(e.target.value)}
-                required
-                className="feed-edit-textarea"
-                placeholder="Edit your comment..."
-              />
+              <div className="feed-edit-modal-body">
+                <textarea
+                  value={editText}
+                  onChange={(e) => setEditText(e.target.value)}
+                  required
+                  className="event-create-textarea"
+                  placeholder="Edit your comment..."
+                  style={{ marginBottom: '0' }}
+                />
+              </div>
               <div className="feed-edit-modal-actions">
                 <button
                   type="button"
