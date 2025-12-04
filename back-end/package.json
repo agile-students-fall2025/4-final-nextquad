@@ -9,7 +9,8 @@
     "test": "c8 mocha test/**/*.test.js --timeout 5000 --exit",
     "test:coverage": "c8 --reporter=text --reporter=html mocha test/**/*.test.js --timeout 5000 --exit",
     "seed:feed": "node scripts/seedFeed.js",
-    "seed:map": "node scripts/seedMap.js"
+    "seed:map": "node scripts/seedMap.js",
+    "seed:mapsource": "node scripts/seedMapSource.js"
   },
   "author": "",
   "license": "ISC",

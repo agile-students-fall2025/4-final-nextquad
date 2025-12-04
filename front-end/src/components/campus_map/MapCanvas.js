@@ -1,60 +1,40 @@
-import { useEffect, useRef, useState, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
+import { GoogleMap, LoadScript, Marker, InfoWindow } from "@react-google-maps/api";
 import "./MapCanvas.css";
-import pinPng from "../../assets/campus_map/mapPin.png";
 import { getMapPoints } from "../../services/api";
+
+// Default center for NYU campus (Washington Square Park area)
+const DEFAULT_CENTER = {
+  lat: 40.7308,
+  lng: -73.9973
+};
+
+// Default map options
+const mapContainerStyle = {
+  width: "100%",
+  height: "100%",
+  minHeight: "60vh"
+};
+
+const defaultOptions = {
+  zoomControl: true,
+  streetViewControl: false,
+  mapTypeControl: false,
+  fullscreenControl: true,
+  styles: [
+    {
+      featureType: "poi",
+      elementType: "labels",
+      stylers: [{ visibility: "off" }]
+    }
+  ]
+};
 
 export default function MapCanvas({ activeCategories, searchQuery }) {
   const [openId, setOpenId] = useState(null);
-  const [zoom, setZoom] = useState(1);
   const [points, setPoints] = useState([]);
-  const canvasRef = useRef(null);
-  const [pan, setPan] = useState({ x: 0, y: 0 });
-  const [isDragging, setIsDragging] = useState(false);
-  const dragStartRef = useRef({ x: 0, y: 0 });
-
-  const Z_MIN = 0.55;
-  const Z_MAX = 2.0;
-  const Z_STEP = 0.15;
-
-  const clamp = (z) => Math.min(Z_MAX, Math.max(Z_MIN, Number(z.toFixed(2))));
-
-  const zoomIn = () => setZoom((z) => clamp(z + Z_STEP));
-  const zoomOut = () => setZoom((z) => clamp(z - Z_STEP));
-  const zoomReset = () => {
-    setZoom(1);
-    setPan({ x: 0, y: 0 });
-  };
-
-  // Pan and drag handlers
-  const handleMouseDown = (e) => {
-    const target = e.target;
-    // Don't start dragging if clicking on interactive elements
-    if (
-      target.closest('.pin-btn') ||
-      target.closest('.pin-info') ||
-      target.closest('.zoom-controls') ||
-      target.closest('button') ||
-      target.closest('a')
-    ) {
-      return;
-    }
-    
-    setIsDragging(true);
-    dragStartRef.current = {
-      x: e.clientX - pan.x,
-      y: e.clientY - pan.y
-    };
-    e.preventDefault();
-  };
-
-  // Handle link clicks - prevent map dragging from interfering
-  const handleLinkClick = (e) => {
-    e.stopPropagation(); // Prevent event from bubbling to map handlers
-    // Allow default link navigation behavior
-    if (!e.currentTarget.href || e.currentTarget.href === '#') {
-      e.preventDefault(); // Only prevent if link is invalid
-    }
-  };
+  const [map, setMap] = useState(null);
+  const [center, setCenter] = useState(DEFAULT_CENTER);
 
   // Load points from backend when filters/search change
   useEffect(() => {
@@ -62,154 +42,250 @@ export default function MapCanvas({ activeCategories, searchQuery }) {
       try {
         const params = {};
         if (activeCategories instanceof Set && activeCategories.size > 0) {
-          // backend expects comma-separated list
           params.categories = [...activeCategories].join(',');
         }
         if (searchQuery) params.search = searchQuery;
-        const data = await getMapPoints(params); // expect array of points
-        setPoints(data.data || data);
+        const data = await getMapPoints(params);
+        console.log('Map data received:', data);
+        
+        // Handle different response formats
+        let pointsData = [];
+        if (data && data.data) {
+          pointsData = Array.isArray(data.data) ? data.data : [];
+        } else if (Array.isArray(data)) {
+          pointsData = data;
+        }
+        
+        console.log('Points to display:', pointsData.length);
+        if (pointsData.length > 0) {
+          console.log('Sample point:', pointsData[0]);
+          
+          // Check if all points have the same coordinates (indicates geocoding issue)
+          const uniqueCoords = new Set(pointsData.map(p => `${p.latitude},${p.longitude}`));
+          console.log(`Unique coordinate pairs: ${uniqueCoords.size} out of ${pointsData.length} points`);
+          if (uniqueCoords.size === 1 && pointsData.length > 1) {
+            console.warn('⚠️  WARNING: All points have the same coordinates! This means geocoding is failing.');
+            console.warn('Check that GOOGLE_MAPS_API_KEY is set in back-end/.env and Geocoding API is enabled.');
+          }
+        }
+        
+        setPoints(pointsData);
+        
         // Auto-open first matching result when searching
-        if (searchQuery) setOpenId(data?.[0]?.id ?? null);
-        else setOpenId(null);
+        if (searchQuery && pointsData.length > 0) {
+          setOpenId(pointsData[0]?.id ?? null);
+          // Center map on first result
+          if (pointsData[0]?.latitude && pointsData[0]?.longitude) {
+            setCenter({
+              lat: pointsData[0].latitude,
+              lng: pointsData[0].longitude
+            });
+          }
+        } else {
+          setOpenId(null);
+        }
       } catch (e) {
         console.error('Failed to load map points', e);
+        console.error('Error details:', e.message, e.stack);
       }
     })();
   }, [activeCategories, searchQuery]);
 
-  // Close the info card when clicking outside the canvas
-  useEffect(() => {
-    const onDocClick = (e) => {
-      if (!canvasRef.current) return;
-      if (!canvasRef.current.contains(e.target)) setOpenId(null);
-    };
-    document.addEventListener("mousedown", onDocClick);
-    return () => document.removeEventListener("mousedown", onDocClick);
-  }, []);
+  const onMapLoad = (mapInstance) => {
+    setMap(mapInstance);
+  };
 
-  // Keyboard shortcuts: +/-
-  useEffect(() => {
-    const onKey = (e) => {
-      if (e.key === "+" || e.key === "=") zoomIn();
-      else if (e.key === "-") zoomOut();
-      else if (e.key === "0") zoomReset();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, []);
-
-  // Mouse move and up handlers for dragging
-  useEffect(() => {
-    if (!isDragging) return;
-
-    const handleMouseMove = (e) => {
-      setPan({
-        x: e.clientX - dragStartRef.current.x,
-        y: e.clientY - dragStartRef.current.y
-      });
-    };
-
-    const handleMouseUp = () => {
-      setIsDragging(false);
-    };
-
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp);
-
-    return () => {
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
-    };
-  }, [isDragging]);
-
-  const onDoubleClick = () => zoomIn();
+  const onMarkerClick = (pointId) => {
+    setOpenId((cur) => (cur === pointId ? null : pointId));
+  };
 
   const visible = useMemo(() => points, [points]);
 
-  const onPinClick = (id) => {
-    setOpenId((cur) => (cur === id ? null : id));
-  };
+  // Get Google Maps API key from environment
+  const googleMapsApiKey = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
 
-  const closeCard = () => setOpenId(null);
+  if (!googleMapsApiKey) {
+    return (
+      <div className="map-canvas map-error">
+        <div className="map-error-message">
+          <h3>Google Maps API Key Required</h3>
+          <p>Please set REACT_APP_GOOGLE_MAPS_API_KEY in your .env file</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div 
-      className={`map-canvas ${isDragging ? 'is-dragging' : ''}`}
-      ref={canvasRef} 
-      onDoubleClick={onDoubleClick}
-      onMouseDown={handleMouseDown}
-    >
-      <div className="zoom-controls" role="toolbar" aria-label="Map zoom controls">
-        <button type="button" className="zoom-btn" onClick={zoomOut} aria-label="Zoom out">-</button>
-        <div className="zoom-indicator" aria-live="polite">{Math.round(zoom * 100)}%</div>
-        <button type="button" className="zoom-btn" onClick={zoomIn} aria-label="Zoom in">+</button>
-        <button type="button" className="zoom-reset" onClick={zoomReset} aria-label="Reset zoom">Reset</button>
-      </div>
-
-      <div className="map-inner" style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})` }}>
-        {visible.map((p) => {const isOpen = openId === p.id;
-          return (
-            <div
-              key={p.id}
-              className={`pin ${isOpen ? "is-open" : ""}`}
-              style={{ left: `${p.x}%`, top: `${p.y}%`}}
-            >
-              <button
-                type="button"
-                className="pin-btn"
-                title={p.title}
-                aria-label={p.title}
-                onClick={() => onPinClick(p.id)}
-              >
-                <img className="pin-img" src={pinPng} alt="" width={24} height={24} />
-              </button>
-
-              {isOpen && (
-                <div 
-                  className="pin-info" 
-                  role="dialog" 
-                  aria-label={`${p.title} information`}
-                  style={{ 
-                    transform: `scale(${1 / zoom}) translate(calc(-50% + var(--pin-info-shift-x)), calc(-100% + var(--pin-info-shift-y)))`,
-                    transformOrigin: 'center bottom'
-                  }}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <button
-                    type="button"
-                    className="pin-info-close"
-                    aria-label="Close"
-                    onClick={closeCard}
-                  >
-                    X
-                  </button>
-
-                  <h4 className="pin-info-title">{p.title}</h4>
-                  {p.hours ? <div className="meta">Hours: {p.hours}</div> : null}
-                  <p className="pin-info-desc">
-                    {p.desc ?? "Lorem ipsum dolor sit amet, consectetur adipisicing elit."}
-                  </p>
-
-                  {p.link && p.link.trim() && (
-                    <div className="pin-info-actions" onClick={(e) => e.stopPropagation()}>
-                      <a
-                        className="pin-info-link-btn"
-                        href={p.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        aria-label={`Reserve at ${p.title}`}
-                        onClick={handleLinkClick}
-                      >
-                        Reserve
-                      </a>
-                    </div>
-                  )}
-                </div>
-              )}
+    <div className="map-canvas">
+      <LoadScript googleMapsApiKey={googleMapsApiKey}>
+        <GoogleMap
+          mapContainerStyle={mapContainerStyle}
+          center={center}
+          zoom={15}
+          options={defaultOptions}
+          onLoad={onMapLoad}
+        >
+          {visible.length === 0 && (
+            <div style={{ 
+              position: 'absolute', 
+              top: '50%', 
+              left: '50%', 
+              transform: 'translate(-50%, -50%)',
+              background: 'white',
+              padding: '20px',
+              borderRadius: '8px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+              zIndex: 1000
+            }}>
+              <p>No locations found. Check console for details.</p>
             </div>
-          );
-        })}
-      </div>
+          )}
+          {visible.map((point) => {
+            // Validate point has required fields
+            if (!point || !point.id || !point.title) {
+              console.warn('Invalid point - missing id or title:', point);
+              return null;
+            }
+            
+            // Ensure coordinates are valid numbers
+            const lat = typeof point.latitude === 'number' && !isNaN(point.latitude) 
+              ? point.latitude 
+              : 40.7308; // Default NYU coordinates
+            const lng = typeof point.longitude === 'number' && !isNaN(point.longitude) 
+              ? point.longitude 
+              : -73.9973; // Default NYU coordinates
+            
+            return (
+              <Marker
+                key={point.id}
+                position={{
+                  lat: lat,
+                  lng: lng
+                }}
+                onClick={() => onMarkerClick(point.id)}
+                title={point.title}
+              >
+                {openId === point.id && (
+                  <InfoWindow
+                    onCloseClick={() => setOpenId(null)}
+                    position={{
+                      lat: lat,
+                      lng: lng
+                    }}
+                    options={{
+                      maxWidth: 400
+                    }}
+                  >
+                    <div className="pin-info" style={{ 
+                      minWidth: '320px', 
+                      maxWidth: '400px',
+                      padding: '16px 20px',
+                      fontSize: '14px'
+                    }}>
+                      <button
+                        type="button"
+                        className="pin-info-close"
+                        aria-label="Close"
+                        onClick={() => setOpenId(null)}
+                        style={{
+                          position: 'absolute',
+                          top: '8px',
+                          right: '12px',
+                          border: 'none',
+                          background: 'transparent',
+                          fontSize: '20px',
+                          cursor: 'pointer',
+                          color: '#666',
+                          lineHeight: '1',
+                          padding: '4px 8px'
+                        }}
+                      >
+                        ×
+                      </button>
+                      <h4 className="pin-info-title" style={{
+                        margin: '0 32px 10px 0',
+                        fontSize: '18px',
+                        fontWeight: '700',
+                        color: '#333',
+                        lineHeight: '1.3'
+                      }}>
+                        {point.title}
+                      </h4>
+                      {point.address && (
+                        <div className="meta" style={{
+                          fontSize: '14px',
+                          color: '#666',
+                          marginBottom: '8px',
+                          lineHeight: '1.5'
+                        }}>
+                          <strong>Address:</strong> {point.address}
+                        </div>
+                      )}
+                      {point.building && (
+                        <div className="meta" style={{
+                          fontSize: '14px',
+                          color: '#666',
+                          marginBottom: '8px',
+                          lineHeight: '1.5'
+                        }}>
+                          <strong>Building:</strong> {point.building}
+                        </div>
+                      )}
+                      {point.hours && (
+                        <div className="meta" style={{
+                          fontSize: '14px',
+                          color: '#666',
+                          marginBottom: '8px',
+                          lineHeight: '1.5'
+                        }}>
+                          <strong>Hours:</strong> {point.hours}
+                        </div>
+                      )}
+                      {point.desc && (
+                        <p className="pin-info-desc" style={{
+                          margin: '10px 0 0 0',
+                          fontSize: '14px',
+                          color: '#333',
+                          lineHeight: '1.6'
+                        }}>
+                          {point.desc}
+                        </p>
+                      )}
+                      {point.link && point.link.trim() && (
+                        <div className="pin-info-actions" style={{ marginTop: '12px' }}>
+                          <a
+                            className="pin-info-link-btn"
+                            href={point.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label={`Reserve at ${point.title}`}
+                            style={{
+                              display: 'inline-block',
+                              padding: '10px 16px',
+                              borderRadius: '8px',
+                              border: '1px solid #e5e5e5',
+                              background: '#fff',
+                              color: '#6B46C1',
+                              fontWeight: '600',
+                              textDecoration: 'none',
+                              fontSize: '14px',
+                              transition: 'background 0.15s ease'
+                            }}
+                            onMouseEnter={(e) => e.target.style.background = '#faf7ff'}
+                            onMouseLeave={(e) => e.target.style.background = '#fff'}
+                          >
+                            Reserve
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  </InfoWindow>
+                )}
+              </Marker>
+            );
+          })}
+        </GoogleMap>
+      </LoadScript>
     </div>
   );
 }
