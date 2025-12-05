@@ -1,15 +1,15 @@
-const { 
-  mockPosts, 
-  mockPostLikes, 
-  getNextPostId, 
+const {
+  mockPosts,
+  mockPostLikes,
+  getNextPostId,
   categories,
-  formatRelativeTime
-} = require('../../data/feed/mockFeedData');
-const Post = require('../../models/Post');
-const Comment = require('../../models/Comment');
-const PostLike = require('../../models/PostLike');
-const PostSave = require('../../models/PostSave');
-const CommentLike = require('../../models/CommentLike');
+  formatRelativeTime,
+} = require("../../data/feed/mockFeedData");
+const Post = require("../../models/Post");
+const Comment = require("../../models/Comment");
+const PostLike = require("../../models/PostLike");
+const PostSave = require("../../models/PostSave");
+const CommentLike = require("../../models/CommentLike");
 
 /**
  * GET /api/feed/posts
@@ -28,11 +28,11 @@ const getAllPosts = async (req, res) => {
 
     // Build query
     const query = {};
-    if (category && category !== 'All') {
+    if (category && category !== "All") {
       query.category = category;
     }
     if (search) {
-      const regex = new RegExp(search, 'i');
+      const regex = new RegExp(search, "i");
       query.$or = [{ title: regex }, { content: regex }];
     }
 
@@ -44,33 +44,33 @@ const getAllPosts = async (req, res) => {
 
     // Determine sort order
     let sortSpec = { createdAt: -1 }; // default: newest first
-    if (sort === 'oldest') sortSpec = { createdAt: 1 };
-    else if (sort === 'popular') sortSpec = { likes: -1, createdAt: -1 };
+    if (sort === "oldest") sortSpec = { createdAt: 1 };
+    else if (sort === "popular") sortSpec = { likes: -1, createdAt: -1 };
 
     let posts;
-    
+
     // Special handling for 'comments' sort - requires aggregation
-    if (sort === 'comments') {
+    if (sort === "comments") {
       const pipeline = [
         { $match: query },
         {
           $lookup: {
-            from: 'comments',
-            localField: 'id',
-            foreignField: 'postId',
-            as: 'commentsList'
-          }
+            from: "comments",
+            localField: "id",
+            foreignField: "postId",
+            as: "commentsList",
+          },
         },
         {
           $addFields: {
-            commentCount: { $size: '$commentsList' }
-          }
+            commentCount: { $size: "$commentsList" },
+          },
         },
         { $sort: { commentCount: -1, createdAt: -1 } },
         { $limit: limitNum + 1 },
-        { $project: { commentsList: 0 } } // Remove the comments array
+        { $project: { commentsList: 0 } }, // Remove the comments array
       ];
-      
+
       posts = await Post.aggregate(pipeline);
     } else {
       // Fetch limit + 1 posts to detect if there are more posts
@@ -97,9 +97,18 @@ const getAllPosts = async (req, res) => {
     const result = await Promise.all(
       postsToReturn.map(async (p) => {
         // For comments sort, commentCount is already included from aggregation
-        const count = sort === 'comments' ? p.commentCount : await Comment.countDocuments({ postId: p.id });
-        const liked = await PostLike.findOne({ postId: p.id, userId: currentUserId }).lean();
-        const saved = await PostSave.findOne({ postId: p.id, userId: currentUserId }).lean();
+        const count =
+          sort === "comments"
+            ? p.commentCount
+            : await Comment.countDocuments({ postId: p.id });
+        const liked = await PostLike.findOne({
+          postId: p.id,
+          userId: currentUserId,
+        }).lean();
+        const saved = await PostSave.findOne({
+          postId: p.id,
+          userId: currentUserId,
+        }).lean();
         return {
           ...p,
           commentCount: count,
@@ -117,10 +126,10 @@ const getAllPosts = async (req, res) => {
       nextCursor: hasMore ? nextCursor : null, // null means no more posts
     });
   } catch (error) {
-    console.error('[getAllPosts] error:', error);
+    console.error("[getAllPosts] error:", error);
     res.status(500).json({
       success: false,
-      error: 'Server error while fetching posts',
+      error: "Server error while fetching posts",
     });
   }
 };
@@ -141,19 +150,16 @@ const searchPosts = async (req, res) => {
     if (!query || query.trim().length === 0) {
       return res.status(400).json({
         success: false,
-        error: 'Search query is required',
+        error: "Search query is required",
       });
     }
 
     const limitNum = Math.min(parseInt(limit, 10) || 10, 50); // cap at 50
 
     // Build search query using regex for title and content
-    const searchRegex = new RegExp(query, 'i'); // case-insensitive
+    const searchRegex = new RegExp(query, "i"); // case-insensitive
     const searchQuery = {
-      $or: [
-        { title: searchRegex },
-        { content: searchRegex },
-      ],
+      $or: [{ title: searchRegex }, { content: searchRegex }],
     };
 
     // Cursor-based pagination: only fetch posts before the cursor
@@ -185,8 +191,14 @@ const searchPosts = async (req, res) => {
     const result = await Promise.all(
       postsToReturn.map(async (p) => {
         const count = await Comment.countDocuments({ postId: p.id });
-        const liked = await PostLike.findOne({ postId: p.id, userId: currentUserId }).lean();
-        const saved = await PostSave.findOne({ postId: p.id, userId: currentUserId }).lean();
+        const liked = await PostLike.findOne({
+          postId: p.id,
+          userId: currentUserId,
+        }).lean();
+        const saved = await PostSave.findOne({
+          postId: p.id,
+          userId: currentUserId,
+        }).lean();
         return {
           ...p,
           commentCount: count,
@@ -204,10 +216,10 @@ const searchPosts = async (req, res) => {
       nextCursor: hasMore ? nextCursor : null, // null means no more posts
     });
   } catch (error) {
-    console.error('[searchPosts] error:', error);
+    console.error("[searchPosts] error:", error);
     res.status(500).json({
       success: false,
-      error: 'Server error while searching posts',
+      error: "Server error while searching posts",
     });
   }
 };
@@ -222,19 +234,33 @@ const getPostById = async (req, res) => {
     const post = await Post.findOne({ id: postId }).lean();
 
     if (!post) {
-      return res.status(404).json({ success: false, error: 'Post not found' });
+      return res.status(404).json({ success: false, error: "Post not found" });
     }
 
     const count = await Comment.countDocuments({ postId: post.id });
     const currentUserId = req.user.userId;
-    const liked = await PostLike.findOne({ postId: post.id, userId: currentUserId }).lean();
-    const saved = await PostSave.findOne({ postId: post.id, userId: currentUserId }).lean();
-    const data = { ...post, commentCount: count, isLikedByUser: !!liked, isSavedByUser: !!saved, timestamp: formatRelativeTime(new Date(post.createdAt)) };
+    const liked = await PostLike.findOne({
+      postId: post.id,
+      userId: currentUserId,
+    }).lean();
+    const saved = await PostSave.findOne({
+      postId: post.id,
+      userId: currentUserId,
+    }).lean();
+    const data = {
+      ...post,
+      commentCount: count,
+      isLikedByUser: !!liked,
+      isSavedByUser: !!saved,
+      timestamp: formatRelativeTime(new Date(post.createdAt)),
+    };
 
     res.status(200).json({ success: true, data });
   } catch (error) {
-    console.error('[getPostById] error:', error);
-    res.status(500).json({ success: false, error: 'Server error while fetching post' });
+    console.error("[getPostById] error:", error);
+    res
+      .status(500)
+      .json({ success: false, error: "Server error while fetching post" });
   }
 };
 
@@ -247,34 +273,44 @@ const createPost = async (req, res) => {
     const { title, content, category, image, images } = req.body;
 
     if (!title || !content) {
-      return res.status(400).json({ success: false, error: 'Please provide title and content' });
+      return res
+        .status(400)
+        .json({ success: false, error: "Please provide title and content" });
     }
     if (!category) {
-      return res.status(400).json({ success: false, error: 'Please select a category' });
+      return res
+        .status(400)
+        .json({ success: false, error: "Please select a category" });
     }
-    if (!categories.includes(category) || category === 'All') {
-      return res.status(400).json({ success: false, error: 'Invalid category' });
+    if (!categories.includes(category) || category === "All") {
+      return res
+        .status(400)
+        .json({ success: false, error: "Invalid category" });
     }
 
     const currentUser = req.user;
-    
+
     // Check if user has completed profile setup
     if (!currentUser.firstName || !currentUser.lastName) {
-      return res.status(400).json({ 
-        success: false, 
-        error: 'Please complete your profile setup before creating posts',
-        requiresProfileSetup: true
+      return res.status(400).json({
+        success: false,
+        error: "Please complete your profile setup before creating posts",
+        requiresProfileSetup: true,
       });
     }
 
     const last = await Post.findOne().sort({ id: -1 }).lean();
     const nextId = last ? last.id + 1 : 1;
-    
-    console.log(`Creating new post. Last post ID: ${last?.id || 'none'}, Next ID: ${nextId}`);
+
+    console.log(
+      `Creating new post. Last post ID: ${
+        last?.id || "none"
+      }, Next ID: ${nextId}`
+    );
 
     const createdAtDate = new Date();
     const authorName = `${currentUser.firstName} ${currentUser.lastName}`;
-    
+
     // Handle both single image (backward compatibility) and multiple images
     let postImages = [];
     if (images && Array.isArray(images) && images.length > 0) {
@@ -282,7 +318,7 @@ const createPost = async (req, res) => {
     } else if (image) {
       postImages = [image];
     }
-    
+
     const doc = await Post.create({
       id: nextId,
       title,
@@ -295,7 +331,9 @@ const createPost = async (req, res) => {
       images: postImages,
       author: {
         name: authorName,
-        avatar: currentUser.profileImage || `https://picsum.photos/seed/${currentUser.userId}/50/50`,
+        avatar:
+          currentUser.profileImage ||
+          `https://picsum.photos/seed/${currentUser.userId}/50/50`,
         userId: currentUser.userId,
       },
       isLikedByUser: false,
@@ -307,12 +345,22 @@ const createPost = async (req, res) => {
 
     // Add dynamic timestamp for response
     const responseData = doc.toObject();
-    responseData.timestamp = formatRelativeTime(new Date(responseData.createdAt));
+    responseData.timestamp = formatRelativeTime(
+      new Date(responseData.createdAt)
+    );
 
-    res.status(201).json({ success: true, message: 'Post created successfully', data: responseData });
+    res
+      .status(201)
+      .json({
+        success: true,
+        message: "Post created successfully",
+        data: responseData,
+      });
   } catch (error) {
-    console.error('[createPost] error:', error);
-    res.status(500).json({ success: false, error: 'Server error while creating post' });
+    console.error("[createPost] error:", error);
+    res
+      .status(500)
+      .json({ success: false, error: "Server error while creating post" });
   }
 };
 
@@ -325,20 +373,39 @@ const updatePost = async (req, res) => {
     const postId = parseInt(req.params.id, 10);
     const post = await Post.findOne({ id: postId });
     if (!post) {
-      return res.status(404).json({ success: false, error: 'Post not found' });
+      return res.status(404).json({ success: false, error: "Post not found" });
     }
 
     const currentUserId = req.user.userId;
     if (post.author?.userId !== currentUserId) {
-      return res.status(403).json({ success: false, error: 'You are not authorized to update this post' });
+      return res
+        .status(403)
+        .json({
+          success: false,
+          error: "You are not authorized to update this post",
+        });
     }
 
     const { title, content, category, image, images, resolved } = req.body;
     let edited = false;
-    if (title && title !== post.title) { post.title = title; edited = true; }
-    if (content && content !== post.content) { post.content = content; edited = true; }
-    if (category && categories.includes(category) && category !== 'All' && category !== post.category) { post.category = category; edited = true; }
-    
+    if (title && title !== post.title) {
+      post.title = title;
+      edited = true;
+    }
+    if (content && content !== post.content) {
+      post.content = content;
+      edited = true;
+    }
+    if (
+      category &&
+      categories.includes(category) &&
+      category !== "All" &&
+      category !== post.category
+    ) {
+      post.category = category;
+      edited = true;
+    }
+
     // Handle images array (new multi-image support)
     if (images !== undefined) {
       const newImages = Array.isArray(images) ? images : [];
@@ -354,8 +421,11 @@ const updatePost = async (req, res) => {
       post.image = image;
       edited = true;
     }
-    
-    if (typeof resolved === 'boolean' && resolved !== post.resolved) { post.resolved = resolved; edited = true; }
+
+    if (typeof resolved === "boolean" && resolved !== post.resolved) {
+      post.resolved = resolved;
+      edited = true;
+    }
 
     if (edited) {
       post.editCount = (post.editCount || 0) + 1;
@@ -364,10 +434,18 @@ const updatePost = async (req, res) => {
 
     await post.save();
 
-    res.status(200).json({ success: true, message: 'Post updated successfully', data: post.toObject() });
+    res
+      .status(200)
+      .json({
+        success: true,
+        message: "Post updated successfully",
+        data: post.toObject(),
+      });
   } catch (error) {
-    console.error('[updatePost] error:', error);
-    res.status(500).json({ success: false, error: 'Server error while updating post' });
+    console.error("[updatePost] error:", error);
+    res
+      .status(500)
+      .json({ success: false, error: "Server error while updating post" });
   }
 };
 
@@ -380,55 +458,81 @@ const deletePost = async (req, res) => {
     const postId = parseInt(req.params.id, 10);
     const post = await Post.findOne({ id: postId });
     if (!post) {
-      return res.status(404).json({ success: false, error: 'Post not found' });
+      return res.status(404).json({ success: false, error: "Post not found" });
     }
 
     const currentUserId = req.user.userId;
-    const isAdmin = false; // TODO: check if user has admin role
+    const isAdmin = req.user.role === "admin";
     if (post.author?.userId !== currentUserId && !isAdmin) {
-      return res.status(403).json({ success: false, error: 'You are not authorized to delete this post' });
+      return res
+        .status(403)
+        .json({
+          success: false,
+          error: "You are not authorized to delete this post",
+        });
     }
 
     console.log(`[deletePost] Starting deletion for post ${postId}`);
 
     // First, get all comment IDs for this post (before deleting them)
-    const comments = await Comment.find({ postId: postId }).select('id').lean();
-    const commentIds = comments.map(c => c.id);
-    
-    console.log(`[deletePost] Found ${comments.length} comments for post ${postId}`);
+    const comments = await Comment.find({ postId: postId }).select("id").lean();
+    const commentIds = comments.map((c) => c.id);
+
+    console.log(
+      `[deletePost] Found ${comments.length} comments for post ${postId}`
+    );
     if (commentIds.length > 0) {
-      console.log(`[deletePost] Comment IDs: ${commentIds.join(', ')}`);
+      console.log(`[deletePost] Comment IDs: ${commentIds.join(", ")}`);
     }
 
     // Delete the post
     const deletedPost = await Post.deleteOne({ id: postId });
-    console.log(`[deletePost] Deleted post: ${deletedPost.deletedCount} document(s)`);
-    
+    console.log(
+      `[deletePost] Deleted post: ${deletedPost.deletedCount} document(s)`
+    );
+
     // Delete all comments for this post
     const deletedComments = await Comment.deleteMany({ postId: postId });
-    console.log(`[deletePost] Deleted ${deletedComments.deletedCount} comments for post ${postId}`);
-    
+    console.log(
+      `[deletePost] Deleted ${deletedComments.deletedCount} comments for post ${postId}`
+    );
+
     // Delete all saves for this post
     const deletedSaves = await PostSave.deleteMany({ postId: postId });
     console.log(`[deletePost] Deleted ${deletedSaves.deletedCount} saves`);
-    
+
     // Delete all likes for this post
     const deletedPostLikes = await PostLike.deleteMany({ postId: postId });
-    console.log(`[deletePost] Deleted ${deletedPostLikes.deletedCount} post likes`);
-    
+    console.log(
+      `[deletePost] Deleted ${deletedPostLikes.deletedCount} post likes`
+    );
+
     // Delete all comment likes for those comments
     if (commentIds.length > 0) {
-      const deletedCommentLikes = await CommentLike.deleteMany({ commentId: { $in: commentIds } });
-      console.log(`[deletePost] Deleted ${deletedCommentLikes.deletedCount} comment likes`);
+      const deletedCommentLikes = await CommentLike.deleteMany({
+        commentId: { $in: commentIds },
+      });
+      console.log(
+        `[deletePost] Deleted ${deletedCommentLikes.deletedCount} comment likes`
+      );
     }
 
-    console.log(`✅ [deletePost] Successfully deleted post ${postId} and all associated data`);
-    
-    res.status(200).json({ success: true, message: 'Post deleted successfully' });
+    console.log(
+      `✅ [deletePost] Successfully deleted post ${postId} and all associated data`
+    );
+
+    res
+      .status(200)
+      .json({ success: true, message: "Post deleted successfully" });
   } catch (error) {
-    console.error('[deletePost] ERROR:', error);
-    console.error('[deletePost] Error stack:', error.stack);
-    res.status(500).json({ success: false, error: `Server error while deleting post: ${error.message}` });
+    console.error("[deletePost] ERROR:", error);
+    console.error("[deletePost] Error stack:", error.stack);
+    res
+      .status(500)
+      .json({
+        success: false,
+        error: `Server error while deleting post: ${error.message}`,
+      });
   }
 };
 
@@ -442,20 +546,34 @@ const toggleSavePost = async (req, res) => {
     const currentUserId = req.user.userId;
     const post = await Post.findOne({ id: postId });
     if (!post) {
-      return res.status(404).json({ success: false, error: 'Post not found' });
+      return res.status(404).json({ success: false, error: "Post not found" });
     }
 
     const existing = await PostSave.findOne({ postId, userId: currentUserId });
     if (existing) {
       await PostSave.deleteOne({ _id: existing._id });
-      return res.status(200).json({ success: true, message: 'Post unsaved', data: { postId, isSavedByUser: false } });
+      return res
+        .status(200)
+        .json({
+          success: true,
+          message: "Post unsaved",
+          data: { postId, isSavedByUser: false },
+        });
     } else {
       await PostSave.create({ postId, userId: currentUserId });
-      return res.status(201).json({ success: true, message: 'Post saved', data: { postId, isSavedByUser: true } });
+      return res
+        .status(201)
+        .json({
+          success: true,
+          message: "Post saved",
+          data: { postId, isSavedByUser: true },
+        });
     }
   } catch (error) {
-    console.error('[toggleSavePost] error:', error);
-    res.status(500).json({ success: false, error: 'Server error while toggling save' });
+    console.error("[toggleSavePost] error:", error);
+    res
+      .status(500)
+      .json({ success: false, error: "Server error while toggling save" });
   }
 };
 
@@ -467,20 +585,38 @@ const getSavedPosts = async (req, res) => {
   try {
     const currentUserId = req.user.userId;
     const saves = await PostSave.find({ userId: currentUserId }).lean();
-    const postIds = saves.map(s => s.postId);
+    const postIds = saves.map((s) => s.postId);
     if (postIds.length === 0) {
       return res.status(200).json({ success: true, count: 0, data: [] });
     }
-    const posts = await Post.find({ id: { $in: postIds } }).sort({ createdAt: -1 }).lean();
-    const result = await Promise.all(posts.map(async (p) => {
-      const commentCount = await Comment.countDocuments({ postId: p.id });
-      const liked = await PostLike.findOne({ postId: p.id, userId: currentUserId }).lean();
-      return { ...p, commentCount, isLikedByUser: !!liked, isSavedByUser: true, timestamp: formatRelativeTime(new Date(p.createdAt)) };
-    }));
+    const posts = await Post.find({ id: { $in: postIds } })
+      .sort({ createdAt: -1 })
+      .lean();
+    const result = await Promise.all(
+      posts.map(async (p) => {
+        const commentCount = await Comment.countDocuments({ postId: p.id });
+        const liked = await PostLike.findOne({
+          postId: p.id,
+          userId: currentUserId,
+        }).lean();
+        return {
+          ...p,
+          commentCount,
+          isLikedByUser: !!liked,
+          isSavedByUser: true,
+          timestamp: formatRelativeTime(new Date(p.createdAt)),
+        };
+      })
+    );
     res.status(200).json({ success: true, count: result.length, data: result });
   } catch (error) {
-    console.error('[getSavedPosts] error:', error);
-    res.status(500).json({ success: false, error: 'Server error while fetching saved posts' });
+    console.error("[getSavedPosts] error:", error);
+    res
+      .status(500)
+      .json({
+        success: false,
+        error: "Server error while fetching saved posts",
+      });
   }
 };
 
@@ -500,15 +636,12 @@ const getMyPostsPaginated = async (req, res) => {
     const limitNum = Math.min(parseInt(limit, 10) || 10, 50); // cap at 50
 
     // Build query - always filter by author using dot notation
-    const query = { 'author.userId': currentUserId };
+    const query = { "author.userId": currentUserId };
 
     // Add search filter if provided
     if (search && search.trim()) {
-      const searchRegex = new RegExp(search, 'i'); // case-insensitive
-      query.$or = [
-        { title: searchRegex },
-        { content: searchRegex },
-      ];
+      const searchRegex = new RegExp(search, "i"); // case-insensitive
+      query.$or = [{ title: searchRegex }, { content: searchRegex }];
     }
 
     // Cursor-based pagination: only fetch posts before the cursor
@@ -519,33 +652,33 @@ const getMyPostsPaginated = async (req, res) => {
 
     // Determine sort order
     let sortSpec = { createdAt: -1 }; // default: newest first
-    if (sort === 'oldest') sortSpec = { createdAt: 1 };
-    else if (sort === 'popular') sortSpec = { likes: -1, createdAt: -1 };
+    if (sort === "oldest") sortSpec = { createdAt: 1 };
+    else if (sort === "popular") sortSpec = { likes: -1, createdAt: -1 };
 
     let posts;
-    
+
     // Special handling for 'comments' sort - requires aggregation
-    if (sort === 'comments') {
+    if (sort === "comments") {
       const pipeline = [
         { $match: query },
         {
           $lookup: {
-            from: 'comments',
-            localField: 'id',
-            foreignField: 'postId',
-            as: 'commentsList'
-          }
+            from: "comments",
+            localField: "id",
+            foreignField: "postId",
+            as: "commentsList",
+          },
         },
         {
           $addFields: {
-            commentCount: { $size: '$commentsList' }
-          }
+            commentCount: { $size: "$commentsList" },
+          },
         },
         { $sort: { commentCount: -1, createdAt: -1 } },
         { $limit: limitNum + 1 },
-        { $project: { commentsList: 0 } }
+        { $project: { commentsList: 0 } },
       ];
-      
+
       posts = await Post.aggregate(pipeline);
     } else {
       // Fetch limit + 1 posts to detect if there are more
@@ -569,9 +702,18 @@ const getMyPostsPaginated = async (req, res) => {
     // Enrich posts with additional data
     const result = await Promise.all(
       postsToReturn.map(async (p) => {
-        const count = sort === 'comments' ? p.commentCount : await Comment.countDocuments({ postId: p.id });
-        const liked = await PostLike.findOne({ postId: p.id, userId: currentUserId }).lean();
-        const saved = await PostSave.findOne({ postId: p.id, userId: currentUserId }).lean();
+        const count =
+          sort === "comments"
+            ? p.commentCount
+            : await Comment.countDocuments({ postId: p.id });
+        const liked = await PostLike.findOne({
+          postId: p.id,
+          userId: currentUserId,
+        }).lean();
+        const saved = await PostSave.findOne({
+          postId: p.id,
+          userId: currentUserId,
+        }).lean();
         return {
           ...p,
           commentCount: count,
@@ -589,10 +731,10 @@ const getMyPostsPaginated = async (req, res) => {
       nextCursor: hasMore ? nextCursor : null,
     });
   } catch (error) {
-    console.error('[getMyPostsPaginated] error:', error);
+    console.error("[getMyPostsPaginated] error:", error);
     res.status(500).json({
       success: false,
-      error: 'Server error while fetching your posts',
+      error: "Server error while fetching your posts",
     });
   }
 };
@@ -614,7 +756,7 @@ const getSavedPostsPaginated = async (req, res) => {
 
     // Get all saved post IDs for this user
     const saves = await PostSave.find({ userId: currentUserId }).lean();
-    const savedPostIds = saves.map(s => s.postId);
+    const savedPostIds = saves.map((s) => s.postId);
 
     if (savedPostIds.length === 0) {
       return res.status(200).json({
@@ -630,11 +772,8 @@ const getSavedPostsPaginated = async (req, res) => {
 
     // Add search filter if provided
     if (search && search.trim()) {
-      const searchRegex = new RegExp(search, 'i'); // case-insensitive
-      query.$or = [
-        { title: searchRegex },
-        { content: searchRegex },
-      ];
+      const searchRegex = new RegExp(search, "i"); // case-insensitive
+      query.$or = [{ title: searchRegex }, { content: searchRegex }];
     }
 
     // Cursor-based pagination: only fetch posts before the cursor
@@ -645,33 +784,33 @@ const getSavedPostsPaginated = async (req, res) => {
 
     // Determine sort order
     let sortSpec = { createdAt: -1 }; // default: newest first
-    if (sort === 'oldest') sortSpec = { createdAt: 1 };
-    else if (sort === 'popular') sortSpec = { likes: -1, createdAt: -1 };
+    if (sort === "oldest") sortSpec = { createdAt: 1 };
+    else if (sort === "popular") sortSpec = { likes: -1, createdAt: -1 };
 
     let posts;
-    
+
     // Special handling for 'comments' sort - requires aggregation
-    if (sort === 'comments') {
+    if (sort === "comments") {
       const pipeline = [
         { $match: query },
         {
           $lookup: {
-            from: 'comments',
-            localField: 'id',
-            foreignField: 'postId',
-            as: 'commentsList'
-          }
+            from: "comments",
+            localField: "id",
+            foreignField: "postId",
+            as: "commentsList",
+          },
         },
         {
           $addFields: {
-            commentCount: { $size: '$commentsList' }
-          }
+            commentCount: { $size: "$commentsList" },
+          },
         },
         { $sort: { commentCount: -1, createdAt: -1 } },
         { $limit: limitNum + 1 },
-        { $project: { commentsList: 0 } }
+        { $project: { commentsList: 0 } },
       ];
-      
+
       posts = await Post.aggregate(pipeline);
     } else {
       posts = await Post.find(query)
@@ -694,8 +833,14 @@ const getSavedPostsPaginated = async (req, res) => {
     // Enrich posts with additional data
     const result = await Promise.all(
       postsToReturn.map(async (p) => {
-        const count = sort === 'comments' ? p.commentCount : await Comment.countDocuments({ postId: p.id });
-        const liked = await PostLike.findOne({ postId: p.id, userId: currentUserId }).lean();
+        const count =
+          sort === "comments"
+            ? p.commentCount
+            : await Comment.countDocuments({ postId: p.id });
+        const liked = await PostLike.findOne({
+          postId: p.id,
+          userId: currentUserId,
+        }).lean();
         return {
           ...p,
           commentCount: count,
@@ -713,10 +858,10 @@ const getSavedPostsPaginated = async (req, res) => {
       nextCursor: hasMore ? nextCursor : null,
     });
   } catch (error) {
-    console.error('[getSavedPostsPaginated] error:', error);
+    console.error("[getSavedPostsPaginated] error:", error);
     res.status(500).json({
       success: false,
-      error: 'Server error while fetching saved posts',
+      error: "Server error while fetching saved posts",
     });
   }
 };
@@ -729,12 +874,12 @@ const getCategories = (req, res) => {
   try {
     res.status(200).json({
       success: true,
-      data: categories
+      data: categories,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: 'Server error while fetching categories'
+      error: "Server error while fetching categories",
     });
   }
 };
@@ -750,5 +895,5 @@ module.exports = {
   toggleSavePost,
   getSavedPosts,
   getSavedPostsPaginated,
-  getCategories
+  getCategories,
 };
