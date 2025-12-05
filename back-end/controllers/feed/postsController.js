@@ -458,15 +458,16 @@ const getSavedPosts = async (req, res) => {
 
 /**
  * GET /api/feed/posts/mine
- * Get paginated posts created by current user with optional search
+ * Get paginated posts created by current user with optional search and sort
  * Query params:
  *   - limit: number of posts per page (default 10)
  *   - before: cursor timestamp to load posts before this
  *   - search: optional search term to filter title and content
+ *   - sort: 'latest' (default), 'oldest', 'popular' (most liked)
  */
 const getMyPostsPaginated = async (req, res) => {
   try {
-    const { limit = 10, before, search } = req.query;
+    const { limit = 10, before, search, sort } = req.query;
     const currentUserId = req.user.userId;
     const limitNum = Math.min(parseInt(limit, 10) || 10, 50); // cap at 50
 
@@ -488,9 +489,14 @@ const getMyPostsPaginated = async (req, res) => {
       query.createdAt = { $lt: beforeTimestamp };
     }
 
+    // Determine sort order
+    let sortSpec = { createdAt: -1 }; // default: newest first
+    if (sort === 'oldest') sortSpec = { createdAt: 1 };
+    else if (sort === 'popular') sortSpec = { likes: -1, createdAt: -1 };
+
     // Fetch limit + 1 posts to detect if there are more
     const posts = await Post.find(query)
-      .sort({ createdAt: -1 })
+      .sort(sortSpec)
       .limit(limitNum + 1)
       .lean();
 
@@ -538,15 +544,16 @@ const getMyPostsPaginated = async (req, res) => {
 
 /**
  * GET /api/feed/saved (paginated)
- * Get paginated saved posts for current user with optional search
+ * Get paginated saved posts for current user with optional search and sort
  * Query params:
  *   - limit: number of posts per page (default 10)
  *   - before: cursor timestamp to load posts before this
  *   - search: optional search term to filter title and content
+ *   - sort: 'latest' (default), 'oldest', 'popular' (most liked)
  */
 const getSavedPostsPaginated = async (req, res) => {
   try {
-    const { limit = 10, before, search } = req.query;
+    const { limit = 10, before, search, sort } = req.query;
     const currentUserId = req.user.userId;
     const limitNum = Math.min(parseInt(limit, 10) || 10, 50); // cap at 50
 
@@ -581,9 +588,14 @@ const getSavedPostsPaginated = async (req, res) => {
       query.createdAt = { $lt: beforeTimestamp };
     }
 
+    // Determine sort order
+    let sortSpec = { createdAt: -1 }; // default: newest first
+    if (sort === 'oldest') sortSpec = { createdAt: 1 };
+    else if (sort === 'popular') sortSpec = { likes: -1, createdAt: -1 };
+
     // Fetch limit + 1 posts to detect if there are more
     const posts = await Post.find(query)
-      .sort({ createdAt: -1 })
+      .sort(sortSpec)
       .limit(limitNum + 1)
       .lean();
 

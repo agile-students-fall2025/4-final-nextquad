@@ -73,10 +73,12 @@ export default function FeedMyPosts({ navigateTo }) {
           setLoadingMore(true);
         }
 
+        const sortParam = sortBy === 'Latest' ? 'latest' : sortBy === 'Oldest' ? 'oldest' : sortBy === 'Most Liked' ? 'popular' : 'latest';
         const params = {
           limit: 10,
           ...(cursor && { before: cursor }),
           ...(searchQuery && { search: searchQuery }),
+          sort: sortParam,
         };
 
         const response = await getMyPosts(params);
@@ -99,7 +101,7 @@ export default function FeedMyPosts({ navigateTo }) {
     };
 
     fetchMyPosts();
-  }, []);
+  }, [sortBy]);
 
   const handleLike = async (postId) => {
     try {
@@ -161,10 +163,12 @@ export default function FeedMyPosts({ navigateTo }) {
       setLoadingMore(true);
 
       try {
+        const sortParam = sortBy === 'Latest' ? 'latest' : sortBy === 'Oldest' ? 'oldest' : sortBy === 'Most Liked' ? 'popular' : 'latest';
         const params = {
           limit: 10,
           before: nextCursor,
           ...(searchQuery && { search: searchQuery }),
+          sort: sortParam,
         };
 
         const response = await getMyPosts(params);
@@ -191,8 +195,10 @@ export default function FeedMyPosts({ navigateTo }) {
         setError(null);
 
         try {
+          const sortParam = sortBy === 'Latest' ? 'latest' : sortBy === 'Oldest' ? 'oldest' : sortBy === 'Most Liked' ? 'popular' : 'latest';
           const response = await getMyPosts({
             search: searchTerm,
+            sort: sortParam,
             limit: 10,
           });
 
@@ -215,7 +221,8 @@ export default function FeedMyPosts({ navigateTo }) {
           setError(null);
 
           try {
-            const response = await getMyPosts({ limit: 10 });
+            const sortParam = sortBy === 'Latest' ? 'latest' : sortBy === 'Oldest' ? 'oldest' : sortBy === 'Most Liked' ? 'popular' : 'latest';
+            const response = await getMyPosts({ limit: 10, sort: sortParam });
             setMyPosts(response.data || []);
             setNextCursor(response.nextCursor || null);
           } catch (err) {
@@ -230,7 +237,7 @@ export default function FeedMyPosts({ navigateTo }) {
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [searchTerm, isSearchMode]);
+  }, [searchTerm, isSearchMode, sortBy]);
 
   // Edit handlers (moved to top-level)
   const handleEditPost = (post) => {

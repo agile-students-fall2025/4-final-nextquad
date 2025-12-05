@@ -33,10 +33,12 @@ export default function FeedSavedPosts({ navigateTo }) {
           setLoadingMore(true);
         }
 
+        const sortParam = sortBy === 'Latest' ? 'latest' : sortBy === 'Oldest' ? 'oldest' : sortBy === 'Most Liked' ? 'popular' : 'latest';
         const params = {
           limit: 10,
           ...(cursor && { before: cursor }),
           ...(searchQuery && { search: searchQuery }),
+          sort: sortParam,
         };
 
         const response = await getSavedPostsPaginated(params);
@@ -60,7 +62,7 @@ export default function FeedSavedPosts({ navigateTo }) {
     };
 
     fetchSavedPosts();
-  }, []);
+  }, [sortBy]);
 
   // Close sort menu when clicking outside
   useEffect(() => {
@@ -88,8 +90,10 @@ export default function FeedSavedPosts({ navigateTo }) {
         setError(null);
 
         try {
+          const sortParam = sortBy === 'Latest' ? 'latest' : sortBy === 'Oldest' ? 'oldest' : sortBy === 'Most Liked' ? 'popular' : 'latest';
           const response = await getSavedPostsPaginated({
             search: searchTerm,
+            sort: sortParam,
             limit: 10,
           });
 
@@ -112,7 +116,8 @@ export default function FeedSavedPosts({ navigateTo }) {
           setError(null);
 
           try {
-            const response = await getSavedPostsPaginated({ limit: 10 });
+            const sortParam = sortBy === 'Latest' ? 'latest' : sortBy === 'Oldest' ? 'oldest' : sortBy === 'Most Liked' ? 'popular' : 'latest';
+            const response = await getSavedPostsPaginated({ limit: 10, sort: sortParam });
             setSavedPosts(response.data || []);
             setNextCursor(response.nextCursor || null);
           } catch (err) {
@@ -127,7 +132,7 @@ export default function FeedSavedPosts({ navigateTo }) {
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [searchTerm, isSearchMode]);
+  }, [searchTerm, isSearchMode, sortBy]);
 
   // Load more posts
   const handleLoadMore = async () => {
@@ -137,10 +142,12 @@ export default function FeedSavedPosts({ navigateTo }) {
       setLoadingMore(true);
 
       try {
+        const sortParam = sortBy === 'Latest' ? 'latest' : sortBy === 'Oldest' ? 'oldest' : sortBy === 'Most Liked' ? 'popular' : 'latest';
         const params = {
           limit: 10,
           before: nextCursor,
           ...(searchQuery && { search: searchQuery }),
+          sort: sortParam,
         };
 
         const response = await getSavedPostsPaginated(params);

@@ -57,9 +57,11 @@ export default function FeedMain({ navigateTo, isAdmin = false }) {
         response = await searchPosts(params);
       } else {
         // Otherwise use normal feed endpoint with filters
+        // For client-side sorts (like "Most Comments"), fetch latest and sort client-side
         const sortParam = sortBy === 'Latest' ? 'latest' 
           : sortBy === 'Oldest' ? 'oldest' 
           : sortBy === 'Most Liked' ? 'popular' 
+          : sortBy === 'Most Comments' ? 'latest' // Fetch latest for client-side comment sorting
           : 'latest';
         
         params.category = selectedCategory !== 'All' ? selectedCategory : undefined;
@@ -118,10 +120,59 @@ export default function FeedMain({ navigateTo, isAdmin = false }) {
     }
   };
 
-  // Debounced search handler
-  // When user types in search box, wait 500ms then search
-  useEffect(() => {
-    const timer = setTimeout(async () => {
+  // Handle search input change - if in search mode and input is cleared, exit search mode
+  const handleSearchInputChange = (e) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+    
+    // If user is in search mode and clears the input, automatically exit search
+    if (isSearchMode && !value.trim()) {
+      // Set a small timeout to allow state update first
+      setTimeout(() => {
+        setIsSearchMode(false);
+        setPosts([]);
+        setNextCursor(null);
+        setLoading(true);
+        setError(null);
+        isFetchingRef.current = true;
+
+        // Fetch normal feed
+        const fetchNormalFeed = async () => {
+          try {
+            const sortParam = sortBy === 'Latest' ? 'latest' 
+              : sortBy === 'Oldest' ? 'oldest' 
+              : sortBy === 'Most Liked' ? 'popular' 
+              : sortBy === 'Most Comments' ? 'latest'
+              : 'latest';
+            
+            const params = {
+              category: selectedCategory !== 'All' ? selectedCategory : undefined,
+              sort: sortParam,
+              limit: 10,
+            };
+            
+            const response = await getAllPosts(params);
+            setPosts(response.data || []);
+            setNextCursor(response.nextCursor || null);
+          } catch (err) {
+            console.error('Error fetching posts:', err);
+            setError('Failed to load posts. Please try again.');
+          } finally {
+            setLoading(false);
+            isFetchingRef.current = false;
+          }
+        };
+        
+        fetchNormalFeed();
+      }, 0);
+    }
+  };
+
+  // Handle search on Enter key press
+  const handleSearchKeyPress = async (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      
       if (searchTerm.trim()) {
         // Enter search mode
         setIsSearchMode(true);
@@ -146,44 +197,44 @@ export default function FeedMain({ navigateTo, isAdmin = false }) {
           setLoading(false);
           isFetchingRef.current = false;
         }
-      } else {
-        // Exit search mode and return to normal feed
-        setIsSearchMode(false);
-        // Use internal state reset directly instead of calling fetchPosts
-        // to avoid dependency issues
-        setPosts([]);
-        setNextCursor(null);
-        isFetchingRef.current = true;
-        setLoading(true);
-        setError(null);
-
-        try {
-          const sortParam = sortBy === 'Latest' ? 'latest' 
-            : sortBy === 'Oldest' ? 'oldest' 
-            : sortBy === 'Most Liked' ? 'popular' 
-            : 'latest';
-          
-          const params = {
-            category: selectedCategory !== 'All' ? selectedCategory : undefined,
-            sort: sortParam,
-            limit: 10,
-          };
-          
-          const response = await getAllPosts(params);
-          setPosts(response.data || []);
-          setNextCursor(response.nextCursor || null);
-        } catch (err) {
-          console.error('Error fetching posts:', err);
-          setError('Failed to load posts. Please try again.');
-        } finally {
-          setLoading(false);
-          isFetchingRef.current = false;
-        }
       }
-    }, 500); // 500ms debounce
+    }
+  };
 
-    return () => clearTimeout(timer);
-  }, [searchTerm, sortBy, selectedCategory]);
+  // Clear search and return to normal feed
+  const handleClearSearch = async () => {
+    setSearchTerm('');
+    setIsSearchMode(false);
+    setPosts([]);
+    setNextCursor(null);
+    isFetchingRef.current = true;
+    setLoading(true);
+    setError(null);
+
+    try {
+      const sortParam = sortBy === 'Latest' ? 'latest' 
+        : sortBy === 'Oldest' ? 'oldest' 
+        : sortBy === 'Most Liked' ? 'popular' 
+        : sortBy === 'Most Comments' ? 'latest'
+        : 'latest';
+      
+      const params = {
+        category: selectedCategory !== 'All' ? selectedCategory : undefined,
+        sort: sortParam,
+        limit: 10,
+      };
+      
+      const response = await getAllPosts(params);
+      setPosts(response.data || []);
+      setNextCursor(response.nextCursor || null);
+    } catch (err) {
+      console.error('Error fetching posts:', err);
+      setError('Failed to load posts. Please try again.');
+    } finally {
+      setLoading(false);
+      isFetchingRef.current = false;
+    }
+  };
 
   // Expose function to update a post from external components (like MyPosts)
   useEffect(() => {
@@ -426,13 +477,25 @@ const handleReportUser = async (username, postId) => {
           </div>
         </div>
 
-        <input 
-          type="text" 
-          placeholder="Search posts..." 
-          className="feed-main-search-input"
-          value={searchTerm} 
-          onChange={(e) => setSearchTerm(e.target.value)} 
-        />
+        <div className="feed-main-search-container">
+          <input 
+            type="text" 
+            placeholder="Search posts... (Press Enter to search)" 
+            className="feed-main-search-input"
+            value={searchTerm} 
+            onChange={handleSearchInputChange}
+            onKeyPress={handleSearchKeyPress}
+          />
+          {searchTerm && (
+            <button 
+              className="feed-main-clear-search-button"
+              onClick={handleClearSearch}
+              title="Clear search"
+            >
+              ✕
+            </button>
+          )}
+        </div>
         
         {!isAdmin && (
           <button 
@@ -457,7 +520,7 @@ const handleReportUser = async (username, postId) => {
         </div>
       )}
 
-      {!loading && !error && sortedPosts.length === 0 && (
+      {!loading && !error && sortedPosts.length === 0 && isSearchMode && (
         <div style={{ padding: '40px', textAlign: 'center', color: '#666' }}>
           No posts found. {searchTerm && 'Try a different search term.'}
         </div>
@@ -609,7 +672,7 @@ const handleReportUser = async (username, postId) => {
       </div>
 
       {/* Load More Button for Pagination */}
-      {nextCursor && !loadingMore && (
+      {nextCursor && !loadingMore && sortedPosts.length > 0 && (
         <div style={{ padding: '20px', textAlign: 'center' }}>
           <button 
             className="feed-main-create-button"
