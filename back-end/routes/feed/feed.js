@@ -10,8 +10,11 @@ const {
   createPost,
   updatePost,
   deletePost,
+  getMyPosts,
+  getMyPostsPaginated,
   toggleSavePost,
   getSavedPosts,
+  getSavedPostsPaginated,
   getCategories
 } = require('../../controllers/feed/postsController');
 
@@ -32,6 +35,7 @@ router.get('/categories', getCategories);
 
 // Post routes
 router.get('/posts/search', authenticateToken, searchPosts); // Must come before /posts/:id
+router.get('/posts/mine', authenticateToken, getMyPostsPaginated); // My Posts paginated
 router.get('/posts', authenticateToken, getAllPosts);
 router.get('/posts/:id', authenticateToken, getPostById);
 router.post('/posts', authenticateToken, createPost);
@@ -39,7 +43,7 @@ router.put('/posts/:id', authenticateToken, updatePost);
 router.delete('/posts/:id', authenticateToken, deletePost);
 
 // Saved posts routes
-router.get('/saved', authenticateToken, getSavedPosts);
+router.get('/saved', authenticateToken, getSavedPostsPaginated); // Saved Posts paginated (replaces old route)
 router.post('/posts/:id/save', authenticateToken, toggleSavePost);
 
 // Like routes

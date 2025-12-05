@@ -1,30 +1,61 @@
 import './FeedSavedPosts.css';
 import { useState, useEffect, useRef } from 'react';
-import { getSavedPosts, togglePostLike, toggleSavePost } from '../../services/api';
+import { getSavedPostsPaginated, togglePostLike, toggleSavePost } from '../../services/api';
 import ImageCarousel from './ImageCarousel';
 import ImageModal from './ImageModal';
 
 export default function FeedSavedPosts({ navigateTo }) {
   const [savedPosts, setSavedPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isSearchMode, setIsSearchMode] = useState(false);
   const [sortBy, setSortBy] = useState('Latest');
   const [showSortMenu, setShowSortMenu] = useState(false);
   const [expandedImage, setExpandedImage] = useState(null);
+  const [nextCursor, setNextCursor] = useState(null);
   const sortMenuRef = useRef(null);
+  const isFetchingRef = useRef(false);
 
   useEffect(() => {
-    const fetchSavedPosts = async () => {
-      setLoading(true);
+    const fetchSavedPosts = async (cursor = null, searchQuery = null) => {
+      if (isFetchingRef.current) return;
+
       try {
-        // Fetch saved posts from backend (user-specific)
-        const response = await getSavedPosts();
-        setSavedPosts(response.data || []);
+        isFetchingRef.current = true;
+        if (!cursor) {
+          setLoading(true);
+          setSavedPosts([]);
+          setNextCursor(null);
+          setError(null);
+        } else {
+          setLoadingMore(true);
+        }
+
+        const params = {
+          limit: 10,
+          ...(cursor && { before: cursor }),
+          ...(searchQuery && { search: searchQuery }),
+        };
+
+        const response = await getSavedPostsPaginated(params);
+
+        if (cursor) {
+          setSavedPosts(prevPosts => [...prevPosts, ...(response.data || [])]);
+        } else {
+          setSavedPosts(response.data || []);
+        }
+
+        setNextCursor(response.nextCursor || null);
       } catch (err) {
         console.error('Error fetching saved posts:', err);
         setSavedPosts([]);
+        setError('Failed to load saved posts. Please try again.');
       } finally {
         setLoading(false);
+        setLoadingMore(false);
+        isFetchingRef.current = false;
       }
     };
 
@@ -45,6 +76,85 @@ export default function FeedSavedPosts({ navigateTo }) {
     }
   }, [showSortMenu]);
 
+  // Debounced search handler
+  useEffect(() => {
+    const timer = setTimeout(async () => {
+      if (searchTerm.trim()) {
+        setIsSearchMode(true);
+        isFetchingRef.current = true;
+        setLoading(true);
+        setSavedPosts([]);
+        setNextCursor(null);
+        setError(null);
+
+        try {
+          const response = await getSavedPostsPaginated({
+            search: searchTerm,
+            limit: 10,
+          });
+
+          setSavedPosts(response.data || []);
+          setNextCursor(response.nextCursor || null);
+        } catch (err) {
+          console.error('Error searching saved posts:', err);
+          setError('Failed to search posts. Please try again.');
+        } finally {
+          setLoading(false);
+          isFetchingRef.current = false;
+        }
+      } else {
+        if (isSearchMode) {
+          setIsSearchMode(false);
+          isFetchingRef.current = true;
+          setLoading(true);
+          setSavedPosts([]);
+          setNextCursor(null);
+          setError(null);
+
+          try {
+            const response = await getSavedPostsPaginated({ limit: 10 });
+            setSavedPosts(response.data || []);
+            setNextCursor(response.nextCursor || null);
+          } catch (err) {
+            console.error('Error fetching saved posts:', err);
+            setError('Failed to load posts. Please try again.');
+          } finally {
+            setLoading(false);
+            isFetchingRef.current = false;
+          }
+        }
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm, isSearchMode]);
+
+  // Load more posts
+  const handleLoadMore = async () => {
+    if (nextCursor) {
+      const searchQuery = isSearchMode ? searchTerm : null;
+      isFetchingRef.current = true;
+      setLoadingMore(true);
+
+      try {
+        const params = {
+          limit: 10,
+          before: nextCursor,
+          ...(searchQuery && { search: searchQuery }),
+        };
+
+        const response = await getSavedPostsPaginated(params);
+        setSavedPosts(prevPosts => [...prevPosts, ...(response.data || [])]);
+        setNextCursor(response.nextCursor || null);
+      } catch (err) {
+        console.error('Error loading more posts:', err);
+      } finally {
+        setLoadingMore(false);
+        isFetchingRef.current = false;
+      }
+    }
+  };
+
   const handleLike = async (postId) => {
     try {
       const response = await togglePostLike(postId);
@@ -62,31 +172,8 @@ export default function FeedSavedPosts({ navigateTo }) {
     }
   };
 
-  // Filter posts by search term
-  const filteredPosts = savedPosts.filter(post => {
-    if (!searchTerm) return true;
-    const term = searchTerm.toLowerCase();
-    return post.title.toLowerCase().includes(term) ||
-      post.content.toLowerCase().includes(term) ||
-      post.author.name.toLowerCase().includes(term);
-  });
-
-  // Sort posts based on sortBy selection
-  const sortedPosts = (() => {
-    const posts = [...filteredPosts];
-    switch (sortBy) {
-      case 'Latest':
-        return posts.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-      case 'Oldest':
-        return posts.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
-      case 'Most Liked':
-        return posts.sort((a, b) => (b.likes || 0) - (a.likes || 0));
-      case 'Most Comments':
-        return posts.sort((a, b) => (b.commentCount || 0) - (a.commentCount || 0));
-      default:
-        return posts;
-    }
-  })();
+  // Posts are now sorted and filtered server-side, just use directly
+  const sortedPosts = savedPosts;
 
   return (
     <div className="feed-saved-container">
@@ -150,6 +237,12 @@ export default function FeedSavedPosts({ navigateTo }) {
       {loading && (
         <div style={{ padding: '40px', textAlign: 'center', color: '#666' }}>
           Loading saved posts...
+        </div>
+      )}
+
+      {error && (
+        <div style={{ padding: '20px', textAlign: 'center', color: '#dc2626', backgroundColor: '#fee2e2', margin: '20px', borderRadius: '8px' }}>
+          {error}
         </div>
       )}
 
@@ -228,6 +321,24 @@ export default function FeedSavedPosts({ navigateTo }) {
           </div>
         ))}
       </div>
+
+      {/* Load More Button for Pagination */}
+      {nextCursor && !loadingMore && (
+        <div style={{ padding: '20px', textAlign: 'center' }}>
+          <button 
+            className="feed-main-create-button"
+            onClick={handleLoadMore}
+          >
+            Load More Posts
+          </button>
+        </div>
+      )}
+
+      {loadingMore && (
+        <div style={{ padding: '20px', textAlign: 'center', color: '#666' }}>
+          Loading more posts...
+        </div>
+      )}
       
       {expandedImage && (
         <ImageModal

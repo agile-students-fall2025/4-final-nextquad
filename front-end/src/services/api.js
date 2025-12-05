@@ -344,6 +344,40 @@ export const getSavedPosts = async () => {
 };
 
 /**
+ * Get paginated "My Posts" for current user with optional search
+ * @param {Object} params - Query parameters (limit, before, search)
+ */
+export const getMyPosts = async (params = {}) => {
+  const cleanParams = Object.entries(params).reduce((acc, [key, value]) => {
+    if (value !== undefined && value !== null && value !== '') {
+      acc[key] = value;
+    }
+    return acc;
+  }, {});
+  
+  const queryString = new URLSearchParams(cleanParams).toString();
+  const endpoint = `/feed/posts/mine${queryString ? `?${queryString}` : ''}`;
+  return fetchAPI(endpoint);
+};
+
+/**
+ * Get paginated saved posts for current user with optional search
+ * @param {Object} params - Query parameters (limit, before, search)
+ */
+export const getSavedPostsPaginated = async (params = {}) => {
+  const cleanParams = Object.entries(params).reduce((acc, [key, value]) => {
+    if (value !== undefined && value !== null && value !== '') {
+      acc[key] = value;
+    }
+    return acc;
+  }, {});
+  
+  const queryString = new URLSearchParams(cleanParams).toString();
+  const endpoint = `/feed/saved${queryString ? `?${queryString}` : ''}`;
+  return fetchAPI(endpoint);
+};
+
+/**
  * Get all comments for a post
  * @param {number} postId - Post ID
  */

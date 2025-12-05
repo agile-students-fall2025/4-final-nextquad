@@ -1,6 +1,6 @@
 import './FeedSavedPosts.css'; // Reuse the same styles
 import { useState, useEffect, useRef } from 'react';
-import { getAllPosts, togglePostLike, deletePost } from '../../services/api';
+import { getMyPosts, togglePostLike, deletePost } from '../../services/api';
 import { updatePost } from '../../services/api';
 import ImageModal from './ImageModal';
 import ImageCarousel from './ImageCarousel';
@@ -11,15 +11,20 @@ export default function FeedMyPosts({ navigateTo }) {
     const [savingEdit, setSavingEdit] = useState(false);
   const [myPosts, setMyPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [openMenuId, setOpenMenuId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isSearchMode, setIsSearchMode] = useState(false);
   const [sortBy, setSortBy] = useState('Latest');
   const [showSortMenu, setShowSortMenu] = useState(false);
   const [expandedImage, setExpandedImage] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
+  const [nextCursor, setNextCursor] = useState(null);
   const menuRef = useRef(null);
   const sortMenuRef = useRef(null);
+  const isFetchingRef = useRef(false);
   const feedCategories = ['General','Marketplace','Lost and Found','Roommate Request','Safety Alerts'];
   const [editCategory, setEditCategory] = useState('');
 
@@ -54,30 +59,42 @@ export default function FeedMyPosts({ navigateTo }) {
   }, [openMenuId, showSortMenu]);
 
   useEffect(() => {
-    const fetchMyPosts = async () => {
-      setLoading(true);
+    const fetchMyPosts = async (cursor = null, searchQuery = null) => {
+      if (isFetchingRef.current) return;
+
       try {
-        // Get current user ID from localStorage
-        const userData = localStorage.getItem('user');
-        const currentUserId = userData ? JSON.parse(userData).id : null;
-        
-        if (!currentUserId) {
-          console.error('No user logged in');
-          setLoading(false);
-          return;
+        isFetchingRef.current = true;
+        if (!cursor) {
+          setLoading(true);
+          setMyPosts([]);
+          setNextCursor(null);
+          setError(null);
+        } else {
+          setLoadingMore(true);
         }
 
-        // Fetch all posts and filter by current user
-        const response = await getAllPosts();
-        const allPosts = response.data || [];
-        
-        // Filter posts created by current user
-        const userPosts = allPosts.filter(post => post.author.userId === currentUserId);
-        setMyPosts(userPosts);
+        const params = {
+          limit: 10,
+          ...(cursor && { before: cursor }),
+          ...(searchQuery && { search: searchQuery }),
+        };
+
+        const response = await getMyPosts(params);
+
+        if (cursor) {
+          setMyPosts(prevPosts => [...prevPosts, ...(response.data || [])]);
+        } else {
+          setMyPosts(response.data || []);
+        }
+
+        setNextCursor(response.nextCursor || null);
       } catch (err) {
         console.error('Error fetching my posts:', err);
+        setError('Failed to load your posts. Please try again.');
       } finally {
         setLoading(false);
+        setLoadingMore(false);
+        isFetchingRef.current = false;
       }
     };
 
@@ -135,6 +152,85 @@ export default function FeedMyPosts({ navigateTo }) {
       setDeleting(false);
     }
   };
+
+  // Load more posts with cursor pagination
+  const handleLoadMore = async () => {
+    if (nextCursor) {
+      const searchQuery = isSearchMode ? searchTerm : null;
+      isFetchingRef.current = true;
+      setLoadingMore(true);
+
+      try {
+        const params = {
+          limit: 10,
+          before: nextCursor,
+          ...(searchQuery && { search: searchQuery }),
+        };
+
+        const response = await getMyPosts(params);
+        setMyPosts(prevPosts => [...prevPosts, ...(response.data || [])]);
+        setNextCursor(response.nextCursor || null);
+      } catch (err) {
+        console.error('Error loading more posts:', err);
+      } finally {
+        setLoadingMore(false);
+        isFetchingRef.current = false;
+      }
+    }
+  };
+
+  // Debounced search handler
+  useEffect(() => {
+    const timer = setTimeout(async () => {
+      if (searchTerm.trim()) {
+        setIsSearchMode(true);
+        isFetchingRef.current = true;
+        setLoading(true);
+        setMyPosts([]);
+        setNextCursor(null);
+        setError(null);
+
+        try {
+          const response = await getMyPosts({
+            search: searchTerm,
+            limit: 10,
+          });
+
+          setMyPosts(response.data || []);
+          setNextCursor(response.nextCursor || null);
+        } catch (err) {
+          console.error('Error searching my posts:', err);
+          setError('Failed to search posts. Please try again.');
+        } finally {
+          setLoading(false);
+          isFetchingRef.current = false;
+        }
+      } else {
+        if (isSearchMode) {
+          setIsSearchMode(false);
+          isFetchingRef.current = true;
+          setLoading(true);
+          setMyPosts([]);
+          setNextCursor(null);
+          setError(null);
+
+          try {
+            const response = await getMyPosts({ limit: 10 });
+            setMyPosts(response.data || []);
+            setNextCursor(response.nextCursor || null);
+          } catch (err) {
+            console.error('Error fetching my posts:', err);
+            setError('Failed to load posts. Please try again.');
+          } finally {
+            setLoading(false);
+            isFetchingRef.current = false;
+          }
+        }
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm, isSearchMode]);
 
   // Edit handlers (moved to top-level)
   const handleEditPost = (post) => {
@@ -247,31 +343,8 @@ export default function FeedMyPosts({ navigateTo }) {
     setOpenMenuId(openMenuId === postId ? null : postId);
   };
 
-  // Filter posts by search term
-  const filteredPosts = myPosts.filter(post => {
-    if (!searchTerm) return true;
-    const term = searchTerm.toLowerCase();
-    return post.title.toLowerCase().includes(term) ||
-      post.content.toLowerCase().includes(term) ||
-      post.author.name.toLowerCase().includes(term);
-  });
-
-  // Sort posts based on sortBy selection
-  const sortedPosts = (() => {
-    const posts = [...filteredPosts];
-    switch (sortBy) {
-      case 'Latest':
-        return posts.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-      case 'Oldest':
-        return posts.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
-      case 'Most Liked':
-        return posts.sort((a, b) => (b.likes || 0) - (a.likes || 0));
-      case 'Most Comments':
-        return posts.sort((a, b) => (b.commentCount || 0) - (a.commentCount || 0));
-      default:
-        return posts;
-    }
-  })();
+  // Posts are now sorted and filtered server-side, just use directly
+  const sortedPosts = myPosts;
 
   return (
     <div className="feed-saved-container">
@@ -334,6 +407,12 @@ export default function FeedMyPosts({ navigateTo }) {
       {loading && (
         <div style={{ padding: '40px', textAlign: 'center', color: '#666' }}>
           Loading your posts...
+        </div>
+      )}
+
+      {error && (
+        <div style={{ padding: '20px', textAlign: 'center', color: '#dc2626', backgroundColor: '#fee2e2', margin: '20px', borderRadius: '8px' }}>
+          {error}
         </div>
       )}
 
@@ -400,6 +479,25 @@ export default function FeedMyPosts({ navigateTo }) {
           </div>
         ))}
       </div>
+
+      {/* Load More Button for Pagination */}
+      {nextCursor && !loadingMore && (
+        <div style={{ padding: '20px', textAlign: 'center' }}>
+          <button 
+            className="feed-main-create-button"
+            onClick={handleLoadMore}
+          >
+            Load More Posts
+          </button>
+        </div>
+      )}
+
+      {loadingMore && (
+        <div style={{ padding: '20px', textAlign: 'center', color: '#666' }}>
+          Loading more posts...
+        </div>
+      )}
+
       {/* Edit Post Modal (rendered once, outside the map loop) */}
       {editingPost && (
         <div className="feed-edit-modal-overlay">
