@@ -4,7 +4,7 @@ import ImageModal from './ImageModal';
 import ImageCarousel from './ImageCarousel';
 import './FeedComments.css';
 
-export default function FeedComments({ post, navigateTo, returnToPage = 'main' }) {
+export default function FeedComments({ post, navigateTo,isAdmin = false, returnToPage = 'main' }) {
   const [commentText, setCommentText] = useState('');
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -298,7 +298,8 @@ export default function FeedComments({ post, navigateTo, returnToPage = 'main' }
             )}
           </div>
 
-          <div className="feed-post-actions">
+          {!isAdmin && (
+          <>
             <button 
               className="feed-post-action-button"
               onClick={handleLikePost}
@@ -311,7 +312,8 @@ export default function FeedComments({ post, navigateTo, returnToPage = 'main' }
             >
               {postState.isSavedByUser ? '✓ Saved' : 'Save'}
             </button>
-          </div>
+          </>
+        )}
         </div>
       )}
 
@@ -350,6 +352,7 @@ export default function FeedComments({ post, navigateTo, returnToPage = 'main' }
           </div>
         </div>
 
+        {!isAdmin && (
         <form className="feed-comments-form" onSubmit={handleSubmit}>
           <textarea
             placeholder="Add a comment..."
@@ -361,6 +364,7 @@ export default function FeedComments({ post, navigateTo, returnToPage = 'main' }
             Post Comment
           </button>
         </form>
+        )}
 
         {loading && (
           <div style={{ padding: '20px', textAlign: 'center', color: '#666' }}>
@@ -386,7 +390,8 @@ export default function FeedComments({ post, navigateTo, returnToPage = 'main' }
                 <div className="feed-comment-header">
                   <p className="feed-comment-author">{comment.author.name}</p>
                   <p className="feed-comment-timestamp">{comment.timestamp}</p>
-                  {comment.author.userId === currentUserId && (
+                      {/* Menu for editing/deleting */}
+                  {(comment.author.userId === currentUserId || isAdmin) && (
                     <div ref={openMenuId === comment.id ? menuRef : null}>
                       <button
                         className="feed-post-menu-button"
@@ -396,8 +401,10 @@ export default function FeedComments({ post, navigateTo, returnToPage = 'main' }
                       </button>
                       {openMenuId === comment.id && (
                         <div className="feed-post-menu-dropdown" style={{ right: 0, left: 'auto', top: '36px' }}>
-                          <button className="feed-post-menu-item" onClick={() => handleEditComment(comment)}>✏️ Edit Comment</button>
-                          <button className="feed-post-menu-item" onClick={() => promptDeleteComment(comment)}>🗑️ Delete Comment</button>
+                          {comment.author.userId === currentUserId && (
+                            <button className="feed-post-menu-item" onClick={() => handleEditComment(comment)}>✏️ Edit Comment</button>
+                          )}
+                          <button className="feed-post-menu-item" onClick={() => promptDeleteComment(comment.id)}>🗑️ Delete Comment</button>
                         </div>
                       )}
                     </div>
@@ -407,12 +414,15 @@ export default function FeedComments({ post, navigateTo, returnToPage = 'main' }
                 {typeof comment.editCount === 'number' && comment.editCount > 0 && (
                   <span className="feed-comment-edit-tag">Edited {comment.editCount} {comment.editCount === 1 ? 'time' : 'times'}</span>
                 )}
-                <button 
-                  className="feed-comment-like-button"
-                  onClick={() => handleLikeComment(comment.id)}
-                >
-                  {comment.isLikedByUser ? '❤️' : '🤍'} {comment.likes}
-                </button>
+                {/* Like button only for non-admins */}
+                {!isAdmin && (
+                  <button 
+                    className="feed-comment-like-button"
+                    onClick={() => handleLikeComment(comment.id)}
+                  >
+                    {comment.isLikedByUser ? '❤️' : '🤍'} {comment.likes}
+                  </button>
+                )}
               </div>
             </div>
           ))}

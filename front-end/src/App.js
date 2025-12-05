@@ -57,6 +57,8 @@ export default function App() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [previousPage, setPreviousPage] = useState('main'); // Track where user came from
   const [returnToPage, setReturnToPage] = useState('main'); // Track where to return from comments
+  const [isAdmin, setIsAdmin] = useState(false);
+
   // TODO Sprint 2: This will be managed by backend session/auth
   // For now, we track RSVP'd events in local state
   const [rsvpedEventIds, setRsvpedEventIds] = useState([2, 3]); // Mock: user has RSVP'd to events 2 and 3
@@ -151,7 +153,7 @@ export default function App() {
     setCurrentPage(page);
     if (activeModule === 'events') {
       setSelectedEventId(entityId);
-    } else if (activeModule === 'feed') {
+    } else if (activeModule === 'feed' || activeModule === 'admin') {
       setSelectedPostId(entityId);
     }
   };
@@ -183,6 +185,7 @@ export default function App() {
           <HelloWindow
             setActiveModule={setActiveModule}
             setCurrentPage={setCurrentPage}
+            setIsAdmin={setIsAdmin}
           />
         );
       case 'signin':
@@ -217,19 +220,20 @@ export default function App() {
         );
       case 'adminSignin':
         return (
-          <AdminSignin setActiveModule={setActiveModule} setCurrentPage={setCurrentPage} />
+          <AdminSignin setActiveModule={setActiveModule} setCurrentPage={setCurrentPage} setIsAdmin={setIsAdmin} />
         );
       default:
         return (
           <HelloWindow
             setActiveModule={setActiveModule}
             setCurrentPage={setCurrentPage}
+            setIsAdmin ={setIsAdmin}
           />
         );
     }
   };
 
-  const renderAdminPages = () => {
+const renderAdminPages = () => {
   switch (currentPage) {
     case 'adminNotifications':
       return <AdminNotifications navigateTo={navigateTo} />;
@@ -239,6 +243,15 @@ export default function App() {
       return <AdminEmergencyAlert navigateTo={navigateTo} />;
     case 'adminFeed':
       return <AdminFeedMain navigateTo={navigateTo} />;
+    case 'comments':
+      return (
+        <FeedComments
+          post={selectedPost}
+          navigateTo={navigateTo}
+          returnToPage={'adminFeed'}
+          isAdmin={true}
+        />
+      );
     case 'dashboard': 
     default:
       return <AdminDashboard navigateTo={navigateTo} />;
