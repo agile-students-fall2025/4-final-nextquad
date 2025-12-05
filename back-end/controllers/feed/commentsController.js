@@ -141,7 +141,8 @@ const deleteComment = async (req, res) => {
       return res.status(404).json({ success: false, error: 'Comment not found' });
     }
     const currentUserId = req.user.userId;
-    if (comment.author?.userId !== currentUserId) {
+    const isAdmin = req.user.role === 'admin';
+    if (comment.author.userId !== req.user.userId && req.user.role !== 'admin') {
       return res.status(403).json({ success: false, error: 'You are not authorized to delete this comment' });
     }
     await Comment.deleteOne({ id: commentId });

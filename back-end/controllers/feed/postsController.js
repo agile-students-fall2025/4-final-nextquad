@@ -229,9 +229,9 @@ const deletePost = async (req, res) => {
     }
 
     const currentUserId = req.user.userId;
-    const isAdmin = false; // TODO: check if user has admin role
+    const isAdmin = req.user.role === 'admin';
     if (post.author?.userId !== currentUserId && !isAdmin) {
-      return res.status(403).json({ success: false, error: 'You are not authorized to delete this post' });
+      return res.status(403).json({ success: false, error: 'You are not authorized to delete this post'});
     }
 
     console.log(`[deletePost] Starting deletion for post ${postId}`);

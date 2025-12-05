@@ -404,7 +404,7 @@ export default function FeedComments({ post, navigateTo,isAdmin = false, returnT
                           {comment.author.userId === currentUserId && (
                             <button className="feed-post-menu-item" onClick={() => handleEditComment(comment)}>✏️ Edit Comment</button>
                           )}
-                          <button className="feed-post-menu-item" onClick={() => promptDeleteComment(comment.id)}>🗑️ Delete Comment</button>
+                          <button className="feed-post-menu-item" onClick={() => promptDeleteComment(comment)}>🗑️ Delete Comment</button>
                         </div>
                       )}
                     </div>
