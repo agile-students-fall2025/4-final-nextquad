@@ -13,12 +13,20 @@ const CommentLike = require('../../models/CommentLike');
 
 /**
  * GET /api/feed/posts
- * Get all posts with optional filtering and sorting
+ * Get paginated posts with cursor-based pagination
+ * Query params:
+ *   - category: filter by category
+ *   - search: search in title/content
+ *   - sort: 'latest' (default), 'oldest', 'popular', 'comments'
+ *   - limit: number of posts per page (default 10)
+ *   - before: cursor timestamp to load posts before this (for pagination)
  */
 const getAllPosts = async (req, res) => {
   try {
-    const { category, search, sort } = req.query;
+    const { category, search, sort, limit = 10, before } = req.query;
+    const limitNum = Math.min(parseInt(limit, 10) || 10, 50); // cap at 50
 
+    // Build query
     const query = {};
     if (category && category !== 'All') {
       query.category = category;
@@ -28,18 +36,77 @@ const getAllPosts = async (req, res) => {
       query.$or = [{ title: regex }, { content: regex }];
     }
 
-    let sortSpec = { createdAt: -1 }; // default latest
+    // Cursor-based pagination: only fetch posts before the cursor
+    if (before) {
+      const beforeTimestamp = parseInt(before, 10);
+      query.createdAt = { $lt: beforeTimestamp };
+    }
+
+    // Determine sort order
+    let sortSpec = { createdAt: -1 }; // default: newest first
     if (sort === 'oldest') sortSpec = { createdAt: 1 };
     else if (sort === 'popular') sortSpec = { likes: -1, createdAt: -1 };
 
-    const posts = await Post.find(query).sort(sortSpec).lean();
+    let posts;
+    
+    // Special handling for 'comments' sort - requires aggregation
+    if (sort === 'comments') {
+      const pipeline = [
+        { $match: query },
+        {
+          $lookup: {
+            from: 'comments',
+            localField: 'id',
+            foreignField: 'postId',
+            as: 'commentsList'
+          }
+        },
+        {
+          $addFields: {
+            commentCount: { $size: '$commentsList' }
+          }
+        },
+        { $sort: { commentCount: -1, createdAt: -1 } },
+        { $limit: limitNum + 1 },
+        { $project: { commentsList: 0 } } // Remove the comments array
+      ];
+      
+      posts = await Post.aggregate(pipeline);
+    } else {
+      // Fetch limit + 1 posts to detect if there are more posts
+      posts = await Post.find(query)
+        .sort(sortSpec)
+        .limit(limitNum + 1)
+        .lean();
+    }
+
+    // Determine if there are more posts and set next cursor
+    let hasMore = false;
+    let nextCursor = null;
+    let postsToReturn = posts;
+
+    if (posts.length > limitNum) {
+      hasMore = true;
+      postsToReturn = posts.slice(0, limitNum);
+      // Next cursor is the createdAt of the last post we're returning
+      nextCursor = postsToReturn[postsToReturn.length - 1].createdAt;
+    }
+
+    // Enrich posts with additional data (comment count, likes, saves)
     const currentUserId = req.user.userId;
     const result = await Promise.all(
-      posts.map(async (p) => {
-        const count = await Comment.countDocuments({ postId: p.id });
+      postsToReturn.map(async (p) => {
+        // For comments sort, commentCount is already included from aggregation
+        const count = sort === 'comments' ? p.commentCount : await Comment.countDocuments({ postId: p.id });
         const liked = await PostLike.findOne({ postId: p.id, userId: currentUserId }).lean();
         const saved = await PostSave.findOne({ postId: p.id, userId: currentUserId }).lean();
-        return { ...p, commentCount: count, isLikedByUser: !!liked, isSavedByUser: !!saved, timestamp: formatRelativeTime(new Date(p.createdAt)) };
+        return {
+          ...p,
+          commentCount: count,
+          isLikedByUser: !!liked,
+          isSavedByUser: !!saved,
+          timestamp: formatRelativeTime(new Date(p.createdAt)),
+        };
       })
     );
 
@@ -47,12 +114,100 @@ const getAllPosts = async (req, res) => {
       success: true,
       count: result.length,
       data: result,
+      nextCursor: hasMore ? nextCursor : null, // null means no more posts
     });
   } catch (error) {
     console.error('[getAllPosts] error:', error);
     res.status(500).json({
       success: false,
       error: 'Server error while fetching posts',
+    });
+  }
+};
+
+/**
+ * GET /api/feed/posts/search
+ * Search posts by title and content with cursor-based pagination
+ * Query params:
+ *   - query: search term (required, searches title and content)
+ *   - limit: number of posts per page (default 10)
+ *   - before: cursor timestamp to load posts before this (for pagination)
+ */
+const searchPosts = async (req, res) => {
+  try {
+    const { query, limit = 10, before } = req.query;
+
+    // Validate search query
+    if (!query || query.trim().length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Search query is required',
+      });
+    }
+
+    const limitNum = Math.min(parseInt(limit, 10) || 10, 50); // cap at 50
+
+    // Build search query using regex for title and content
+    const searchRegex = new RegExp(query, 'i'); // case-insensitive
+    const searchQuery = {
+      $or: [
+        { title: searchRegex },
+        { content: searchRegex },
+      ],
+    };
+
+    // Cursor-based pagination: only fetch posts before the cursor
+    if (before) {
+      const beforeTimestamp = parseInt(before, 10);
+      searchQuery.createdAt = { $lt: beforeTimestamp };
+    }
+
+    // Fetch limit + 1 posts to detect if there are more
+    const posts = await Post.find(searchQuery)
+      .sort({ createdAt: -1 }) // newest first
+      .limit(limitNum + 1)
+      .lean();
+
+    // Determine if there are more posts and set next cursor
+    let hasMore = false;
+    let nextCursor = null;
+    let postsToReturn = posts;
+
+    if (posts.length > limitNum) {
+      hasMore = true;
+      postsToReturn = posts.slice(0, limitNum);
+      // Next cursor is the createdAt of the last post we're returning
+      nextCursor = postsToReturn[postsToReturn.length - 1].createdAt;
+    }
+
+    // Enrich posts with additional data (comment count, likes, saves)
+    const currentUserId = req.user.userId;
+    const result = await Promise.all(
+      postsToReturn.map(async (p) => {
+        const count = await Comment.countDocuments({ postId: p.id });
+        const liked = await PostLike.findOne({ postId: p.id, userId: currentUserId }).lean();
+        const saved = await PostSave.findOne({ postId: p.id, userId: currentUserId }).lean();
+        return {
+          ...p,
+          commentCount: count,
+          isLikedByUser: !!liked,
+          isSavedByUser: !!saved,
+          timestamp: formatRelativeTime(new Date(p.createdAt)),
+        };
+      })
+    );
+
+    res.status(200).json({
+      success: true,
+      count: result.length,
+      data: result,
+      nextCursor: hasMore ? nextCursor : null, // null means no more posts
+    });
+  } catch (error) {
+    console.error('[searchPosts] error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Server error while searching posts',
     });
   }
 };
@@ -330,6 +485,243 @@ const getSavedPosts = async (req, res) => {
 };
 
 /**
+ * GET /api/feed/posts/mine
+ * Get paginated posts created by current user with optional search and sort
+ * Query params:
+ *   - limit: number of posts per page (default 10)
+ *   - before: cursor timestamp to load posts before this
+ *   - search: optional search term to filter title and content
+ *   - sort: 'latest' (default), 'oldest', 'popular' (most liked), 'comments'
+ */
+const getMyPostsPaginated = async (req, res) => {
+  try {
+    const { limit = 10, before, search, sort } = req.query;
+    const currentUserId = req.user.userId;
+    const limitNum = Math.min(parseInt(limit, 10) || 10, 50); // cap at 50
+
+    // Build query - always filter by author using dot notation
+    const query = { 'author.userId': currentUserId };
+
+    // Add search filter if provided
+    if (search && search.trim()) {
+      const searchRegex = new RegExp(search, 'i'); // case-insensitive
+      query.$or = [
+        { title: searchRegex },
+        { content: searchRegex },
+      ];
+    }
+
+    // Cursor-based pagination: only fetch posts before the cursor
+    if (before) {
+      const beforeTimestamp = parseInt(before, 10);
+      query.createdAt = { $lt: beforeTimestamp };
+    }
+
+    // Determine sort order
+    let sortSpec = { createdAt: -1 }; // default: newest first
+    if (sort === 'oldest') sortSpec = { createdAt: 1 };
+    else if (sort === 'popular') sortSpec = { likes: -1, createdAt: -1 };
+
+    let posts;
+    
+    // Special handling for 'comments' sort - requires aggregation
+    if (sort === 'comments') {
+      const pipeline = [
+        { $match: query },
+        {
+          $lookup: {
+            from: 'comments',
+            localField: 'id',
+            foreignField: 'postId',
+            as: 'commentsList'
+          }
+        },
+        {
+          $addFields: {
+            commentCount: { $size: '$commentsList' }
+          }
+        },
+        { $sort: { commentCount: -1, createdAt: -1 } },
+        { $limit: limitNum + 1 },
+        { $project: { commentsList: 0 } }
+      ];
+      
+      posts = await Post.aggregate(pipeline);
+    } else {
+      // Fetch limit + 1 posts to detect if there are more
+      posts = await Post.find(query)
+        .sort(sortSpec)
+        .limit(limitNum + 1)
+        .lean();
+    }
+
+    // Determine if there are more posts and set next cursor
+    let hasMore = false;
+    let nextCursor = null;
+    let postsToReturn = posts;
+
+    if (posts.length > limitNum) {
+      hasMore = true;
+      postsToReturn = posts.slice(0, limitNum);
+      nextCursor = postsToReturn[postsToReturn.length - 1].createdAt;
+    }
+
+    // Enrich posts with additional data
+    const result = await Promise.all(
+      postsToReturn.map(async (p) => {
+        const count = sort === 'comments' ? p.commentCount : await Comment.countDocuments({ postId: p.id });
+        const liked = await PostLike.findOne({ postId: p.id, userId: currentUserId }).lean();
+        const saved = await PostSave.findOne({ postId: p.id, userId: currentUserId }).lean();
+        return {
+          ...p,
+          commentCount: count,
+          isLikedByUser: !!liked,
+          isSavedByUser: !!saved,
+          timestamp: formatRelativeTime(new Date(p.createdAt)),
+        };
+      })
+    );
+
+    res.status(200).json({
+      success: true,
+      count: result.length,
+      data: result,
+      nextCursor: hasMore ? nextCursor : null,
+    });
+  } catch (error) {
+    console.error('[getMyPostsPaginated] error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Server error while fetching your posts',
+    });
+  }
+};
+
+/**
+ * GET /api/feed/saved (paginated)
+ * Get paginated saved posts for current user with optional search and sort
+ * Query params:
+ *   - limit: number of posts per page (default 10)
+ *   - before: cursor timestamp to load posts before this
+ *   - search: optional search term to filter title and content
+ *   - sort: 'latest' (default), 'oldest', 'popular' (most liked), 'comments'
+ */
+const getSavedPostsPaginated = async (req, res) => {
+  try {
+    const { limit = 10, before, search, sort } = req.query;
+    const currentUserId = req.user.userId;
+    const limitNum = Math.min(parseInt(limit, 10) || 10, 50); // cap at 50
+
+    // Get all saved post IDs for this user
+    const saves = await PostSave.find({ userId: currentUserId }).lean();
+    const savedPostIds = saves.map(s => s.postId);
+
+    if (savedPostIds.length === 0) {
+      return res.status(200).json({
+        success: true,
+        count: 0,
+        data: [],
+        nextCursor: null,
+      });
+    }
+
+    // Build query - filter by saved post IDs
+    const query = { id: { $in: savedPostIds } };
+
+    // Add search filter if provided
+    if (search && search.trim()) {
+      const searchRegex = new RegExp(search, 'i'); // case-insensitive
+      query.$or = [
+        { title: searchRegex },
+        { content: searchRegex },
+      ];
+    }
+
+    // Cursor-based pagination: only fetch posts before the cursor
+    if (before) {
+      const beforeTimestamp = parseInt(before, 10);
+      query.createdAt = { $lt: beforeTimestamp };
+    }
+
+    // Determine sort order
+    let sortSpec = { createdAt: -1 }; // default: newest first
+    if (sort === 'oldest') sortSpec = { createdAt: 1 };
+    else if (sort === 'popular') sortSpec = { likes: -1, createdAt: -1 };
+
+    let posts;
+    
+    // Special handling for 'comments' sort - requires aggregation
+    if (sort === 'comments') {
+      const pipeline = [
+        { $match: query },
+        {
+          $lookup: {
+            from: 'comments',
+            localField: 'id',
+            foreignField: 'postId',
+            as: 'commentsList'
+          }
+        },
+        {
+          $addFields: {
+            commentCount: { $size: '$commentsList' }
+          }
+        },
+        { $sort: { commentCount: -1, createdAt: -1 } },
+        { $limit: limitNum + 1 },
+        { $project: { commentsList: 0 } }
+      ];
+      
+      posts = await Post.aggregate(pipeline);
+    } else {
+      posts = await Post.find(query)
+        .sort(sortSpec)
+        .limit(limitNum + 1)
+        .lean();
+    }
+
+    // Determine if there are more posts and set next cursor
+    let hasMore = false;
+    let nextCursor = null;
+    let postsToReturn = posts;
+
+    if (posts.length > limitNum) {
+      hasMore = true;
+      postsToReturn = posts.slice(0, limitNum);
+      nextCursor = postsToReturn[postsToReturn.length - 1].createdAt;
+    }
+
+    // Enrich posts with additional data
+    const result = await Promise.all(
+      postsToReturn.map(async (p) => {
+        const count = sort === 'comments' ? p.commentCount : await Comment.countDocuments({ postId: p.id });
+        const liked = await PostLike.findOne({ postId: p.id, userId: currentUserId }).lean();
+        return {
+          ...p,
+          commentCount: count,
+          isLikedByUser: !!liked,
+          isSavedByUser: true,
+          timestamp: formatRelativeTime(new Date(p.createdAt)),
+        };
+      })
+    );
+
+    res.status(200).json({
+      success: true,
+      count: result.length,
+      data: result,
+      nextCursor: hasMore ? nextCursor : null,
+    });
+  } catch (error) {
+    console.error('[getSavedPostsPaginated] error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Server error while fetching saved posts',
+    });
+  }
+};
+
+/**
  * GET /api/feed/categories
  * Get all available categories
  */
@@ -349,11 +741,14 @@ const getCategories = (req, res) => {
 
 module.exports = {
   getAllPosts,
+  searchPosts,
   getPostById,
   createPost,
   updatePost,
   deletePost,
+  getMyPostsPaginated,
   toggleSavePost,
   getSavedPosts,
+  getSavedPostsPaginated,
   getCategories
 };

@@ -9,6 +9,7 @@ export default function FeedMain({ navigateTo, isAdmin = false }) {
   const [showReportInput, setShowReportInput] = useState({});
   const [reportReasons, setReportReasons] = useState({}); 
   const [searchTerm, setSearchTerm] = useState('');
+  const [isSearchMode, setIsSearchMode] = useState(false); // Track if we're in search mode
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [sortBy, setSortBy] = useState('Latest');
   const [showSortMenu, setShowSortMenu] = useState(false);
@@ -17,12 +18,22 @@ export default function FeedMain({ navigateTo, isAdmin = false }) {
   const [resolvedFilter, setResolvedFilter] = useState('All'); // All | Resolved | Unresolved
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState(null);
   const [expandedImage, setExpandedImage] = useState(null);
+  const [nextCursor, setNextCursor] = useState(null); // Cursor for pagination
   const isFetchingRef = useRef(false);
+  const searchTermRef = useRef(''); // Track current search term without triggering re-renders
 
-  // Fetch posts from backend - wrapped in useCallback
-  const fetchPosts = useCallback(async () => {
+  // Keep searchTermRef in sync with searchTerm state
+  useEffect(() => {
+    searchTermRef.current = searchTerm;
+  }, [searchTerm]);
+
+  // Fetch posts from backend with support for search mode
+  // In search mode: queries /search endpoint
+  // In normal mode: queries /posts endpoint with filters
+  const fetchPosts = useCallback(async (cursor = null) => {
     if (isFetchingRef.current) {
       console.log('⏭️ Skipping fetch - already in progress');
       return;
@@ -30,31 +41,60 @@ export default function FeedMain({ navigateTo, isAdmin = false }) {
 
     try {
       isFetchingRef.current = true;
-      setLoading(true);
+      if (!cursor) {
+        setLoading(true);
+        setPosts([]); // Reset posts when fetching from start
+        setNextCursor(null);
+      } else {
+        setLoadingMore(true);
+      }
       setError(null);
       
-      // Map sortBy to backend parameter
+      const params = {
+        limit: 10,
+        ...(cursor && { before: cursor }) // Add cursor if loading more
+      };
+
+      let response;
+
+      // Use getAllPosts for everything (supports search, category, and sort together)
       const sortParam = sortBy === 'Latest' ? 'latest' 
         : sortBy === 'Oldest' ? 'oldest' 
         : sortBy === 'Most Liked' ? 'popular' 
+        : sortBy === 'Most Comments' ? 'comments'
         : 'latest';
       
-      const params = {
-        category: selectedCategory !== 'All' ? selectedCategory : undefined,
-        sort: sortParam
-      };
+      params.category = selectedCategory !== 'All' ? selectedCategory : undefined;
+      params.sort = sortParam;
       
-      const response = await getAllPosts(params);
-      setPosts(response.data || []);
+      // Add search if in search mode - use ref to avoid dependency issues
+      if (isSearchMode && searchTermRef.current && searchTermRef.current.trim()) {
+        params.search = searchTermRef.current;
+      }
+      
+      response = await getAllPosts(params);
+      
+      if (cursor) {
+        // Append to existing posts when loading more
+        setPosts(prevPosts => [...prevPosts, ...(response.data || [])]);
+      } else {
+        // Replace posts when initial load
+        setPosts(response.data || []);
+      }
+      
+      // Set next cursor for pagination
+      setNextCursor(response.nextCursor || null);
     } catch (err) {
       console.error('Error fetching posts:', err);
       setError('Failed to load posts. Please try again.');
     } finally {
       setLoading(false);
+      setLoadingMore(false);
       isFetchingRef.current = false;
     }
-  }, [selectedCategory, sortBy]);
+  }, [selectedCategory, sortBy, isSearchMode]);
 
+  // Auto-fetch when filters change (normal mode) or when component mounts
   useEffect(() => {
     fetchPosts();
   }, [fetchPosts]);
@@ -73,6 +113,110 @@ export default function FeedMain({ navigateTo, isAdmin = false }) {
       );
     } catch (err) {
       console.error('Error liking post:', err);
+    }
+  };
+
+  // Load more posts with cursor-based pagination
+  const handleLoadMore = async () => {
+    if (nextCursor) {
+      // In search mode, use searchTerm; in normal mode, use null
+      const searchQuery = isSearchMode ? searchTerm : null;
+      await fetchPosts(nextCursor, searchQuery);
+    }
+  };
+
+  // Handle search input change - if in search mode and input is cleared, exit search mode
+  const handleSearchInputChange = (e) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+    
+    // If user is in search mode and clears the input, automatically exit search
+    if (isSearchMode && !value.trim()) {
+      // Set a small timeout to allow state update first
+      setTimeout(() => {
+        setIsSearchMode(false);
+        setPosts([]);
+        setNextCursor(null);
+        setLoading(true);
+        setError(null);
+        isFetchingRef.current = true;
+
+        // Fetch normal feed
+        const fetchNormalFeed = async () => {
+          try {
+            const sortParam = sortBy === 'Latest' ? 'latest' 
+              : sortBy === 'Oldest' ? 'oldest' 
+              : sortBy === 'Most Liked' ? 'popular' 
+              : sortBy === 'Most Comments' ? 'comments'
+              : 'latest';
+            
+            const params = {
+              category: selectedCategory !== 'All' ? selectedCategory : undefined,
+              sort: sortParam,
+              limit: 10,
+            };
+            
+            const response = await getAllPosts(params);
+            setPosts(response.data || []);
+            setNextCursor(response.nextCursor || null);
+          } catch (err) {
+            console.error('Error fetching posts:', err);
+            setError('Failed to load posts. Please try again.');
+          } finally {
+            setLoading(false);
+            isFetchingRef.current = false;
+          }
+        };
+        
+        fetchNormalFeed();
+      }, 0);
+    }
+  };
+
+  // Handle search on Enter key press
+  const handleSearchKeyPress = async (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      
+      if (searchTerm.trim()) {
+        // Enter search mode - this will trigger fetchPosts via useEffect
+        setIsSearchMode(true);
+      }
+    }
+  };
+
+  // Clear search and return to normal feed
+  const handleClearSearch = async () => {
+    setSearchTerm('');
+    setIsSearchMode(false);
+    setPosts([]);
+    setNextCursor(null);
+    isFetchingRef.current = true;
+    setLoading(true);
+    setError(null);
+
+    try {
+      const sortParam = sortBy === 'Latest' ? 'latest' 
+        : sortBy === 'Oldest' ? 'oldest' 
+        : sortBy === 'Most Liked' ? 'popular' 
+        : sortBy === 'Most Comments' ? 'comments'
+        : 'latest';
+      
+      const params = {
+        category: selectedCategory !== 'All' ? selectedCategory : undefined,
+        sort: sortParam,
+        limit: 10,
+      };
+      
+      const response = await getAllPosts(params);
+      setPosts(response.data || []);
+      setNextCursor(response.nextCursor || null);
+    } catch (err) {
+      console.error('Error fetching posts:', err);
+      setError('Failed to load posts. Please try again.');
+    } finally {
+      setLoading(false);
+      isFetchingRef.current = false;
     }
   };
 
@@ -120,25 +264,16 @@ export default function FeedMain({ navigateTo, isAdmin = false }) {
 
   const categorySupportsResolved = ['Marketplace', 'Lost and Found', 'Roommate Request'].includes(selectedCategory);
 
-  // Client-side search filter
+  // Apply resolved filter (backend handles search, category, and sort)
   const filteredPosts = posts
-    .filter(post => {
-      if (!searchTerm) return true;
-      const term = searchTerm.toLowerCase();
-      return post.title.toLowerCase().includes(term) ||
-        post.content.toLowerCase().includes(term) ||
-        post.author.name.toLowerCase().includes(term);
-    })
     .filter(post => {
       if (!categorySupportsResolved || resolvedFilter === 'All') return true;
       const isResolved = !!post.resolved;
       return resolvedFilter === 'Resolved' ? isResolved : !isResolved;
     });
 
-  // Sort by comment count (since backend doesn't support this yet)
-  const sortedPosts = sortBy === 'Most Comments' 
-    ? [...filteredPosts].sort((a, b) => b.commentCount - a.commentCount)
-    : filteredPosts;
+  // Posts are already sorted by backend
+  const sortedPosts = filteredPosts;
   
   //report a user (admin feature)
 const handleReportUser = async (username, postId) => {
@@ -311,13 +446,25 @@ const handleReportUser = async (username, postId) => {
           </div>
         </div>
 
-        <input 
-          type="text" 
-          placeholder="Search posts..." 
-          className="feed-main-search-input"
-          value={searchTerm} 
-          onChange={(e) => setSearchTerm(e.target.value)} 
-        />
+        <div className="feed-main-search-container">
+          <input 
+            type="text" 
+            placeholder="Search posts... (Press Enter to search)" 
+            className="feed-main-search-input"
+            value={searchTerm} 
+            onChange={handleSearchInputChange}
+            onKeyPress={handleSearchKeyPress}
+          />
+          {searchTerm && (
+            <button 
+              className="feed-main-clear-search-button"
+              onClick={handleClearSearch}
+              title="Clear search"
+            >
+              ✕
+            </button>
+          )}
+        </div>
         
         {!isAdmin && (
           <button 
@@ -342,7 +489,7 @@ const handleReportUser = async (username, postId) => {
         </div>
       )}
 
-      {!loading && !error && sortedPosts.length === 0 && (
+      {!loading && !error && sortedPosts.length === 0 && isSearchMode && (
         <div style={{ padding: '40px', textAlign: 'center', color: '#666' }}>
           No posts found. {searchTerm && 'Try a different search term.'}
         </div>
@@ -493,6 +640,24 @@ const handleReportUser = async (username, postId) => {
           </div>
         ))}
       </div>
+
+      {/* Load More Button for Pagination */}
+      {nextCursor && !loadingMore && sortedPosts.length > 0 && (
+        <div style={{ padding: '20px', textAlign: 'center' }}>
+          <button 
+            className="feed-main-create-button"
+            onClick={handleLoadMore}
+          >
+            Load More Posts
+          </button>
+        </div>
+      )}
+
+      {loadingMore && (
+        <div style={{ padding: '20px', textAlign: 'center', color: '#666' }}>
+          Loading more posts...
+        </div>
+      )}
       
       {expandedImage && (
         <ImageModal

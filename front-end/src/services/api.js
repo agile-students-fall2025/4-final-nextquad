@@ -241,7 +241,7 @@ export const categories = ['All', 'Music', 'Social', 'Study', 'Career', 'Wellnes
 
 /**
  * Get all feed posts with optional filters
- * @param {Object} params - Query parameters (category, search, sort)
+ * @param {Object} params - Query parameters (category, search, sort, limit, before)
  */
 export const getAllPosts = async (params = {}) => {
   // Filter out undefined values to avoid sending "undefined" as string
@@ -254,6 +254,24 @@ export const getAllPosts = async (params = {}) => {
   
   const queryString = new URLSearchParams(cleanParams).toString();
   const endpoint = `/feed/posts${queryString ? `?${queryString}` : ''}`;
+  return fetchAPI(endpoint);
+};
+
+/**
+ * Search feed posts by title and content with cursor-based pagination
+ * @param {Object} params - Query parameters (query, limit, before)
+ */
+export const searchPosts = async (params = {}) => {
+  // Filter out undefined values
+  const cleanParams = Object.entries(params).reduce((acc, [key, value]) => {
+    if (value !== undefined && value !== null && value !== '') {
+      acc[key] = value;
+    }
+    return acc;
+  }, {});
+  
+  const queryString = new URLSearchParams(cleanParams).toString();
+  const endpoint = `/feed/posts/search${queryString ? `?${queryString}` : ''}`;
   return fetchAPI(endpoint);
 };
 
@@ -323,6 +341,40 @@ export const toggleSavePost = async (postId) => {
  */
 export const getSavedPosts = async () => {
   return fetchAPI('/feed/saved');
+};
+
+/**
+ * Get paginated "My Posts" for current user with optional search
+ * @param {Object} params - Query parameters (limit, before, search)
+ */
+export const getMyPosts = async (params = {}) => {
+  const cleanParams = Object.entries(params).reduce((acc, [key, value]) => {
+    if (value !== undefined && value !== null && value !== '') {
+      acc[key] = value;
+    }
+    return acc;
+  }, {});
+  
+  const queryString = new URLSearchParams(cleanParams).toString();
+  const endpoint = `/feed/posts/mine${queryString ? `?${queryString}` : ''}`;
+  return fetchAPI(endpoint);
+};
+
+/**
+ * Get paginated saved posts for current user with optional search
+ * @param {Object} params - Query parameters (limit, before, search)
+ */
+export const getSavedPostsPaginated = async (params = {}) => {
+  const cleanParams = Object.entries(params).reduce((acc, [key, value]) => {
+    if (value !== undefined && value !== null && value !== '') {
+      acc[key] = value;
+    }
+    return acc;
+  }, {});
+  
+  const queryString = new URLSearchParams(cleanParams).toString();
+  const endpoint = `/feed/saved${queryString ? `?${queryString}` : ''}`;
+  return fetchAPI(endpoint);
 };
 
 /**
