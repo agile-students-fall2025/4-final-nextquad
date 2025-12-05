@@ -1,36 +1,68 @@
-/* Wrapper */
+/* Admin Shell Wrapper */
 .admin-feed-wrapper {
-  display: flex;
-  flex-direction: column;
   min-height: 100vh;
-  background-color: #f9fafb;
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  background-color: #f3f4f6; /* same as .app-shell */
 }
 
-/* Header bar */
+/* Header - Styled like .tab-bar */
 .admin-feed-header {
   display: flex;
   align-items: center;
-  padding: 16px 24px;
+  gap: 1rem;
+  padding: 1.25rem 2rem;
   background-color: #ffffff;
-  border-bottom: 1px solid #e5e7eb;
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: 1000;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
 }
 
-/* Back button */
+/* Back Button (matches tab buttons) */
 .admin-feed-back-button {
-  background-color: #6B46C1;
-  color: #ffffff;
-  border: none;
-  border-radius: 6px;
-  padding: 10px 16px;
-  font-size: 15px;
+  background: #4c1d95;
+  color: #fff;
+  border: 1px solid #4c1d95;
+  border-radius: 8px;
+  padding: 0.75rem 1.75rem;
+  font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.2s ease-in-out;
+  transition: all 0.2s ease;
 }
 
 .admin-feed-back-button:hover {
-  background-color: #553C9A;
+  background: #3b1575;
+  border-color: #3b1575;
+}
+
+/* Title similar to .tab-bar-title */
+.admin-feed-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #4c1d95;
+}
+
+/* Body content area */
+.admin-feed-body {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  padding: 2rem;
+}
+
+/* Full-width container like events-wrapper/map-wrapper */
+.admin-feed-content {
+  width: 100%;
+  max-width: 1400px;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08);
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
