@@ -56,8 +56,9 @@ adminSchema.methods.generateJWT = function () {
 
   return jwt.sign(
     {
-      id: this._id,
+      userid: this._id,
       email: this.email,
+      role: 'admin',
       exp: parseInt(exp.getTime() / 1000),
     },
     process.env.JWT_SECRET
