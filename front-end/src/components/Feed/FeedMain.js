@@ -23,6 +23,12 @@ export default function FeedMain({ navigateTo, isAdmin = false }) {
   const [expandedImage, setExpandedImage] = useState(null);
   const [nextCursor, setNextCursor] = useState(null); // Cursor for pagination
   const isFetchingRef = useRef(false);
+  const searchTermRef = useRef(''); // Track current search term without triggering re-renders
+
+  // Keep searchTermRef in sync with searchTerm state
+  useEffect(() => {
+    searchTermRef.current = searchTerm;
+  }, [searchTerm]);
 
   // Fetch posts from backend with support for search mode
   // In search mode: queries /search endpoint
@@ -61,9 +67,9 @@ export default function FeedMain({ navigateTo, isAdmin = false }) {
       params.category = selectedCategory !== 'All' ? selectedCategory : undefined;
       params.sort = sortParam;
       
-      // Add search if in search mode - use state variable, not parameter
-      if (isSearchMode && searchTerm && searchTerm.trim()) {
-        params.search = searchTerm;
+      // Add search if in search mode - use ref to avoid dependency issues
+      if (isSearchMode && searchTermRef.current && searchTermRef.current.trim()) {
+        params.search = searchTermRef.current;
       }
       
       response = await getAllPosts(params);
@@ -86,7 +92,7 @@ export default function FeedMain({ navigateTo, isAdmin = false }) {
       setLoadingMore(false);
       isFetchingRef.current = false;
     }
-  }, [selectedCategory, sortBy, isSearchMode, searchTerm]);
+  }, [selectedCategory, sortBy, isSearchMode]);
 
   // Auto-fetch when filters change (normal mode) or when component mounts
   useEffect(() => {

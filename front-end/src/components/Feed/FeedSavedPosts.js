@@ -17,6 +17,12 @@ export default function FeedSavedPosts({ navigateTo }) {
   const [nextCursor, setNextCursor] = useState(null);
   const sortMenuRef = useRef(null);
   const isFetchingRef = useRef(false);
+  const searchTermRef = useRef(''); // Track current search term without triggering re-renders
+
+  // Keep searchTermRef in sync with searchTerm state
+  useEffect(() => {
+    searchTermRef.current = searchTerm;
+  }, [searchTerm]);
 
   useEffect(() => {
     const fetchSavedPosts = async (cursor = null) => {
@@ -37,7 +43,7 @@ export default function FeedSavedPosts({ navigateTo }) {
         const params = {
           limit: 10,
           ...(cursor && { before: cursor }),
-          ...(isSearchMode && searchTerm && searchTerm.trim() && { search: searchTerm }),
+          ...(isSearchMode && searchTermRef.current && searchTermRef.current.trim() && { search: searchTermRef.current }),
           sort: sortParam,
         };
 
@@ -62,7 +68,7 @@ export default function FeedSavedPosts({ navigateTo }) {
     };
 
     fetchSavedPosts();
-  }, [sortBy, isSearchMode, searchTerm]);
+  }, [sortBy, isSearchMode]);
 
   // Close sort menu when clicking outside
   useEffect(() => {

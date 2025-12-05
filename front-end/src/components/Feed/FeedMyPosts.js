@@ -25,8 +25,14 @@ export default function FeedMyPosts({ navigateTo }) {
   const menuRef = useRef(null);
   const sortMenuRef = useRef(null);
   const isFetchingRef = useRef(false);
+  const searchTermRef = useRef(''); // Track current search term without triggering re-renders
   const feedCategories = ['General','Marketplace','Lost and Found','Roommate Request','Safety Alerts'];
   const [editCategory, setEditCategory] = useState('');
+
+  // Keep searchTermRef in sync with searchTerm state
+  useEffect(() => {
+    searchTermRef.current = searchTerm;
+  }, [searchTerm]);
 
   // Prevent background scroll when edit modal is open
   useEffect(() => {
@@ -77,7 +83,7 @@ export default function FeedMyPosts({ navigateTo }) {
         const params = {
           limit: 10,
           ...(cursor && { before: cursor }),
-          ...(isSearchMode && searchTerm && searchTerm.trim() && { search: searchTerm }),
+          ...(isSearchMode && searchTermRef.current && searchTermRef.current.trim() && { search: searchTermRef.current }),
           sort: sortParam,
         };
 
@@ -101,7 +107,7 @@ export default function FeedMyPosts({ navigateTo }) {
     };
 
     fetchMyPosts();
-  }, [sortBy, isSearchMode, searchTerm]);
+  }, [sortBy, isSearchMode]);
 
   const handleLike = async (postId) => {
     try {
