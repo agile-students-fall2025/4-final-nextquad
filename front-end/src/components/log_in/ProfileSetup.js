@@ -4,9 +4,13 @@ import './ProfileSetup.css';
 export default function ProfileSetup({ setActiveModule }) {
   const [first, setFirst] = useState("");
   const [last, setLast] = useState("");
-  const [nyuEmail, setNyuEmail] = useState("");
   const [gradYear, setGradYear] = useState("");
   const [profileImage, setProfileImage] = useState(null);
+
+  const [firstError, setFirstError] = useState("");
+  const [lastError, setLastError] = useState("");
+  const [gradYearError, setGradYearError] = useState("");
+  const [generalError, setGeneralError] = useState("");
 
   const fileInputRef = useRef(null);
   const [loading, setLoading] = useState(false);
@@ -20,49 +24,59 @@ export default function ProfileSetup({ setActiveModule }) {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setProfileImage(reader.result); // base64 URL
+        setProfileImage(reader.result);
       };
       reader.readAsDataURL(file);
     }
   };
 
   const handleContinue = async () => {
-    if (!first || !last || !nyuEmail || !gradYear) {
-      alert("Please fill in all the fields.");
-      return;
+    // Reset all field errors
+    setFirstError("");
+    setLastError("");
+    setGradYearError("");
+    setGeneralError("");
+
+    let hasError = false;
+
+    if (!first.trim()) {
+      setFirstError("Please enter your first name.");
+      hasError = true;
+    }
+    if (!last.trim()) {
+      setLastError("Please enter your last name.");
+      hasError = true;
     }
 
-    if (!nyuEmail.endsWith("@nyu.edu")) {
-      alert("Please enter a valid NYU email address.");
-      return;
+    if (!gradYear.trim()) {
+      setGradYearError("Please enter your graduation year.");
+      hasError = true;
+    } else {
+      const yr = parseInt(gradYear);
+      if (isNaN(yr) || yr <= 2024) {
+        setGradYearError("Graduation year must be 2025 or later.");
+        hasError = true;
+      }
     }
 
-    const gradYearNum = parseInt(gradYear);
-    if (isNaN(gradYearNum) || gradYearNum <= 2024) {
-      alert("Please enter a valid graduation year (e.g. 2025).");
-      return;
-    }
-
-    // Get the email from signup
     const signupEmail = localStorage.getItem("signupEmail");
     if (!signupEmail) {
-      alert("Session expired. Please sign up again.");
-      return;
+      setGeneralError("Session expired. Please sign up again.");
+      hasError = true;
     }
+
+    if (hasError) return;
 
     try {
       setLoading(true);
 
       const res = await fetch(`${process.env.REACT_APP_API_URL}/auth/profile-setup`, {
         method: "POST",
-        headers: { 
-          "Content-Type": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: signupEmail,
           firstName: first,
           lastName: last,
-          nyuEmail,
           graduationYear: gradYear,
           profileImage: profileImage
         }),
@@ -71,24 +85,22 @@ export default function ProfileSetup({ setActiveModule }) {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || data.message || "Profile setup failed.");
+        setGeneralError(data.error || "Profile setup failed.");
+        return;
       }
 
-      // Store JWT token and user info
       if (data.token) {
         localStorage.setItem("jwt", data.token);
       }
       if (data.data) {
         localStorage.setItem("user", JSON.stringify(data.data));
       }
-      
-      // Clean up signup email
+
       localStorage.removeItem("signupEmail");
 
-      alert("Profile setup complete!");
       setActiveModule("events");
     } catch (err) {
-      alert(err.message);
+      setGeneralError(err.message);
     } finally {
       setLoading(false);
     }
@@ -99,6 +111,7 @@ export default function ProfileSetup({ setActiveModule }) {
       <h2 className="profile-title">Welcome to NextQuad!</h2>
       <p className="profile-subtitle">Let's finish setting up your profile.</p>
 
+      {/* Profile image picker */}
       <div className="profile-image" onClick={handleImageClick}>
         {profileImage ? (
           <img src={profileImage} alt="Profile" className="preview-image" />
@@ -114,6 +127,7 @@ export default function ProfileSetup({ setActiveModule }) {
         />
       </div>
 
+      {/* First name */}
       <input
         className="profile-input"
         placeholder="First name"
@@ -121,6 +135,9 @@ export default function ProfileSetup({ setActiveModule }) {
         onChange={(e) => setFirst(e.target.value)}
         disabled={loading}
       />
+      {firstError && <p className="form-error">{firstError}</p>}
+
+      {/* Last name */}
       <input
         className="profile-input"
         placeholder="Last name"
@@ -128,13 +145,9 @@ export default function ProfileSetup({ setActiveModule }) {
         onChange={(e) => setLast(e.target.value)}
         disabled={loading}
       />
-      <input
-        className="profile-input"
-        placeholder="NYU email"
-        value={nyuEmail}
-        onChange={(e) => setNyuEmail(e.target.value)}
-        disabled={loading}
-      />
+      {lastError && <p className="form-error">{lastError}</p>}
+
+      {/* Grad year */}
       <input
         className="profile-input"
         placeholder="Graduation Year"
@@ -142,7 +155,12 @@ export default function ProfileSetup({ setActiveModule }) {
         onChange={(e) => setGradYear(e.target.value)}
         disabled={loading}
       />
+      {gradYearError && <p className="form-error">{gradYearError}</p>}
 
+      {/* General error (API / missing session) */}
+      {generalError && <p className="form-error">{generalError}</p>}
+
+      {/* Continue Button */}
       <button className="profile-btn" onClick={handleContinue} disabled={loading}>
         {loading ? "Saving..." : "Continue"}
       </button>

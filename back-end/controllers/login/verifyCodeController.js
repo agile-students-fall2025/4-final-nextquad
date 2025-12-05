@@ -1,28 +1,51 @@
-const { setLastVerifiedEmail } = require("./verifiedEmailStore");
+const {
+  getResetCodeData,
+  clearResetCode,
+} = require("./verifiedEmailStore");
 
 const verifyCode = (req, res) => {
   const { email, code } = req.body;
 
-  if (!email) {
-    return res.status(400).json({ success: false, error: "Email is required." });
-  }
-
-  if (!code || code.length !== 4 || !/^\d+$/.test(code)) {
+  if (!email || !email.toLowerCase().endsWith("@nyu.edu")) {
     return res.status(400).json({
       success: false,
-      error: "Verification code must be 4 numeric digits.",
+      error: "Only @nyu.edu email addresses are allowed.",
     });
   }
 
-  if (code !== "1234") {
+  if (!code || code.length !== 6 || !/^\d+$/.test(code)) {
+    return res.status(400).json({
+      success: false,
+      error: "Verification code must be 6 numeric digits.",
+    });
+  }
+
+  const cleanedEmail = email.trim().toLowerCase();
+  const record = getResetCodeData(cleanedEmail);
+
+  if (!record) {
+    return res.status(400).json({
+      success: false,
+      error: "No verification code found for this email.",
+    });
+  }
+
+  if (Date.now() > record.expiresAt) {
+    clearResetCode(cleanedEmail);
+    return res.status(410).json({
+      success: false,
+      error: "Verification code has expired. Please request a new one.",
+    });
+  }
+
+  if (code !== record.code) {
     return res.status(401).json({
       success: false,
       error: "Incorrect verification code.",
     });
   }
 
-  setLastVerifiedEmail(email);
-  console.log("✅ Email verified:", email);
+  console.log("✅ Email verified:", cleanedEmail);
 
   return res.status(200).json({
     success: true,

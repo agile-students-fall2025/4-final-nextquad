@@ -7,6 +7,8 @@
   height: 100vh;
 }
 
+/* ------------ Titles ------------ */
+
 .auth-title {
   font-size: 28px;
   font-weight: bold;
@@ -23,6 +25,8 @@
   margin-bottom: 24px;
   text-align: center;
 }
+
+/* ------------ Inputs ------------ */
 
 .auth-input {
   width: 260px;
@@ -47,6 +51,7 @@
   margin-bottom: 10px;
 }
 
+/* ------------ Buttons ------------ */
 
 .auth-btn {
   width: 260px;
@@ -71,6 +76,9 @@
   box-shadow: 0 2px 6px rgba(107, 70, 193, 0.25);
 }
 
+
+/* ------------ Divider ------------ */
+
 .auth-divider {
   display: flex;
   align-items: center;
@@ -85,25 +93,28 @@
   background: #ccc;
 }
 
-.google-btn {
+/* ------------ Terms Checkbox ------------ */
+
+.checkbox-box {
   width: 260px;
-  padding: 12px;
-  background-color: white;
-  color: #555;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  font-size: 15px;
-  font-weight: 500;
-  cursor: pointer;
-  position: relative
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 14px;
+}
+
+.checkbox-box input {
+  transform: scale(1.15);
 }
 
 .terms-link {
   color: #6B46C1;
   text-decoration: underline;
   cursor: pointer;
-  margin-left: 4px;
 }
+
+/* ------------ Modal ------------ */
 
 .modal-overlay {
   position: fixed;
@@ -135,4 +146,24 @@
   padding: 10px 16px;
   border-radius: 6px;
   cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.close-modal:hover {
+  background-color: #553C9A;
+}
+
+/* ------------ Bottom link ------------ */
+
+.auth-link {
+  margin-top: 16px;
+  color: #6B46C1;
+  font-size: 14px;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.auth-link.small {
+  font-size: 13px;
+  margin-top: 12px;
 }

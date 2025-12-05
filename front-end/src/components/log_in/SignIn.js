@@ -1,27 +1,30 @@
+// SignIn.js — cleaned version without Google login button
 import React, { useState } from "react";
 import "./SignIn.css";
-import googleIcon from "../../assets/log_in/google_icon.png";
 
 export default function SignIn({ setActiveModule, setCurrentPage }) {
+  // Form state
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Error states
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [generalError, setGeneralError] = useState("");
 
+  // Handle normal email/password login
   const handleLogin = async () => {
-    // Reset all errors
+    // Reset previous errors
     setEmailError("");
     setPasswordError("");
     setGeneralError("");
 
+    // Simple validation
     if (!email.trim()) {
       setEmailError("Please enter your email.");
       return;
     }
-
     if (!password.trim()) {
       setPasswordError("Please enter your password.");
       return;
@@ -30,6 +33,7 @@ export default function SignIn({ setActiveModule, setCurrentPage }) {
     try {
       setLoading(true);
 
+      // Make login API request
       const res = await fetch(`${process.env.REACT_APP_API_URL}/auth/signin`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -38,6 +42,7 @@ export default function SignIn({ setActiveModule, setCurrentPage }) {
 
       const data = await res.json();
 
+      // Handle backend errors
       if (!res.ok) {
         const msg = data.message || data.error || "Login failed.";
 
@@ -51,7 +56,7 @@ export default function SignIn({ setActiveModule, setCurrentPage }) {
         return;
       }
 
-      // Store JWT token and user info
+      // Save token and user info
       if (data.token) {
         localStorage.setItem("jwt", data.token);
       }
@@ -59,7 +64,7 @@ export default function SignIn({ setActiveModule, setCurrentPage }) {
         localStorage.setItem("user", JSON.stringify(data.user));
       }
 
-      // Login successful
+      // Redirect to main module
       setActiveModule("events");
     } catch (err) {
       setGeneralError(err.message || "Unexpected network error.");
@@ -75,8 +80,10 @@ export default function SignIn({ setActiveModule, setCurrentPage }) {
         Log in by entering your email address and password.
       </p>
 
+      {/* General backend error */}
       {generalError && <p className="form-error">{generalError}</p>}
 
+      {/* Email input */}
       <input
         className="auth-input"
         type="email"
@@ -90,6 +97,7 @@ export default function SignIn({ setActiveModule, setCurrentPage }) {
       />
       {emailError && <p className="form-error">{emailError}</p>}
 
+      {/* Password input */}
       <input
         className="auth-input"
         type="password"
@@ -103,6 +111,7 @@ export default function SignIn({ setActiveModule, setCurrentPage }) {
       />
       {passwordError && <p className="form-error">{passwordError}</p>}
 
+      {/* Forgot password */}
       <p
         className="auth-link"
         onClick={() => !loading && setCurrentPage("forgot")}
@@ -110,21 +119,12 @@ export default function SignIn({ setActiveModule, setCurrentPage }) {
         Forgot password?
       </p>
 
+      {/* Login button */}
       <button className="auth-btn" onClick={handleLogin} disabled={loading}>
         {loading ? "Logging in..." : "Log in"}
       </button>
 
-      <div className="auth-divider">
-        <span></span>
-        <p>or</p>
-        <span></span>
-      </div>
-
-      <button className="google-btn" disabled={loading}>
-        <img src={googleIcon} alt="Google" className="google-icon" />
-        Continue with Google
-      </button>
-
+      {/* Sign up link */}
       <p
         className="auth-link small"
         onClick={() => !loading && setCurrentPage("signup")}
