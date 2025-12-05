@@ -18,7 +18,7 @@
   padding: 8px 16px;
   background-color: transparent;
   border: none;
-  color: #6B46C1;
+  color: #6b46c1;
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
@@ -43,7 +43,7 @@
   margin-top: 24px;
   margin-bottom: 24px;
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .feed-comments-post-header {
@@ -163,7 +163,7 @@
   background-color: white;
   padding: 20px;
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   margin-bottom: 24px;
 }
 
@@ -182,7 +182,7 @@
 
 .feed-comments-submit-button {
   padding: 10px 24px;
-  background-color: #6B46C1;
+  background-color: #6b46c1;
   color: white;
   border: none;
   border-radius: 8px;
@@ -206,7 +206,7 @@
   background-color: white;
   padding: 20px;
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   display: flex;
   gap: 12px;
 }
@@ -276,7 +276,6 @@
 
 .feed-comment-like-button:hover {
   background-color: #f5f5f5;
-  border-color: #6B46C1;
-  color: #6B46C1;
+  border-color: #6b46c1;
+  color: #6b46c1;
 }
-
