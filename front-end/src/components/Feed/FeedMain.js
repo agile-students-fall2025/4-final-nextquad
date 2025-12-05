@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { getAllPosts, searchPosts, togglePostLike, toggleSavePost, feedCategories, deletePost } from '../../services/api';
+import { getAllPosts, togglePostLike, toggleSavePost, feedCategories, deletePost } from '../../services/api';
 import { createReport } from '../../services/api'; 
 import ImageModal from './ImageModal';
 import ImageCarousel from './ImageCarousel';
@@ -27,7 +27,7 @@ export default function FeedMain({ navigateTo, isAdmin = false }) {
   // Fetch posts from backend with support for search mode
   // In search mode: queries /search endpoint
   // In normal mode: queries /posts endpoint with filters
-  const fetchPosts = useCallback(async (cursor = null, searchQuery = null) => {
+  const fetchPosts = useCallback(async (cursor = null) => {
     if (isFetchingRef.current) {
       console.log('⏭️ Skipping fetch - already in progress');
       return;
@@ -51,23 +51,22 @@ export default function FeedMain({ navigateTo, isAdmin = false }) {
 
       let response;
 
-      // If search query provided, use search endpoint
-      if (searchQuery && searchQuery.trim()) {
-        params.query = searchQuery;
-        response = await searchPosts(params);
-      } else {
-        // Otherwise use normal feed endpoint with filters
-        // For client-side sorts (like "Most Comments"), fetch latest and sort client-side
-        const sortParam = sortBy === 'Latest' ? 'latest' 
-          : sortBy === 'Oldest' ? 'oldest' 
-          : sortBy === 'Most Liked' ? 'popular' 
-          : sortBy === 'Most Comments' ? 'latest' // Fetch latest for client-side comment sorting
-          : 'latest';
-        
-        params.category = selectedCategory !== 'All' ? selectedCategory : undefined;
-        params.sort = sortParam;
-        response = await getAllPosts(params);
+      // Use getAllPosts for everything (supports search, category, and sort together)
+      const sortParam = sortBy === 'Latest' ? 'latest' 
+        : sortBy === 'Oldest' ? 'oldest' 
+        : sortBy === 'Most Liked' ? 'popular' 
+        : sortBy === 'Most Comments' ? 'comments'
+        : 'latest';
+      
+      params.category = selectedCategory !== 'All' ? selectedCategory : undefined;
+      params.sort = sortParam;
+      
+      // Add search if in search mode - use state variable, not parameter
+      if (isSearchMode && searchTerm && searchTerm.trim()) {
+        params.search = searchTerm;
       }
+      
+      response = await getAllPosts(params);
       
       if (cursor) {
         // Append to existing posts when loading more
@@ -87,7 +86,7 @@ export default function FeedMain({ navigateTo, isAdmin = false }) {
       setLoadingMore(false);
       isFetchingRef.current = false;
     }
-  }, [selectedCategory, sortBy]);
+  }, [selectedCategory, sortBy, isSearchMode, searchTerm]);
 
   // Auto-fetch when filters change (normal mode) or when component mounts
   useEffect(() => {
@@ -142,7 +141,7 @@ export default function FeedMain({ navigateTo, isAdmin = false }) {
             const sortParam = sortBy === 'Latest' ? 'latest' 
               : sortBy === 'Oldest' ? 'oldest' 
               : sortBy === 'Most Liked' ? 'popular' 
-              : sortBy === 'Most Comments' ? 'latest'
+              : sortBy === 'Most Comments' ? 'comments'
               : 'latest';
             
             const params = {
@@ -174,29 +173,8 @@ export default function FeedMain({ navigateTo, isAdmin = false }) {
       e.preventDefault();
       
       if (searchTerm.trim()) {
-        // Enter search mode
+        // Enter search mode - this will trigger fetchPosts via useEffect
         setIsSearchMode(true);
-        try {
-          isFetchingRef.current = true;
-          setLoading(true);
-          setError(null);
-          setPosts([]);
-          setNextCursor(null);
-
-          const response = await searchPosts({
-            query: searchTerm,
-            limit: 10,
-          });
-
-          setPosts(response.data || []);
-          setNextCursor(response.nextCursor || null);
-        } catch (err) {
-          console.error('Error searching posts:', err);
-          setError('Failed to search posts. Please try again.');
-        } finally {
-          setLoading(false);
-          isFetchingRef.current = false;
-        }
       }
     }
   };
@@ -215,7 +193,7 @@ export default function FeedMain({ navigateTo, isAdmin = false }) {
       const sortParam = sortBy === 'Latest' ? 'latest' 
         : sortBy === 'Oldest' ? 'oldest' 
         : sortBy === 'Most Liked' ? 'popular' 
-        : sortBy === 'Most Comments' ? 'latest'
+        : sortBy === 'Most Comments' ? 'comments'
         : 'latest';
       
       const params = {
@@ -280,25 +258,16 @@ export default function FeedMain({ navigateTo, isAdmin = false }) {
 
   const categorySupportsResolved = ['Marketplace', 'Lost and Found', 'Roommate Request'].includes(selectedCategory);
 
-  // Client-side search filter
+  // Apply resolved filter (backend handles search, category, and sort)
   const filteredPosts = posts
-    .filter(post => {
-      if (!searchTerm) return true;
-      const term = searchTerm.toLowerCase();
-      return post.title.toLowerCase().includes(term) ||
-        post.content.toLowerCase().includes(term) ||
-        post.author.name.toLowerCase().includes(term);
-    })
     .filter(post => {
       if (!categorySupportsResolved || resolvedFilter === 'All') return true;
       const isResolved = !!post.resolved;
       return resolvedFilter === 'Resolved' ? isResolved : !isResolved;
     });
 
-  // Sort by comment count (since backend doesn't support this yet)
-  const sortedPosts = sortBy === 'Most Comments' 
-    ? [...filteredPosts].sort((a, b) => b.commentCount - a.commentCount)
-    : filteredPosts;
+  // Posts are already sorted by backend
+  const sortedPosts = filteredPosts;
   
   //report a user (admin feature)
 const handleReportUser = async (username, postId) => {

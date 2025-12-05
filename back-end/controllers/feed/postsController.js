@@ -17,7 +17,7 @@ const CommentLike = require('../../models/CommentLike');
  * Query params:
  *   - category: filter by category
  *   - search: search in title/content
- *   - sort: 'latest' (default), 'oldest', 'popular'
+ *   - sort: 'latest' (default), 'oldest', 'popular', 'comments'
  *   - limit: number of posts per page (default 10)
  *   - before: cursor timestamp to load posts before this (for pagination)
  */
@@ -47,11 +47,38 @@ const getAllPosts = async (req, res) => {
     if (sort === 'oldest') sortSpec = { createdAt: 1 };
     else if (sort === 'popular') sortSpec = { likes: -1, createdAt: -1 };
 
-    // Fetch limit + 1 posts to detect if there are more posts
-    const posts = await Post.find(query)
-      .sort(sortSpec)
-      .limit(limitNum + 1)
-      .lean();
+    let posts;
+    
+    // Special handling for 'comments' sort - requires aggregation
+    if (sort === 'comments') {
+      const pipeline = [
+        { $match: query },
+        {
+          $lookup: {
+            from: 'comments',
+            localField: 'id',
+            foreignField: 'postId',
+            as: 'commentsList'
+          }
+        },
+        {
+          $addFields: {
+            commentCount: { $size: '$commentsList' }
+          }
+        },
+        { $sort: { commentCount: -1, createdAt: -1 } },
+        { $limit: limitNum + 1 },
+        { $project: { commentsList: 0 } } // Remove the comments array
+      ];
+      
+      posts = await Post.aggregate(pipeline);
+    } else {
+      // Fetch limit + 1 posts to detect if there are more posts
+      posts = await Post.find(query)
+        .sort(sortSpec)
+        .limit(limitNum + 1)
+        .lean();
+    }
 
     // Determine if there are more posts and set next cursor
     let hasMore = false;
@@ -69,7 +96,8 @@ const getAllPosts = async (req, res) => {
     const currentUserId = req.user.userId;
     const result = await Promise.all(
       postsToReturn.map(async (p) => {
-        const count = await Comment.countDocuments({ postId: p.id });
+        // For comments sort, commentCount is already included from aggregation
+        const count = sort === 'comments' ? p.commentCount : await Comment.countDocuments({ postId: p.id });
         const liked = await PostLike.findOne({ postId: p.id, userId: currentUserId }).lean();
         const saved = await PostSave.findOne({ postId: p.id, userId: currentUserId }).lean();
         return {
@@ -463,7 +491,7 @@ const getSavedPosts = async (req, res) => {
  *   - limit: number of posts per page (default 10)
  *   - before: cursor timestamp to load posts before this
  *   - search: optional search term to filter title and content
- *   - sort: 'latest' (default), 'oldest', 'popular' (most liked)
+ *   - sort: 'latest' (default), 'oldest', 'popular' (most liked), 'comments'
  */
 const getMyPostsPaginated = async (req, res) => {
   try {
@@ -494,11 +522,38 @@ const getMyPostsPaginated = async (req, res) => {
     if (sort === 'oldest') sortSpec = { createdAt: 1 };
     else if (sort === 'popular') sortSpec = { likes: -1, createdAt: -1 };
 
-    // Fetch limit + 1 posts to detect if there are more
-    const posts = await Post.find(query)
-      .sort(sortSpec)
-      .limit(limitNum + 1)
-      .lean();
+    let posts;
+    
+    // Special handling for 'comments' sort - requires aggregation
+    if (sort === 'comments') {
+      const pipeline = [
+        { $match: query },
+        {
+          $lookup: {
+            from: 'comments',
+            localField: 'id',
+            foreignField: 'postId',
+            as: 'commentsList'
+          }
+        },
+        {
+          $addFields: {
+            commentCount: { $size: '$commentsList' }
+          }
+        },
+        { $sort: { commentCount: -1, createdAt: -1 } },
+        { $limit: limitNum + 1 },
+        { $project: { commentsList: 0 } }
+      ];
+      
+      posts = await Post.aggregate(pipeline);
+    } else {
+      // Fetch limit + 1 posts to detect if there are more
+      posts = await Post.find(query)
+        .sort(sortSpec)
+        .limit(limitNum + 1)
+        .lean();
+    }
 
     // Determine if there are more posts and set next cursor
     let hasMore = false;
@@ -514,7 +569,7 @@ const getMyPostsPaginated = async (req, res) => {
     // Enrich posts with additional data
     const result = await Promise.all(
       postsToReturn.map(async (p) => {
-        const count = await Comment.countDocuments({ postId: p.id });
+        const count = sort === 'comments' ? p.commentCount : await Comment.countDocuments({ postId: p.id });
         const liked = await PostLike.findOne({ postId: p.id, userId: currentUserId }).lean();
         const saved = await PostSave.findOne({ postId: p.id, userId: currentUserId }).lean();
         return {
@@ -549,7 +604,7 @@ const getMyPostsPaginated = async (req, res) => {
  *   - limit: number of posts per page (default 10)
  *   - before: cursor timestamp to load posts before this
  *   - search: optional search term to filter title and content
- *   - sort: 'latest' (default), 'oldest', 'popular' (most liked)
+ *   - sort: 'latest' (default), 'oldest', 'popular' (most liked), 'comments'
  */
 const getSavedPostsPaginated = async (req, res) => {
   try {
@@ -593,11 +648,37 @@ const getSavedPostsPaginated = async (req, res) => {
     if (sort === 'oldest') sortSpec = { createdAt: 1 };
     else if (sort === 'popular') sortSpec = { likes: -1, createdAt: -1 };
 
-    // Fetch limit + 1 posts to detect if there are more
-    const posts = await Post.find(query)
-      .sort(sortSpec)
-      .limit(limitNum + 1)
-      .lean();
+    let posts;
+    
+    // Special handling for 'comments' sort - requires aggregation
+    if (sort === 'comments') {
+      const pipeline = [
+        { $match: query },
+        {
+          $lookup: {
+            from: 'comments',
+            localField: 'id',
+            foreignField: 'postId',
+            as: 'commentsList'
+          }
+        },
+        {
+          $addFields: {
+            commentCount: { $size: '$commentsList' }
+          }
+        },
+        { $sort: { commentCount: -1, createdAt: -1 } },
+        { $limit: limitNum + 1 },
+        { $project: { commentsList: 0 } }
+      ];
+      
+      posts = await Post.aggregate(pipeline);
+    } else {
+      posts = await Post.find(query)
+        .sort(sortSpec)
+        .limit(limitNum + 1)
+        .lean();
+    }
 
     // Determine if there are more posts and set next cursor
     let hasMore = false;
@@ -613,7 +694,7 @@ const getSavedPostsPaginated = async (req, res) => {
     // Enrich posts with additional data
     const result = await Promise.all(
       postsToReturn.map(async (p) => {
-        const count = await Comment.countDocuments({ postId: p.id });
+        const count = sort === 'comments' ? p.commentCount : await Comment.countDocuments({ postId: p.id });
         const liked = await PostLike.findOne({ postId: p.id, userId: currentUserId }).lean();
         return {
           ...p,

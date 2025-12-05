@@ -73,7 +73,7 @@ export default function FeedMyPosts({ navigateTo }) {
           setLoadingMore(true);
         }
 
-        const sortParam = sortBy === 'Latest' ? 'latest' : sortBy === 'Oldest' ? 'oldest' : sortBy === 'Most Liked' ? 'popular' : 'latest';
+        const sortParam = sortBy === 'Latest' ? 'latest' : sortBy === 'Oldest' ? 'oldest' : sortBy === 'Most Liked' ? 'popular' : sortBy === 'Most Comments' ? 'comments' : 'latest';
         const params = {
           limit: 10,
           ...(cursor && { before: cursor }),
@@ -163,7 +163,7 @@ export default function FeedMyPosts({ navigateTo }) {
       setLoadingMore(true);
 
       try {
-        const sortParam = sortBy === 'Latest' ? 'latest' : sortBy === 'Oldest' ? 'oldest' : sortBy === 'Most Liked' ? 'popular' : 'latest';
+        const sortParam = sortBy === 'Latest' ? 'latest' : sortBy === 'Oldest' ? 'oldest' : sortBy === 'Most Liked' ? 'popular' : sortBy === 'Most Comments' ? 'comments' : 'latest';
         const params = {
           limit: 10,
           before: nextCursor,
@@ -195,7 +195,7 @@ export default function FeedMyPosts({ navigateTo }) {
         setError(null);
 
         try {
-          const sortParam = sortBy === 'Latest' ? 'latest' : sortBy === 'Oldest' ? 'oldest' : sortBy === 'Most Liked' ? 'popular' : 'latest';
+          const sortParam = sortBy === 'Latest' ? 'latest' : sortBy === 'Oldest' ? 'oldest' : sortBy === 'Most Liked' ? 'popular' : sortBy === 'Most Comments' ? 'comments' : 'latest';
           const response = await getMyPosts({
             search: searchTerm,
             sort: sortParam,
@@ -221,7 +221,7 @@ export default function FeedMyPosts({ navigateTo }) {
           setError(null);
 
           try {
-            const sortParam = sortBy === 'Latest' ? 'latest' : sortBy === 'Oldest' ? 'oldest' : sortBy === 'Most Liked' ? 'popular' : 'latest';
+            const sortParam = sortBy === 'Latest' ? 'latest' : sortBy === 'Oldest' ? 'oldest' : sortBy === 'Most Liked' ? 'popular' : sortBy === 'Most Comments' ? 'comments' : 'latest';
             const response = await getMyPosts({ limit: 10, sort: sortParam });
             setMyPosts(response.data || []);
             setNextCursor(response.nextCursor || null);
@@ -350,7 +350,7 @@ export default function FeedMyPosts({ navigateTo }) {
     setOpenMenuId(openMenuId === postId ? null : postId);
   };
 
-  // Posts are now sorted and filtered server-side, just use directly
+  // Posts are already sorted by backend
   const sortedPosts = myPosts;
 
   return (

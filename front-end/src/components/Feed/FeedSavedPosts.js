@@ -33,7 +33,7 @@ export default function FeedSavedPosts({ navigateTo }) {
           setLoadingMore(true);
         }
 
-        const sortParam = sortBy === 'Latest' ? 'latest' : sortBy === 'Oldest' ? 'oldest' : sortBy === 'Most Liked' ? 'popular' : 'latest';
+        const sortParam = sortBy === 'Latest' ? 'latest' : sortBy === 'Oldest' ? 'oldest' : sortBy === 'Most Liked' ? 'popular' : sortBy === 'Most Comments' ? 'comments' : 'latest';
         const params = {
           limit: 10,
           ...(cursor && { before: cursor }),
@@ -90,7 +90,7 @@ export default function FeedSavedPosts({ navigateTo }) {
         setError(null);
 
         try {
-          const sortParam = sortBy === 'Latest' ? 'latest' : sortBy === 'Oldest' ? 'oldest' : sortBy === 'Most Liked' ? 'popular' : 'latest';
+          const sortParam = sortBy === 'Latest' ? 'latest' : sortBy === 'Oldest' ? 'oldest' : sortBy === 'Most Liked' ? 'popular' : sortBy === 'Most Comments' ? 'comments' : 'latest';
           const response = await getSavedPostsPaginated({
             search: searchTerm,
             sort: sortParam,
@@ -116,7 +116,7 @@ export default function FeedSavedPosts({ navigateTo }) {
           setError(null);
 
           try {
-            const sortParam = sortBy === 'Latest' ? 'latest' : sortBy === 'Oldest' ? 'oldest' : sortBy === 'Most Liked' ? 'popular' : 'latest';
+            const sortParam = sortBy === 'Latest' ? 'latest' : sortBy === 'Oldest' ? 'oldest' : sortBy === 'Most Liked' ? 'popular' : sortBy === 'Most Comments' ? 'comments' : 'latest';
             const response = await getSavedPostsPaginated({ limit: 10, sort: sortParam });
             setSavedPosts(response.data || []);
             setNextCursor(response.nextCursor || null);
@@ -142,7 +142,7 @@ export default function FeedSavedPosts({ navigateTo }) {
       setLoadingMore(true);
 
       try {
-        const sortParam = sortBy === 'Latest' ? 'latest' : sortBy === 'Oldest' ? 'oldest' : sortBy === 'Most Liked' ? 'popular' : 'latest';
+        const sortParam = sortBy === 'Latest' ? 'latest' : sortBy === 'Oldest' ? 'oldest' : sortBy === 'Most Liked' ? 'popular' : sortBy === 'Most Comments' ? 'comments' : 'latest';
         const params = {
           limit: 10,
           before: nextCursor,
@@ -179,7 +179,7 @@ export default function FeedSavedPosts({ navigateTo }) {
     }
   };
 
-  // Posts are now sorted and filtered server-side, just use directly
+  // Posts are already sorted by backend
   const sortedPosts = savedPosts;
 
   return (
