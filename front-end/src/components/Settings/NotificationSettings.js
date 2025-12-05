@@ -6,7 +6,7 @@ export default function NotificationSettings({ navigateTo }) {
   const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // get user preferences 
+  // get user preferences
   useEffect(() => {
     getUserSettings()
       .then((data) => {
@@ -110,7 +110,7 @@ function formatLabel(key) {
   const labels = {
     all: "Turn On/Off All",
     emergencyAlerts: "Emergency Alerts",
-    roomReservations: "Room Reservations",
+    roommateRequest: "Roommate Requests",
     commentReplies: "Comment Replies",
     lostAndFound: "Lost & Found",
     marketplace: "Marketplace",
