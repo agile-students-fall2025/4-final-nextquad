@@ -7,21 +7,13 @@ const jwt = require("jsonwebtoken");
  * Saves user profile to database.
  */
 const setupProfile = async (req, res) => {
-  const { email, firstName, lastName, nyuEmail, graduationYear, profileImage } = req.body;
+  const { email, firstName, lastName, graduationYear, profileImage } = req.body;
 
   // Validate required fields
-  if (!email || !firstName || !lastName || !nyuEmail || !graduationYear) {
+  if (!email || !firstName || !lastName || !graduationYear) {
     return res.status(400).json({
       success: false,
-      error: "Email, first name, last name, NYU email, and graduation year are required.",
-    });
-  }
-
-  // Validate NYU email
-  if (!nyuEmail.endsWith("@nyu.edu")) {
-    return res.status(400).json({
-      success: false,
-      error: "Email must be an NYU email.",
+      error: "Email, first name, last name, and graduation year are required.",
     });
   }
 
@@ -35,9 +27,7 @@ const setupProfile = async (req, res) => {
   }
 
   try {
-    // Find user by email and update profile
     const user = await User.findOne({ email: email.toLowerCase() });
-    
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -45,24 +35,23 @@ const setupProfile = async (req, res) => {
       });
     }
 
-    // Update user profile
+    // Update user fields
     user.firstName = firstName;
     user.lastName = lastName;
-    user.nyuEmail = nyuEmail;
     user.graduationYear = gradYearNum;
     if (profileImage) {
       user.profileImage = profileImage;
     }
-    
+
     await user.save();
 
-    // Generate new JWT token with updated user info
+    // Generate updated token
     const token = jwt.sign(
-      { 
+      {
         userId: user._id,
         email: user.email,
         firstName: user.firstName,
-        lastName: user.lastName
+        lastName: user.lastName,
       },
       process.env.JWT_SECRET || "dev_jwt_secret",
       { expiresIn: "5d" }
@@ -79,7 +68,6 @@ const setupProfile = async (req, res) => {
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
-        nyuEmail: user.nyuEmail,
         graduationYear: user.graduationYear,
         profileImage: user.profileImage,
       },

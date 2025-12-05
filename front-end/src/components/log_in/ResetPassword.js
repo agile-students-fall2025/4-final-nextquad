@@ -5,21 +5,37 @@ export default function ResetPassword({ setActiveModule, setCurrentPage }) {
   const [newPw, setNewPw] = useState("");
   const [confirmPw, setConfirmPw] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
   const email = localStorage.getItem("resetEmail");
+  const code = localStorage.getItem("resetCode");
 
   const handleReset = async () => {
+    setError(""); // clear previous error
+
     if (!newPw.trim() || !confirmPw.trim()) {
-      alert("Please fill in both password fields.");
+      setError("Please fill in both password fields.");
+      return;
+    }
+
+    // Password must be at least 6 characters
+    if (newPw.length < 6) {
+      setError("Password must be at least 6 characters long.");
       return;
     }
 
     if (newPw !== confirmPw) {
-      alert("Passwords do not match.");
+      setError("Passwords do not match.");
       return;
     }
 
     if (!email) {
-      alert("Missing email. Please restart the password reset process.");
+      setError("Missing email. Please restart the password reset process.");
+      return;
+    }
+
+    if (!code || code.length !== 6) {
+      setError("Missing or invalid verification code.");
       return;
     }
 
@@ -31,6 +47,7 @@ export default function ResetPassword({ setActiveModule, setCurrentPage }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email,
+          code,
           newPassword: newPw,
           confirmPassword: confirmPw,
         }),
@@ -42,15 +59,14 @@ export default function ResetPassword({ setActiveModule, setCurrentPage }) {
         throw new Error(data.error || data.message || "Failed to reset password.");
       }
 
-      alert("Password reset successful! Please log in again.");
-
-   
+      // Clear reset data
       localStorage.removeItem("resetEmail");
+      localStorage.removeItem("resetCode");
 
       setActiveModule("auth");
       setCurrentPage("signin");
     } catch (err) {
-      alert(err.message);
+      setError(err.message);
     } finally {
       setLoading(false);
     }
@@ -78,6 +94,8 @@ export default function ResetPassword({ setActiveModule, setCurrentPage }) {
         onChange={(e) => setConfirmPw(e.target.value)}
         disabled={loading}
       />
+
+      {error && <div className="form-error">{error}</div>}
 
       <button
         className="auth-btn"

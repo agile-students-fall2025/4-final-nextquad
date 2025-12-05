@@ -11,6 +11,11 @@ const signUpUser = async (req, res) => {
 
   const { email, password } = req.body;
 
+  // Check if email ends with @nyu.edu
+  if (!email.toLowerCase().endsWith("@nyu.edu")) {
+    return res.status(400).json({ success: false, message: "Only @nyu.edu emails are allowed." });
+  }
+  
   try {
     // Check if user already exists
     const existingUser = await User.findOne({ email });

@@ -3,16 +3,21 @@ import './ForgotPassword.css';
 
 export default function ForgotPassword({ setCurrentPage }) {
   const [email, setEmail] = useState("");
+  const [emailError, setEmailError] = useState("");     
+  const [generalError, setGeneralError] = useState(""); 
   const [loading, setLoading] = useState(false);
 
   const handleSendCode = async () => {
+    setEmailError("");
+    setGeneralError("");
+
     if (!email.trim()) {
-      alert("Please enter your email.");
+      setEmailError("Please enter your email.");
       return;
     }
 
-    if (!email.includes("@") || !email.includes(".")) {
-      alert("Please enter a valid email address.");
+    if (!email.toLowerCase().endsWith("@nyu.edu")) {
+      setEmailError("Only @nyu.edu email addresses are allowed.");
       return;
     }
 
@@ -31,11 +36,10 @@ export default function ForgotPassword({ setCurrentPage }) {
         throw new Error(data.error || data.message || "Failed to send code.");
       }
 
-      alert("Verification code sent to your email!");
       localStorage.setItem("resetEmail", email);
       setCurrentPage("verify");
     } catch (err) {
-      alert(err.message);
+      setGeneralError(err.message);
     } finally {
       setLoading(false);
     }
@@ -53,9 +57,15 @@ export default function ForgotPassword({ setCurrentPage }) {
         type="email"
         placeholder="Email address"
         value={email}
-        onChange={(e) => setEmail(e.target.value)}
+        onChange={(e) => {
+          setEmail(e.target.value);
+          setEmailError("");
+          setGeneralError("");
+        }}
         disabled={loading}
       />
+      {emailError && <p className="form-error">{emailError}</p>}
+      {generalError && <p className="form-error">{generalError}</p>}
 
       <button
         className="auth-btn"

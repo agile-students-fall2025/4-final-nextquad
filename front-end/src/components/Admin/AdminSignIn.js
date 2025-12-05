@@ -1,17 +1,27 @@
-// copied from user sign in
 import React, { useState } from 'react';
 import './AdminSignIn.css';
-import googleIcon from '../../assets/log_in/google_icon.png';
 
 export default function SignIn({ setActiveModule, setCurrentPage }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [generalError, setGeneralError] = useState("");
 
-    const handleLogin = async () => {
-    if (!email.trim() || !password.trim()) {
-      alert("Please enter both email and password.");
+  const handleLogin = async () => {
+    setEmailError("");
+    setPasswordError("");
+    setGeneralError("");
+
+    if (!email.trim()) {
+      setEmailError("Please enter your email.");
+      return;
+    }
+
+    if (!password.trim()) {
+      setPasswordError("Please enter your password.");
       return;
     }
 
@@ -29,19 +39,16 @@ export default function SignIn({ setActiveModule, setCurrentPage }) {
       if (!res.ok) {
         throw new Error(data.error || data.message || "Login failed.");
       }
-      //set JWT in local storage
-      localStorage.setItem("jwt", data.data.token);
 
-      // alert(`Welcome back, ${data.data.email}!`);
-      setActiveModule("admin"); 
-      setCurrentPage("dashboard"); 
+      localStorage.setItem("jwt", data.data.token);
+      setActiveModule("admin");
+      setCurrentPage("dashboard");
     } catch (err) {
-      alert(err.message);
+      setGeneralError(err.message);
     } finally {
       setLoading(false);
     }
   };
-
 
   return (
     <div className="auth-container">
@@ -56,6 +63,7 @@ export default function SignIn({ setActiveModule, setCurrentPage }) {
         onChange={(e) => setEmail(e.target.value)}
         disabled={loading}
       />
+      {emailError && <p className="form-error">{emailError}</p>}
 
       <input
         className="auth-input"
@@ -65,9 +73,11 @@ export default function SignIn({ setActiveModule, setCurrentPage }) {
         onChange={(e) => setPassword(e.target.value)}
         disabled={loading}
       />
+      {passwordError && <p className="form-error">{passwordError}</p>}
 
-      <p className="auth-link"
-         onClick={() => !loading && setCurrentPage('forgot')}>
+      {generalError && <p className="form-error">{generalError}</p>}
+
+      <p className="auth-link" onClick={() => !loading && setCurrentPage('forgot')}>
         Forgot password?
       </p>
 
@@ -75,25 +85,9 @@ export default function SignIn({ setActiveModule, setCurrentPage }) {
         {loading ? "Logging in..." : "Log in"}
       </button>
 
-      <div className="auth-divider">
-        <span></span>
-        <p>or</p>
-        <span></span>
-      </div>
-
-      <button className="google-btn" disabled={loading}>
-        <img src={googleIcon} alt="Google" className="google-icon" />
-        Continue with Google
-      </button>
-
-      <p
-        className="auth-link"
-        onClick={() => !loading && setCurrentPage('userSignIn')} 
-      >
+      <p className="auth-link" onClick={() => !loading && setCurrentPage('userSignIn')}>
         Not an admin? Go back
       </p>
-
-      
     </div>
   );
 }

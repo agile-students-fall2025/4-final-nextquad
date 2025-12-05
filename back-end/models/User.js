@@ -19,10 +19,6 @@ const UserSchema = new mongoose.Schema({
     type: String,
     default: null,
   },
-  nyuEmail: {
-    type: String,
-    default: null,
-  },
   graduationYear: {
     type: Number,
     default: null,

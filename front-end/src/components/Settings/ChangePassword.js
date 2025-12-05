@@ -16,9 +16,14 @@ export default function ChangePasswordForm({ navigateTo }) {
     setErrorMessage('');
     setSuccessMessage('');
 
-    // verify in js 
     if (!currentPassword || !newPassword || !confirmPassword) {
       setErrorMessage('All fields are required.');
+      return;
+    }
+
+    // new password must be ≥ 6 chars
+    if (newPassword.length < 6) {
+      setErrorMessage('New password must be at least 6 characters long.');
       return;
     }
 
@@ -40,7 +45,6 @@ export default function ChangePasswordForm({ navigateTo }) {
       setSuccessMessage('Password changed successfully.');
 
       setTimeout(() => {
-        //bring user back to login
         navigateTo('auth');
       }, 1500);
 
@@ -89,28 +93,24 @@ export default function ChangePasswordForm({ navigateTo }) {
           </div>
 
           {errorMessage && (
-            <p style={{ color: 'red' }}>
-              {errorMessage}
-            </p>
+            <p style={{ color: 'red' }}>{errorMessage}</p>
           )}
 
           {successMessage && (
-            <p style={{ color: 'green'}}>
-              {successMessage}
-            </p>
+            <p style={{ color: 'green' }}>{successMessage}</p>
           )}
 
           <button type="submit" className="submit-button" disabled={loading}>
             {loading ? 'Changing...' : 'Change Password'}
           </button>
 
-            <button
-              type="button"
-              className="cancel-button"
-              onClick={() => navigateTo('settings')}
-            >
-              Cancel
-            </button>
+          <button
+            type="button"
+            className="cancel-button"
+            onClick={() => navigateTo('settings')}
+          >
+            Cancel
+          </button>
         </form>
       </div>
     </div>
