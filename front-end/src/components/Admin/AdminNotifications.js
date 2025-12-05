@@ -103,7 +103,7 @@ function formatLabel(key) {
   const labels = {
     all: "Turn On/Off All",
     emergencyAlerts: "Emergency Alerts",
-    userReports: "User Reports",
+    userReports: "New Comments",
     newPosts: "New Posts",
   };
   return labels[key] || key;
