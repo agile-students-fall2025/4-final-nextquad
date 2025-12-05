@@ -110,7 +110,7 @@ function formatLabel(key) {
   const labels = {
     all: "Turn On/Off All",
     emergencyAlerts: "Emergency Alerts",
-    roommateRequest: "Roommate Requests",
+    roomReservations: "Roommate Requests",
     commentReplies: "Comment Replies",
     lostAndFound: "Lost & Found",
     marketplace: "Marketplace",
