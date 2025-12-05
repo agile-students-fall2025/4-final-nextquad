@@ -59,7 +59,7 @@ export default function FeedMyPosts({ navigateTo }) {
   }, [openMenuId, showSortMenu]);
 
   useEffect(() => {
-    const fetchMyPosts = async (cursor = null, searchQuery = null) => {
+    const fetchMyPosts = async (cursor = null) => {
       if (isFetchingRef.current) return;
 
       try {
@@ -77,7 +77,7 @@ export default function FeedMyPosts({ navigateTo }) {
         const params = {
           limit: 10,
           ...(cursor && { before: cursor }),
-          ...(searchQuery && { search: searchQuery }),
+          ...(isSearchMode && searchTerm && searchTerm.trim() && { search: searchTerm }),
           sort: sortParam,
         };
 
@@ -101,7 +101,7 @@ export default function FeedMyPosts({ navigateTo }) {
     };
 
     fetchMyPosts();
-  }, [sortBy]);
+  }, [sortBy, isSearchMode, searchTerm]);
 
   const handleLike = async (postId) => {
     try {

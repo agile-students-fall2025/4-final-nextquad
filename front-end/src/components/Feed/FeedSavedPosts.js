@@ -19,7 +19,7 @@ export default function FeedSavedPosts({ navigateTo }) {
   const isFetchingRef = useRef(false);
 
   useEffect(() => {
-    const fetchSavedPosts = async (cursor = null, searchQuery = null) => {
+    const fetchSavedPosts = async (cursor = null) => {
       if (isFetchingRef.current) return;
 
       try {
@@ -37,7 +37,7 @@ export default function FeedSavedPosts({ navigateTo }) {
         const params = {
           limit: 10,
           ...(cursor && { before: cursor }),
-          ...(searchQuery && { search: searchQuery }),
+          ...(isSearchMode && searchTerm && searchTerm.trim() && { search: searchTerm }),
           sort: sortParam,
         };
 
@@ -62,7 +62,7 @@ export default function FeedSavedPosts({ navigateTo }) {
     };
 
     fetchSavedPosts();
-  }, [sortBy]);
+  }, [sortBy, isSearchMode, searchTerm]);
 
   // Close sort menu when clicking outside
   useEffect(() => {
