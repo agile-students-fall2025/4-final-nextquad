@@ -174,23 +174,17 @@ const handleReportUser = async (username, postId) => {
   }
 };
   // Delete post (admin feature)
-  const handleAdminDelete = async (postId) => {
-  if (!window.confirm("Are you sure you want to delete this post? This action cannot be undone.")) {
-    return;
-  }
-
+ const handleAdminDelete = async (postId) => {
   try {
     await deletePost(postId);
 
     // Remove the deleted post from the feed
     setPosts(prev => prev.filter(p => p.id !== postId));
-
-    alert("Post deleted successfully.");
   } catch (err) {
     console.error("Admin delete failed:", err);
-    alert("Failed to delete post. Please try again.");
   }
 };
+
 
 
   return (
