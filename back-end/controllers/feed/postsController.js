@@ -1,10 +1,7 @@
 const { 
-  mockPosts, 
-  mockPostLikes, 
-  getNextPostId, 
-  categories,
-  formatRelativeTime
+  categories
 } = require('../../data/feed/mockFeedData');
+const { formatRelativeTime } = require('../../utils/timeFormatting');
 const Post = require('../../models/Post');
 const Comment = require('../../models/Comment');
 const PostLike = require('../../models/PostLike');

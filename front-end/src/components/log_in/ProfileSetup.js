@@ -90,10 +90,10 @@ export default function ProfileSetup({ setActiveModule }) {
       }
 
       if (data.token) {
-        localStorage.setItem("jwt", data.token);
+        sessionStorage.setItem("jwt", data.token);
       }
       if (data.data) {
-        localStorage.setItem("user", JSON.stringify(data.data));
+        sessionStorage.setItem("user", JSON.stringify(data.data));
       }
 
       localStorage.removeItem("signupEmail");

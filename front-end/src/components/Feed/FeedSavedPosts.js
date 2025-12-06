@@ -4,7 +4,7 @@ import { getSavedPostsPaginated, togglePostLike, toggleSavePost } from '../../se
 import ImageCarousel from './ImageCarousel';
 import ImageModal from './ImageModal';
 
-export default function FeedSavedPosts({ navigateTo }) {
+export default function FeedSavedPosts({ navigateTo, onShowToast }) {
   const [savedPosts, setSavedPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -324,7 +324,7 @@ export default function FeedSavedPosts({ navigateTo }) {
                     setSavedPosts(prev => prev.filter(p => p.id !== post.id));
                   } catch (err) {
                     console.error('Error removing saved post:', err);
-                    alert('Failed to remove saved post');
+                    onShowToast({ message: 'Failed to remove saved post', type: 'error' });
                   }
                 }}
               >

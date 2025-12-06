@@ -37,8 +37,8 @@ app.use(
   morgan("dev", { skip: (req, res) => process.env.NODE_ENV === "test" })
 );
 app.use(cors()); // Enable CORS for all routes
-app.use(express.json({ limit: '10mb' })); // Parse JSON request bodies (increased limit for image uploads)
-app.use(express.urlencoded({ extended: true, limit: '10mb' })); // Parse URL-encoded bodies
+app.use(express.json({ limit: '50mb' })); // Parse JSON request bodies (increased limit for multiple image uploads)
+app.use(express.urlencoded({ extended: true, limit: '50mb' })); // Parse URL-encoded bodies
 app.use(cookieParser());
 
 // Import routes
