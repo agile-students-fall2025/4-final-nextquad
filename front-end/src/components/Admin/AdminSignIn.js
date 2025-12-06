@@ -41,6 +41,7 @@ export default function SignIn({ setActiveModule, setCurrentPage }) {
       }
 
       localStorage.setItem("jwt", data.data.token);
+      localStorage.setItem("isAdmin", "true");
       setActiveModule("admin");
       setCurrentPage("dashboard");
     } catch (err) {

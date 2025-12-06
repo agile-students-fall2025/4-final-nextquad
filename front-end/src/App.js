@@ -65,6 +65,45 @@ export default function App() {
   const [activeCats, setActiveCats] = useState(new Set());
   const [toast, setToast] = useState(null); // { message, type }
 
+  // Check if user is logged in on app mount (for page refresh persistence)
+  useEffect(() => {
+    const token = localStorage.getItem('jwt');
+    const lastModule = localStorage.getItem('lastModule');
+    const lastPage = localStorage.getItem('lastPage');
+    const lastEventId = localStorage.getItem('lastEventId');
+    const lastPostId = localStorage.getItem('lastPostId');
+    const isAdminUser = localStorage.getItem('isAdmin') === 'true';
+
+    if (token) {
+      // User has a valid token, restore their previous location
+      setIsAdmin(isAdminUser);
+      
+      if (isAdminUser) {
+        setActiveModule('admin');
+      } else if (lastModule) {
+        setActiveModule(lastModule);
+        if (lastPage) setCurrentPage(lastPage);
+        if (lastEventId) setSelectedEventId(parseInt(lastEventId, 10));
+        if (lastPostId) setSelectedPostId(parseInt(lastPostId, 10));
+      } else {
+        // Default to feed if no last module stored
+        setActiveModule('feed');
+        setCurrentPage('main');
+      }
+    }
+    // If no token, user stays on auth page (already the default)
+  }, []);
+
+  // Save current location to localStorage whenever it changes (for refresh persistence)
+  useEffect(() => {
+    if (activeModule !== 'auth') {
+      localStorage.setItem('lastModule', activeModule);
+      localStorage.setItem('lastPage', currentPage);
+      if (selectedEventId) localStorage.setItem('lastEventId', selectedEventId);
+      if (selectedPostId) localStorage.setItem('lastPostId', selectedPostId);
+    }
+  }, [activeModule, currentPage, selectedEventId, selectedPostId]);
+
   // Load categories once and set all selected by default
   useEffect(() => {
     (async () => {
@@ -293,22 +332,23 @@ const renderAdminPages = () => {
   const renderFeedPage = () => {
     switch (currentPage) {
       case 'saved':
-        return <FeedSavedPosts navigateTo={navigateTo} />;
+        return <FeedSavedPosts navigateTo={navigateTo} onShowToast={setToast} />;
       case 'myposts':
-        return <FeedMyPosts navigateTo={navigateTo} />;
+        return <FeedMyPosts navigateTo={navigateTo} onShowToast={setToast} />;
       case 'comments':
         return (
           <FeedComments
             post={selectedPost}
             navigateTo={navigateTo}
             returnToPage={returnToPage}
+            onShowToast={setToast}
           />
         );
       case 'create':
         return <FeedCreatePost navigateTo={navigateTo} onShowToast={setToast} />;
       case 'main':
       default:
-        return <FeedMain navigateTo={navigateTo} />;
+        return <FeedMain navigateTo={navigateTo} onShowToast={setToast} />;
     }
   };
 

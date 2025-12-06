@@ -103,11 +103,7 @@ export default function FeedCreatePost({ navigateTo, onShowToast }) {
       console.error('Error creating post:', err);
       
       // Show error toast
-      if (onShowToast) {
-        onShowToast({ message: 'Failed to create post. Please try again.', type: 'error' });
-      } else {
-        alert('Failed to create post. Please try again.');
-      }
+      onShowToast({ message: 'Failed to create post. Please try again.', type: 'error' });
     } finally {
       setSubmitting(false);
     }

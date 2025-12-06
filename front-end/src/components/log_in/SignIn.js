@@ -63,6 +63,8 @@ export default function SignIn({ setActiveModule, setCurrentPage }) {
       if (data.user) {
         localStorage.setItem("user", JSON.stringify(data.user));
       }
+      // Note: isAdmin will be determined by backend or component logic
+      localStorage.removeItem('isAdmin');
 
       // Redirect to main module
       setActiveModule("events");

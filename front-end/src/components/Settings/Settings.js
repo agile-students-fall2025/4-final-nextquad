@@ -4,6 +4,14 @@ export default function Settings({ navigateTo }) {
 
   const handleLogout = () => {
     console.log('User logged out');
+    // Clear auth data from localStorage
+    localStorage.removeItem('jwt');
+    localStorage.removeItem('user');
+    localStorage.removeItem('isAdmin');
+    localStorage.removeItem('lastModule');
+    localStorage.removeItem('lastPage');
+    localStorage.removeItem('lastEventId');
+    localStorage.removeItem('lastPostId');
     navigateTo('auth'); 
   };
 
