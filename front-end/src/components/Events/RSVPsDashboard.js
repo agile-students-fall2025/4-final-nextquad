@@ -14,8 +14,8 @@ export default function RSVPsDashboard({ navigateTo }) {
       try {
         setLoading(true);
         
-        // Check if user is logged in
-        const token = localStorage.getItem('token');
+        // Check if user is logged in - use sessionStorage which is where token is stored
+        const token = sessionStorage.getItem('jwt');
         if (!token) {
           setError('Please log in to view your RSVPs.');
           setLoading(false);
@@ -42,7 +42,8 @@ export default function RSVPsDashboard({ navigateTo }) {
       } catch (err) {
         console.error('Error fetching RSVP data:', err);
         const errMsg = err.message?.toLowerCase() || '';
-        if (errMsg.includes('token') || errMsg.includes('log in') || errMsg.includes('unauthorized')) {
+        const isAuthError = err.status === 401 || errMsg.includes('401') || errMsg.includes('token') || errMsg.includes('log in') || errMsg.includes('unauthorized');
+        if (isAuthError) {
           setError('Please log in to view your RSVPs.');
         } else {
           setError('Failed to load RSVP data. Please try again.');

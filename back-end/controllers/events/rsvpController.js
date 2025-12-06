@@ -1,6 +1,54 @@
 const Event = require('../../models/Event');
 
 /**
+ * Helper function to parse event date and time into a Date object
+ * @param {string} dateStr - Date string in "YYYY-MM-DD" format
+ * @param {string} timeStr - Time string in "3:30 PM" format
+ * @returns {Date|null} - Parsed Date object or null if invalid
+ */
+const parseEventDateTime = (dateStr, timeStr) => {
+  if (!dateStr || !timeStr) return null;
+  
+  try {
+    // Parse date (YYYY-MM-DD)
+    const [year, month, day] = dateStr.split('-').map(Number);
+    
+    // Parse time (e.g., "8:00 PM" or "3:30 PM")
+    const timeMatch = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
+    if (!timeMatch) return null;
+    
+    let hours = parseInt(timeMatch[1], 10);
+    const minutes = parseInt(timeMatch[2], 10);
+    const ampm = timeMatch[3].toUpperCase();
+    
+    // Convert to 24-hour format
+    if (ampm === 'PM' && hours !== 12) {
+      hours += 12;
+    } else if (ampm === 'AM' && hours === 12) {
+      hours = 0;
+    }
+    
+    return new Date(year, month - 1, day, hours, minutes);
+  } catch (error) {
+    console.error('Error parsing event date/time:', error);
+    return null;
+  }
+};
+
+/**
+ * Check if an event is in the past (considering both date and time)
+ * @param {Object} event - Event object with date and time properties
+ * @returns {boolean} - True if event is in the past
+ */
+const isEventPast = (event) => {
+  if (!event.date || !event.time) return false;
+  const eventDateTime = parseEventDateTime(event.date, event.time);
+  if (!eventDateTime) return false;
+  const now = new Date();
+  return eventDateTime < now;
+};
+
+/**
  * POST /api/events/:id/rsvp
  * RSVP to an event
  */
@@ -17,12 +65,8 @@ const rsvpToEvent = async (req, res) => {
       });
     }
 
-    // Check if event is in the past
-    const eventDate = new Date(event.date);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    if (eventDate < today) {
+    // Check if event is in the past (considering both date and time)
+    if (isEventPast(event)) {
       return res.status(400).json({
         success: false,
         error: 'Cannot RSVP to past events'
@@ -225,12 +269,15 @@ const checkRSVPStatus = async (req, res) => {
     // Check if user is the host
     const isHost = event.isHost(userId);
 
+    // Check if event is past (considering both date and time)
+    const eventIsPast = isEventPast(event);
+
     res.status(200).json({
       success: true,
       data: {
         hasRSVPd,
         isHost,
-        canRSVP: !hasRSVPd && !isHost && new Date(event.date) >= new Date()
+        canRSVP: !hasRSVPd && !isHost && !eventIsPast
       }
     });
   } catch (error) {

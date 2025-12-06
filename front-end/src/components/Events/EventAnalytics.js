@@ -15,8 +15,8 @@ export default function EventAnalytics({ navigateTo, event }) {
       try {
         setLoading(true);
         
-        // Check if user is logged in
-        const token = localStorage.getItem('token');
+        // Check if user is logged in - use sessionStorage which is where token is stored
+        const token = sessionStorage.getItem('jwt');
         if (!token) {
           setError('Please log in to view analytics.');
           setLoading(false);
@@ -29,7 +29,8 @@ export default function EventAnalytics({ navigateTo, event }) {
       } catch (err) {
         console.error('Error fetching analytics:', err);
         const errMsg = err.message?.toLowerCase() || '';
-        if (errMsg.includes('token') || errMsg.includes('log in') || errMsg.includes('unauthorized')) {
+        const isAuthError = err.status === 401 || errMsg.includes('401') || errMsg.includes('token') || errMsg.includes('log in') || errMsg.includes('unauthorized');
+        if (isAuthError) {
           setError('Please log in to view analytics.');
         } else {
           setError(err.message || 'Failed to load analytics');
