@@ -33,7 +33,10 @@ const fetchAPI = async (endpoint, options = {}) => {
     }
 
     if (!response.ok) {
-      throw new Error(data.error || data.message || `Request failed with status ${response.status}`);
+      const errorMessage = data.error || data.message || `Request failed with status ${response.status}`;
+      const error = new Error(errorMessage);
+      error.status = response.status; // Attach status code to error object
+      throw error;
     }
 
     return data;
