@@ -28,10 +28,10 @@ export default function FeedCreatePost({ navigateTo, onShowToast }) {
     const validFiles = [];
 
     for (const file of files) {
-      // Validate file size (max 5MB)
+      // Validate file size (max 5MB per image)
       if (file.size > 5 * 1024 * 1024) {
         if (onShowToast) {
-          onShowToast({ message: 'Each image must be less than 5MB', type: 'error' });
+          onShowToast({ message: 'Each image must be less than 5MB. Please choose a smaller image.', type: 'error' });
         }
         continue;
       }

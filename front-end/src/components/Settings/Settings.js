@@ -4,14 +4,14 @@ export default function Settings({ navigateTo }) {
 
   const handleLogout = () => {
     console.log('User logged out');
-    // Clear auth data from localStorage
-    localStorage.removeItem('jwt');
-    localStorage.removeItem('user');
-    localStorage.removeItem('isAdmin');
-    localStorage.removeItem('lastModule');
-    localStorage.removeItem('lastPage');
-    localStorage.removeItem('lastEventId');
-    localStorage.removeItem('lastPostId');
+    // Clear auth data from session storage
+    sessionStorage.removeItem('jwt');
+    sessionStorage.removeItem('user');
+    sessionStorage.removeItem('isAdmin');
+    sessionStorage.removeItem('lastModule');
+    sessionStorage.removeItem('lastPage');
+    sessionStorage.removeItem('lastEventId');
+    sessionStorage.removeItem('lastPostId');
     navigateTo('auth'); 
   };
 

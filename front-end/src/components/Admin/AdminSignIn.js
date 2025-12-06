@@ -40,8 +40,8 @@ export default function SignIn({ setActiveModule, setCurrentPage }) {
         throw new Error(data.error || data.message || "Login failed.");
       }
 
-      localStorage.setItem("jwt", data.data.token);
-      localStorage.setItem("isAdmin", "true");
+      sessionStorage.setItem("jwt", data.data.token);
+      sessionStorage.setItem("isAdmin", "true");
       setActiveModule("admin");
       setCurrentPage("dashboard");
     } catch (err) {

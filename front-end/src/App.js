@@ -65,14 +65,25 @@ export default function App() {
   const [activeCats, setActiveCats] = useState(new Set());
   const [toast, setToast] = useState(null); // { message, type }
 
+  // Clear any legacy localStorage auth/navigation data so a fresh app start requires login
+  useEffect(() => {
+    localStorage.removeItem('jwt');
+    localStorage.removeItem('user');
+    localStorage.removeItem('isAdmin');
+    localStorage.removeItem('lastModule');
+    localStorage.removeItem('lastPage');
+    localStorage.removeItem('lastEventId');
+    localStorage.removeItem('lastPostId');
+  }, []);
+
   // Check if user is logged in on app mount (for page refresh persistence)
   useEffect(() => {
-    const token = localStorage.getItem('jwt');
-    const lastModule = localStorage.getItem('lastModule');
-    const lastPage = localStorage.getItem('lastPage');
-    const lastEventId = localStorage.getItem('lastEventId');
-    const lastPostId = localStorage.getItem('lastPostId');
-    const isAdminUser = localStorage.getItem('isAdmin') === 'true';
+    const token = sessionStorage.getItem('jwt');
+    const lastModule = sessionStorage.getItem('lastModule');
+    const lastPage = sessionStorage.getItem('lastPage');
+    const lastEventId = sessionStorage.getItem('lastEventId');
+    const lastPostId = sessionStorage.getItem('lastPostId');
+    const isAdminUser = sessionStorage.getItem('isAdmin') === 'true';
 
     if (token) {
       // User has a valid token, restore their previous location
@@ -94,13 +105,13 @@ export default function App() {
     // If no token, user stays on auth page (already the default)
   }, []);
 
-  // Save current location to localStorage whenever it changes (for refresh persistence)
+  // Save current location to sessionStorage whenever it changes (for refresh persistence)
   useEffect(() => {
     if (activeModule !== 'auth') {
-      localStorage.setItem('lastModule', activeModule);
-      localStorage.setItem('lastPage', currentPage);
-      if (selectedEventId) localStorage.setItem('lastEventId', selectedEventId);
-      if (selectedPostId) localStorage.setItem('lastPostId', selectedPostId);
+      sessionStorage.setItem('lastModule', activeModule);
+      sessionStorage.setItem('lastPage', currentPage);
+      if (selectedEventId) sessionStorage.setItem('lastEventId', selectedEventId);
+      if (selectedPostId) sessionStorage.setItem('lastPostId', selectedPostId);
     }
   }, [activeModule, currentPage, selectedEventId, selectedPostId]);
 

@@ -299,7 +299,7 @@ export default function FeedComments({ post, navigateTo, onShowToast, isAdmin = 
           </div>
 
           {!isAdmin && (
-          <>
+          <div className="feed-post-actions">
             <button 
               className="feed-post-action-button"
               onClick={handleLikePost}
@@ -312,7 +312,7 @@ export default function FeedComments({ post, navigateTo, onShowToast, isAdmin = 
             >
               {postState.isSavedByUser ? '✓ Saved' : 'Save'}
             </button>
-          </>
+          </div>
         )}
         </div>
       )}

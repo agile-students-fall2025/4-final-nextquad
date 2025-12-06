@@ -9,8 +9,8 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000/api
  */
 const fetchAPI = async (endpoint, options = {}) => {
   try {
-    // Get JWT token from localStorage if it exists
-    const token = localStorage.getItem('jwt');
+    // Get JWT token from sessionStorage if it exists
+    const token = sessionStorage.getItem('jwt');
     
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       headers: {
@@ -454,7 +454,7 @@ export const getPrivacyPolicy = async () => {
  * Get user's current notification settings
  */
 export const getUserSettings = async () => {
-  const token = localStorage.getItem("jwt");
+  const token = sessionStorage.getItem("jwt");
   return fetchAPI("/settings", {
     headers: {
       Authorization: `jwt ${token}`,
@@ -465,7 +465,7 @@ export const getUserSettings = async () => {
  * Update user's current notification settings
  */
 export const updateUserSettings = async (updates) => {
-  const token = localStorage.getItem("jwt");
+  const token = sessionStorage.getItem("jwt");
   return fetchAPI("/settings", {
     method: "PUT",
     headers: {
@@ -495,7 +495,7 @@ export const changeUserPassword = async (currentPassword, newPassword, confirmPa
 // Admin APIs
 // ============================================
 export const getAdminSettings = async () => {
-  const token = localStorage.getItem("jwt");
+  const token = sessionStorage.getItem("jwt");
   return fetchAPI("/admin", {
     headers: {
       Authorization: `jwt ${token}`,
@@ -503,7 +503,7 @@ export const getAdminSettings = async () => {
   });
 };
 export const updateAdminSettings = async (updates) => {
-  const token = localStorage.getItem("jwt");
+  const token = sessionStorage.getItem("jwt");
   return fetchAPI("/admin", {
     method: "PUT",
     headers: {
@@ -515,7 +515,7 @@ export const updateAdminSettings = async (updates) => {
 };
 
 export const createReport = async (reportData) => {
-  const token = localStorage.getItem("jwt");
+  const token = sessionStorage.getItem("jwt");
   return fetchAPI("/admin/reports", {
     method: "PUT",
     headers: {
@@ -535,7 +535,7 @@ export const getEmergencyAlerts = async () => {
 };
 
 export const createEmergencyAlert = async (alertData) => {
-  const token = localStorage.getItem("jwt");
+  const token = sessionStorage.getItem("jwt");
   return fetchAPI("/admin/alerts", {
     method: "POST",
     headers: {
