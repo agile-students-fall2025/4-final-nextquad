@@ -4,7 +4,7 @@ import ImageModal from './ImageModal';
 import ImageCarousel from './ImageCarousel';
 import './FeedComments.css';
 
-export default function FeedComments({ post, navigateTo,isAdmin = false, returnToPage = 'main' }) {
+export default function FeedComments({ post, navigateTo, onShowToast, isAdmin = false, returnToPage = 'main' }) {
   const [commentText, setCommentText] = useState('');
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -104,7 +104,7 @@ export default function FeedComments({ post, navigateTo,isAdmin = false, returnT
         }
       } catch (err) {
         console.error('Error adding comment:', err);
-        alert('Failed to add comment. Please try again.');
+        onShowToast({ message: 'Failed to add comment. Please try again.', type: 'error' });
       }
     }
   };
@@ -179,7 +179,7 @@ export default function FeedComments({ post, navigateTo,isAdmin = false, returnT
       setEditText('');
     } catch (err) {
       console.error('Error updating comment:', err);
-      alert('Failed to update comment. Please try again.');
+      onShowToast({ message: 'Failed to update comment. Please try again.', type: 'error' });
     } finally {
       setSavingEdit(false);
     }
@@ -212,7 +212,7 @@ export default function FeedComments({ post, navigateTo,isAdmin = false, returnT
       }
     } catch (err) {
       console.error('Error deleting comment:', err);
-      alert('Failed to delete comment. Please try again.');
+      onShowToast({ message: 'Failed to delete comment. Please try again.', type: 'error' });
     } finally {
       setDeleting(false);
     }
@@ -299,7 +299,7 @@ export default function FeedComments({ post, navigateTo,isAdmin = false, returnT
           </div>
 
           {!isAdmin && (
-          <>
+          <div className="feed-post-actions">
             <button 
               className="feed-post-action-button"
               onClick={handleLikePost}
@@ -312,7 +312,7 @@ export default function FeedComments({ post, navigateTo,isAdmin = false, returnT
             >
               {postState.isSavedByUser ? '✓ Saved' : 'Save'}
             </button>
-          </>
+          </div>
         )}
         </div>
       )}

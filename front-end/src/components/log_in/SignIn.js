@@ -56,13 +56,15 @@ export default function SignIn({ setActiveModule, setCurrentPage }) {
         return;
       }
 
-      // Save token and user info
+      // Save token and user info in session storage so restart requires login
       if (data.token) {
-        localStorage.setItem("jwt", data.token);
+        sessionStorage.setItem("jwt", data.token);
       }
       if (data.user) {
-        localStorage.setItem("user", JSON.stringify(data.user));
+        sessionStorage.setItem("user", JSON.stringify(data.user));
       }
+      // Note: isAdmin will be determined by backend or component logic
+      sessionStorage.removeItem('isAdmin');
 
       // Redirect to main module
       setActiveModule("events");

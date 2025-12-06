@@ -5,7 +5,7 @@ import { updatePost } from '../../services/api';
 import ImageModal from './ImageModal';
 import ImageCarousel from './ImageCarousel';
 
-export default function FeedMyPosts({ navigateTo }) {
+export default function FeedMyPosts({ navigateTo, onShowToast }) {
     const [editingPost, setEditingPost] = useState(null);
     const [editForm, setEditForm] = useState({ title: '', content: '', image: '', category: '', resolved: false });
     const [savingEdit, setSavingEdit] = useState(false);
@@ -151,11 +151,11 @@ export default function FeedMyPosts({ navigateTo }) {
         }
         setDeleteTarget(null);
       } else {
-        alert(`Failed to delete post: ${response?.error || 'Unknown error'}`);
+        onShowToast({ message: `Failed to delete post: ${response?.error || 'Unknown error'}`, type: 'error' });
       }
     } catch (err) {
       console.error('Error deleting post:', err);
-      alert(`Failed to delete post: ${err.message}`);
+      onShowToast({ message: `Failed to delete post: ${err.message}`, type: 'error' });
     } finally {
       setDeleting(false);
     }
@@ -265,18 +265,18 @@ export default function FeedMyPosts({ navigateTo }) {
     const currentCount = editForm.images?.length || 0;
     const remaining = 5 - currentCount;
     if (files.length > remaining) {
-      alert(`You can only add ${remaining} more image(s). Maximum is 5.`);
+      onShowToast({ message: `You can only add ${remaining} more image(s). Maximum is 5.`, type: 'error' });
       return;
     }
 
     const validFiles = [];
     for (const file of files) {
       if (file.size > 5 * 1024 * 1024) {
-        alert('Each image must be less than 5MB');
+        onShowToast({ message: 'Each image must be less than 5MB', type: 'error' });
         continue;
       }
       if (!file.type.startsWith('image/')) {
-        alert('Please upload valid image files only');
+        onShowToast({ message: 'Please upload valid image files only', type: 'error' });
         continue;
       }
 
@@ -342,7 +342,7 @@ export default function FeedMyPosts({ navigateTo }) {
       setEditingPost(null);
     } catch (err) {
       console.error('❌ Failed to update post:', err);
-      alert('Failed to update post.');
+      onShowToast({ message: 'Failed to update post', type: 'error' });
     } finally {
       setSavingEdit(false);
     }

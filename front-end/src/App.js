@@ -65,6 +65,56 @@ export default function App() {
   const [activeCats, setActiveCats] = useState(new Set());
   const [toast, setToast] = useState(null); // { message, type }
 
+  // Clear any legacy localStorage auth/navigation data so a fresh app start requires login
+  useEffect(() => {
+    localStorage.removeItem('jwt');
+    localStorage.removeItem('user');
+    localStorage.removeItem('isAdmin');
+    localStorage.removeItem('lastModule');
+    localStorage.removeItem('lastPage');
+    localStorage.removeItem('lastEventId');
+    localStorage.removeItem('lastPostId');
+  }, []);
+
+  // Check if user is logged in on app mount (for page refresh persistence)
+  useEffect(() => {
+    const token = sessionStorage.getItem('jwt');
+    const lastModule = sessionStorage.getItem('lastModule');
+    const lastPage = sessionStorage.getItem('lastPage');
+    const lastEventId = sessionStorage.getItem('lastEventId');
+    const lastPostId = sessionStorage.getItem('lastPostId');
+    const isAdminUser = sessionStorage.getItem('isAdmin') === 'true';
+
+    if (token) {
+      // User has a valid token, restore their previous location
+      setIsAdmin(isAdminUser);
+      
+      if (isAdminUser) {
+        setActiveModule('admin');
+      } else if (lastModule) {
+        setActiveModule(lastModule);
+        if (lastPage) setCurrentPage(lastPage);
+        if (lastEventId) setSelectedEventId(parseInt(lastEventId, 10));
+        if (lastPostId) setSelectedPostId(parseInt(lastPostId, 10));
+      } else {
+        // Default to feed if no last module stored
+        setActiveModule('feed');
+        setCurrentPage('main');
+      }
+    }
+    // If no token, user stays on auth page (already the default)
+  }, []);
+
+  // Save current location to sessionStorage whenever it changes (for refresh persistence)
+  useEffect(() => {
+    if (activeModule !== 'auth') {
+      sessionStorage.setItem('lastModule', activeModule);
+      sessionStorage.setItem('lastPage', currentPage);
+      if (selectedEventId) sessionStorage.setItem('lastEventId', selectedEventId);
+      if (selectedPostId) sessionStorage.setItem('lastPostId', selectedPostId);
+    }
+  }, [activeModule, currentPage, selectedEventId, selectedPostId]);
+
   // Load categories once and set all selected by default
   useEffect(() => {
     (async () => {
@@ -293,22 +343,23 @@ const renderAdminPages = () => {
   const renderFeedPage = () => {
     switch (currentPage) {
       case 'saved':
-        return <FeedSavedPosts navigateTo={navigateTo} />;
+        return <FeedSavedPosts navigateTo={navigateTo} onShowToast={setToast} />;
       case 'myposts':
-        return <FeedMyPosts navigateTo={navigateTo} />;
+        return <FeedMyPosts navigateTo={navigateTo} onShowToast={setToast} />;
       case 'comments':
         return (
           <FeedComments
             post={selectedPost}
             navigateTo={navigateTo}
             returnToPage={returnToPage}
+            onShowToast={setToast}
           />
         );
       case 'create':
         return <FeedCreatePost navigateTo={navigateTo} onShowToast={setToast} />;
       case 'main':
       default:
-        return <FeedMain navigateTo={navigateTo} />;
+        return <FeedMain navigateTo={navigateTo} onShowToast={setToast} />;
     }
   };
 
