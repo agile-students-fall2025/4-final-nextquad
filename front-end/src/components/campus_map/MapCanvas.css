@@ -88,11 +88,11 @@
   min-width: 220px;
   max-width: 280px;
   width: 100%;
-  background: var(--card);
+  background: #fefefe !important;
   color: var(--text);
   border-radius: 12px;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.15);
   padding: 12px 12px 14px;
+  padding-top: -5px !important;
   z-index: 1;
   pointer-events: auto;
   box-sizing: border-box;

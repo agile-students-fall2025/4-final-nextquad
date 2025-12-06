@@ -47,11 +47,27 @@ export default function MapCanvas({ activeCategories, searchQuery }) {
   // Inject styles to override Google Maps InfoWindow defaults
   useEffect(() => {
     const styleId = 'map-infowindow-overrides';
-    if (document.getElementById(styleId)) return; 
+    // Remove existing style if it exists to ensure fresh injection
+    const existingStyle = document.getElementById(styleId);
+    if (existingStyle) {
+      existingStyle.remove();
+    }
 
     const style = document.createElement('style');
     style.id = styleId;
     style.textContent = `
+      .gm-style .gm-style-iw-c,
+      .gm-style .gm-style-iw-d,
+      .gm-style .gm-style-iw,
+      .gm-style .gm-style-iw-c > div,
+      .gm-style .gm-style-iw-c > div > div,
+      .gm-style .gm-style-iw-d > div,
+      .gm-style-iw-t,
+      .gm-style-iw-t::after,
+      .gm-style-iw-t::before {
+        background: #fff !important;
+        background-color: #fff !important;
+      }
       .gm-style .gm-style-iw-c {
         padding: 0 !important;
         border-radius: 12px !important;
@@ -60,9 +76,6 @@ export default function MapCanvas({ activeCategories, searchQuery }) {
       .gm-style .gm-style-iw-d {
         overflow: visible !important;
         max-width: 320px !important;
-      }
-      .gm-style-iw-t::after {
-        background: #fff !important;
       }
       @media (max-width: 480px) {
         .gm-style .gm-style-iw-c,
@@ -74,12 +87,39 @@ export default function MapCanvas({ activeCategories, searchQuery }) {
     document.head.appendChild(style);
 
     return () => {
-      const existingStyle = document.getElementById(styleId);
-      if (existingStyle) {
-        existingStyle.remove();
+      const styleToRemove = document.getElementById(styleId);
+      if (styleToRemove) {
+        styleToRemove.remove();
       }
     };
   }, []);
+
+  // Apply white background directly to InfoWindow when it opens
+  useEffect(() => {
+    if (!openId) return;
+
+    const applyWhiteBackground = () => {
+      // Find all InfoWindow elements and force white background using inline styles
+      // Inline styles have higher specificity than CSS classes
+      const infoWindows = document.querySelectorAll('.gm-style-iw-c, .gm-style-iw-d, .gm-style-iw, .gm-style-iw-c > div, .gm-style-iw-d > div');
+      infoWindows.forEach((el) => {
+        if (el) {
+          el.style.background = '#fff';
+          el.style.backgroundColor = '#fff';
+        }
+      });
+    };
+
+    // Apply immediately and also after delays to catch dynamically created elements
+    applyWhiteBackground();
+    const timeout1 = setTimeout(applyWhiteBackground, 50);
+    const timeout2 = setTimeout(applyWhiteBackground, 200);
+    
+    return () => {
+      clearTimeout(timeout1);
+      clearTimeout(timeout2);
+    };
+  }, [openId]);
 
   // Reset state when component mounts/unmounts
   useEffect(() => {
