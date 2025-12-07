@@ -129,51 +129,48 @@ npm test
 npm run test:coverage
 ```
 
+### Docker Setup
+
+The application can be run using Docker and Docker Compose for easier deployment and consistency across environments.
+
+**Prerequisites:**
+- Docker (version 20.10 or higher)
+- Docker Compose (version 2.0 or higher)
+
+**Quick Start:**
+```bash
+# Ensure you have a .env file in the root directory with required variables
+# Then build and start all services
+docker-compose up --build
+
+# Or run in detached mode
+docker-compose up -d
+```
+
+The application will be available at:
+- Frontend: `http://localhost:3001`
+- Backend API: `http://localhost:3000`
+
+**Commands:**
+```bash
+# View logs
+docker-compose logs -f                    # All services
+docker-compose logs -f backend            # Backend only
+docker-compose logs -f frontend           # Frontend only
+
+# Stop containers
+docker-compose down
+
+# Rebuild after code changes
+docker-compose up --build
+```
+
+**Troubleshooting:**
+- **Backend can't connect to MongoDB**: Verify `MONGODB_URI` in `.env` and ensure MongoDB Atlas allows connections
+- **Port conflicts**: Modify port mappings in `docker-compose.yml` if ports 3000 or 3001 are already in use
+- **Frontend can't reach backend**: Ensure `REACT_APP_API_URL` in `.env` matches your backend URL
+
 ## Environment Variables
-
-Both backend and frontend require `.env` files for configuration. Here are the required variables:
-
-### Backend Environment Variables (`back-end/.env`)
-
-Create a `.env` file in the `back-end/` directory with the following variables:
-
-```env
-# Server Configuration
-PORT=3000
-NODE_ENV=development
-
-# Database
-MONGODB_URI=mongodb://localhost:27017/nextquad
-# Or for MongoDB Atlas:
-# MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/nextquad?retryWrites=true&w=majority
-
-# Authentication
-JWT_SECRET=your_jwt_secret_key_here
-JWT_EXP_DAYS=60
-
-# Google Maps API (for campus map feature)
-# See [GOOGLE_MAPS_SETUP.md](./GOOGLE_MAPS_SETUP.md) for detailed setup instructions
-GOOGLE_MAPS_API_KEY=your_google_maps_api_key_here
-```
-
-**Note:** For Google Maps API key setup, please refer to [GOOGLE_MAPS_SETUP.md](./GOOGLE_MAPS_SETUP.md) for detailed instructions on obtaining and configuring your API key.
-
-### Frontend Environment Variables (`front-end/.env`)
-
-Create a `.env` file in the `front-end/` directory with the following variables:
-
-```env
-# Backend API URL
-REACT_APP_API_URL=http://localhost:3000/api
-
-# Google Maps API (for campus map feature)
-# See GOOGLE_MAPS_SETUP.md for detailed setup instructions
-REACT_APP_GOOGLE_MAPS_API_KEY=your_google_maps_api_key_here
-```
-
-**Note:** 
-- Frontend environment variables must be prefixed with `REACT_APP_` to be accessible in React
-- For Google Maps API key setup, please refer to [GOOGLE_MAPS_SETUP.md](./GOOGLE_MAPS_SETUP.md) for detailed instructions
 
 ### Creating .env Files
 
@@ -187,6 +184,8 @@ MONGODB_URI=mongodb://localhost:27017/nextquad
 JWT_SECRET=dev_jwt_secret_key_change_in_production
 JWT_EXP_DAYS=60
 GOOGLE_MAPS_API_KEY=your_google_maps_api_key_here
+EMAIL_USER=your_email@example.com
+EMAIL_PASS=your_email_password
 ```
 
 **Create `front-end/.env`:**
