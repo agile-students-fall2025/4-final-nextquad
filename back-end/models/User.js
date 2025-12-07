@@ -31,14 +31,22 @@ const UserSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  banCounter: {
+    type: Number,
+    default: 0,
+  },
+  isBanned: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 // Virtual for full name
-UserSchema.virtual('fullName').get(function() {
+UserSchema.virtual("fullName").get(function () {
   if (this.firstName && this.lastName) {
     return `${this.firstName} ${this.lastName}`;
   }
-  return this.email.split('@')[0]; // Use email username as fallback
+  return this.email.split("@")[0]; // Use email username as fallback
 });
 
 module.exports = mongoose.model("User", UserSchema);

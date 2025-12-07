@@ -1,16 +1,15 @@
-
-const Admin = require('../../models/Admin');
-const AdminSettings = require('../../models/AdminSettings');
-const AdminEmergencyAlert = require('../../models/AdminEmergencyAlert');
-const AdminReportUser = require('../../models/AdminReportUser');
-const { jwtSecret, jwtOptions } = require('../../config/jwt-config');
-const jwt = require('jsonwebtoken');
+const Admin = require("../../models/Admin");
+const AdminSettings = require("../../models/AdminSettings");
+const AdminEmergencyAlert = require("../../models/AdminEmergencyAlert");
+const AdminReportUser = require("../../models/AdminReportUser");
+const { jwtSecret, jwtOptions } = require("../../config/jwt-config");
+const jwt = require("jsonwebtoken");
+const User = require("../../models/User");
 
 //settings
 
 // get request for admin
 const getAdminSettings = async (req, res) => {
-
   try {
     const adminId = req.user._id;
 
@@ -21,7 +20,6 @@ const getAdminSettings = async (req, res) => {
       settings = new AdminSettings({ admin: adminId });
       await settings.save();
     }
-
 
     res.status(200).json({
       success: true,
@@ -40,7 +38,7 @@ const getAdminSettings = async (req, res) => {
 const updateAdminSettings = async (req, res) => {
   try {
     const adminId = req.user._id;
-    const updates = req.body.notifications; 
+    const updates = req.body.notifications;
 
     if (!updates) {
       return res.status(400).json({
@@ -77,7 +75,7 @@ const getAllReports = async (req, res) => {
     // Fetch all reports from the database
     const reports = await AdminReportUser.find()
       .populate("admin", "username email")
-      .sort({ createdAt: -1 }); 
+      .sort({ createdAt: -1 });
 
     res.status(200).json({
       success: true,
@@ -92,10 +90,11 @@ const getAllReports = async (req, res) => {
   }
 };
 
-
 // put create a new report
 const createReport = async (req, res) => {
   const { username, reason } = req.body;
+
+  console.log("Incoming report request:", { username, reason });
 
   if (!username || !reason) {
     return res.status(400).json({
@@ -103,18 +102,42 @@ const createReport = async (req, res) => {
       error: "Username and reason are required to submit a report.",
     });
   }
-    const adminId = req.user.id;
+
+  const adminId = req.user.id;
+  console.log("Admin making report:", adminId);
+
   try {
+    // create new report entry
+    console.log("Creating new report entry in DB...");
     const newReport = await AdminReportUser.create({
       admin: adminId,
       username,
       reason,
     });
 
+    console.log("Report created successfully with ID:", newReport._id);
+
+    // Update user's banCounter and isBanned status
+    const user = await User.findById(username); // username is  user ID
+    if (!user) {
+      console.warn(`User ${username} not found for ban update`);
+    } else {
+      user.banCounter += 1;
+      if (user.banCounter >= 3) {
+        user.isBanned = true;
+        console.log(`User ${username} has reached 3 reports and is now banned`);
+      } else {
+        console.log(
+          `User ${username} banCounter updated to ${user.banCounter}`
+        );
+      }
+      await user.save();
+    }
+
     res.status(201).json({
       success: true,
       message: "User report submitted successfully.",
-      data: newReport,
+      data: { report: newReport, user },
     });
   } catch (error) {
     console.error("Error submitting report:", error);
@@ -130,8 +153,7 @@ const createReport = async (req, res) => {
 
 const getEmergencyAlerts = async (req, res) => {
   try {
-    const alerts = await AdminEmergencyAlert.find()
-      .sort({ createdAt: -1 }); 
+    const alerts = await AdminEmergencyAlert.find().sort({ createdAt: -1 });
 
     res.status(200).json({
       success: true,
@@ -158,12 +180,11 @@ const createEmergencyAlert = async (req, res) => {
       });
     }
 
-    
     const adminId = req.user.id;
 
     const newAlert = await AdminEmergencyAlert.create({
       admin: adminId,
-      message: message.trim()
+      message: message.trim(),
     });
 
     res.status(201).json({
@@ -217,7 +238,6 @@ const adminSignIn = async (req, res) => {
     });
   }
 };
-
 
 module.exports = {
   getAdminSettings,
