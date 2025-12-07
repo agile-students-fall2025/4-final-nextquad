@@ -35,6 +35,7 @@ export default function MapCanvas({ activeCategories, searchQuery }) {
   const [points, setPoints] = useState([]);
   const [map, setMap] = useState(null);
   const [center, setCenter] = useState(DEFAULT_CENTER);
+  const [pendingLink, setPendingLink] = useState(null);
 
   // Get Google Maps API key from environment
   const googleMapsApiKey = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
@@ -135,6 +136,20 @@ export default function MapCanvas({ activeCategories, searchQuery }) {
     };
   }, []);
 
+  // Handle Escape key to close confirmation modal
+  useEffect(() => {
+    if (!pendingLink) return;
+
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') {
+        setPendingLink(null);
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [pendingLink]);
+
   // Load points from backend when filters/search change
   useEffect(() => {
     (async () => {
@@ -198,6 +213,27 @@ export default function MapCanvas({ activeCategories, searchQuery }) {
     setOpenId((cur) => (cur === pointId ? null : pointId));
   };
 
+  const handleLearnMore = (link) => {
+    if (!link || !link.trim()) return;
+    setPendingLink(link.trim());
+  };
+
+  const handleConfirmRedirect = () => {
+    if (!pendingLink) return;
+    
+    // Ensure the link has a protocol
+    let url = pendingLink;
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      url = 'https://' + url;
+    }
+    window.open(url, '_blank', 'noopener,noreferrer');
+    setPendingLink(null);
+  };
+
+  const handleCancelRedirect = () => {
+    setPendingLink(null);
+  };
+
   const visible = useMemo(() => points, [points]);
 
   // Show error if API key is missing
@@ -244,13 +280,13 @@ export default function MapCanvas({ activeCategories, searchQuery }) {
 
   return (
     <div className="map-canvas">
-      <GoogleMap
-        mapContainerStyle={mapContainerStyle}
-        center={center}
-        zoom={15}
-        options={defaultOptions}
-        onLoad={onMapLoad}
-      >
+        <GoogleMap
+          mapContainerStyle={mapContainerStyle}
+          center={center}
+          zoom={15}
+          options={defaultOptions}
+          onLoad={onMapLoad}
+        >
           {visible.length === 0 && (
             <div style={{ 
               position: 'absolute', 
@@ -326,13 +362,57 @@ export default function MapCanvas({ activeCategories, searchQuery }) {
                           <strong>Address:</strong> {point.address}
                         </div>
                       )}
+                      {point.link && point.link.trim() && (
+                        <div className="pin-info-actions">
+                          <button
+                            type="button"
+                            className="pin-info-link-btn"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleLearnMore(point.link);
+                            }}
+                          >
+                            Learn More
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </InfoWindow>
                 )}
               </Marker>
             );
           })}
-      </GoogleMap>
+        </GoogleMap>
+        
+        {pendingLink && (
+          <div className="confirm-modal-backdrop" onClick={handleCancelRedirect}>
+            <div className="confirm-modal" onClick={(e) => e.stopPropagation()}>
+              <h4>External Link</h4>
+              <p style={{ margin: '8px 0 16px', color: '#4a4a4a' }}>
+                You will be redirected to an outside website. Do you want to continue?
+              </p>
+              <div className="confirm-modal-actions">
+                <button
+                  className="confirm-modal-btn secondary"
+                  onClick={handleCancelRedirect}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="confirm-modal-btn"
+                  onClick={handleConfirmRedirect}
+                  style={{
+                    background: 'var(--brand)',
+                    color: '#fff',
+                    boxShadow: '0 6px 16px rgba(107, 70, 193, 0.25)'
+                  }}
+                >
+                  Continue
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
     </div>
   );
 }
