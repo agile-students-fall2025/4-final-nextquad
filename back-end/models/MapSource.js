@@ -45,7 +45,8 @@ const mapSourceSchema = new mongoose.Schema(
     },
     link: {
       type: String,
-      default: ''
+      default: '',
+      trim: true
     },
     // Geocoded coordinates (added when needed)
     latitude: {
