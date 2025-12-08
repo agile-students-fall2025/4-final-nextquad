@@ -1,6 +1,3 @@
-const { 
-  categories
-} = require('../../data/feed/mockFeedData');
 const User = require('../../models/User');
 const { formatRelativeTime } = require('../../utils/timeFormatting');
 const Post = require('../../models/Post');
@@ -9,6 +6,16 @@ const PostLike = require('../../models/PostLike');
 const PostSave = require('../../models/PostSave');
 const CommentLike = require('../../models/CommentLike');
 const sendNotification = require('../../utils/sendNotification');
+
+// Feed post categories (per UX-DESIGN.md)
+const categories = [
+  'All',
+  'General',
+  'Marketplace',
+  'Lost and Found',
+  'Roommate Request',
+  'Safety Alerts'
+];
 
 /**
  * Helper: Enrich a single post with current user data and interaction flags
