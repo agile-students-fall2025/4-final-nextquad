@@ -106,6 +106,7 @@ export default function Profile({ navigateTo, onShowToast }) {
           lastName: editValues.lastName
         };
         sessionStorage.setItem('user', JSON.stringify(updatedUser));
+        
         setEditingField(null);
         onShowToast?.({ message: 'Full name updated successfully!', type: 'success' });
       } else {
@@ -178,6 +179,7 @@ export default function Profile({ navigateTo, onShowToast }) {
           <div className="profile-detail-row">
             {editingField === 'name' ? (
               <div className="profile-edit-form">
+                <div className="profile-edit-note">You can change your name up to 3 times per year</div>
                 <input
                   type="text"
                   placeholder="First name"

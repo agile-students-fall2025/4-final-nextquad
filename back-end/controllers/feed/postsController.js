@@ -258,12 +258,12 @@ const createPost = async (req, res) => {
 
     const currentUser = req.user;
     
-    // Fetch freshest user profile to get stored profileImage
+    // Fetch freshest user profile to get current name and profileImage
     const userDoc = await User.findById(currentUser.userId).lean();
     const profileImage = userDoc?.profileImage || null;
     
     // Check if user has completed profile setup
-    if (!currentUser.firstName || !currentUser.lastName) {
+    if (!userDoc?.firstName || !userDoc?.lastName) {
       return res.status(400).json({ 
         success: false, 
         error: 'Please complete your profile setup before creating posts',
@@ -277,7 +277,7 @@ const createPost = async (req, res) => {
     console.log(`Creating new post. Last post ID: ${last?.id || 'none'}, Next ID: ${nextId}`);
 
     const createdAtDate = new Date();
-    const authorName = `${currentUser.firstName} ${currentUser.lastName}`;
+    const authorName = `${userDoc.firstName} ${userDoc.lastName}`;
     
     // Handle both single image (backward compatibility) and multiple images
     let postImages = [];

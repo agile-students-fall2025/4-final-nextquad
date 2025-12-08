@@ -50,11 +50,11 @@ const addComment = async (req, res) => {
 
     const currentUser = req.user;
 
-    // Fetch freshest user profile to get stored profileImage
+    // Fetch freshest user profile to get current name and profileImage
     const userDoc = await User.findById(currentUser.userId).lean();
     const profileImage = userDoc?.profileImage || null;
 
-    if (!currentUser.firstName || !currentUser.lastName) {
+    if (!userDoc?.firstName || !userDoc?.lastName) {
       return res.status(400).json({
         success: false,
         error: 'Please complete your profile setup before commenting',
@@ -65,7 +65,7 @@ const addComment = async (req, res) => {
     const last = await Comment.findOne().sort({ id: -1 }).lean();
     const nextId = last ? last.id + 1 : 1;
     const createdAtDate = new Date();
-    const authorName = `${currentUser.firstName} ${currentUser.lastName}`;
+    const authorName = `${userDoc.firstName} ${userDoc.lastName}`;
 
     const doc = await Comment.create({
       id: nextId,
