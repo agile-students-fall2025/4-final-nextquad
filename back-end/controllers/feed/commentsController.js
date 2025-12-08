@@ -3,6 +3,7 @@ const sendNotification = require('../../utils/sendNotification');
 const Comment = require('../../models/Comment');
 const Post = require('../../models/Post');
 const CommentLike = require('../../models/CommentLike');
+const User = require('../../models/User');
 
 /**
  * GET /api/feed/posts/:id/comments
@@ -15,7 +16,7 @@ const getPostComments = async (req, res) => {
     if (!post) {
       return res.status(404).json({ success: false, error: 'Post not found' });
     }
-    const comments = await Comment.find({ postId }).sort({ createdAt: -1 }).lean();
+    const comments = await Comment.find({ postId }).sort({ createdAt: -1 }).allowDiskUse(true).lean();
 
     const currentUserId = req.user.userId;
     const withLikeFlag = await Promise.all(
@@ -48,6 +49,11 @@ const addComment = async (req, res) => {
     }
 
     const currentUser = req.user;
+
+    // Fetch freshest user profile to get stored profileImage
+    const userDoc = await User.findById(currentUser.userId).lean();
+    const profileImage = userDoc?.profileImage || null;
+
     if (!currentUser.firstName || !currentUser.lastName) {
       return res.status(400).json({
         success: false,
@@ -69,7 +75,7 @@ const addComment = async (req, res) => {
       likes: 0,
       author: {
         name: authorName,
-        avatar: currentUser.profileImage || `https://picsum.photos/seed/${currentUser.userId}/50/50`,
+        avatar: profileImage || `https://picsum.photos/seed/${currentUser.userId}/50/50`,
         userId: currentUser.userId
       },
       isLikedByUser: false,
