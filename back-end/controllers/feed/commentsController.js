@@ -5,6 +5,33 @@ const Post = require('../../models/Post');
 const CommentLike = require('../../models/CommentLike');
 const User = require('../../models/User');
 
+// Enrich a comment with current author info and like state
+const enrichComment = async (comment, currentUserId) => {
+  const liked = await CommentLike.findOne({ commentId: comment.id, userId: currentUserId }).lean();
+  let enriched = {
+    ...comment,
+    isLikedByUser: !!liked,
+    timestamp: formatRelativeTime(new Date(comment.createdAt)),
+  };
+
+  if (comment.author?.userId) {
+    try {
+      const userDoc = await User.findById(comment.author.userId).lean();
+      if (userDoc) {
+        enriched.author = {
+          ...comment.author,
+          name: `${userDoc.firstName} ${userDoc.lastName}`,
+          avatar: userDoc.profileImage || comment.author.avatar,
+        };
+      }
+    } catch (err) {
+      console.error('Error enriching comment author info:', err);
+    }
+  }
+
+  return enriched;
+};
+
 /**
  * GET /api/feed/posts/:id/comments
  * Get all comments for a specific post
@@ -19,13 +46,10 @@ const getPostComments = async (req, res) => {
     const comments = await Comment.find({ postId }).sort({ createdAt: -1 }).allowDiskUse(true).lean();
 
     const currentUserId = req.user.userId;
-    const withLikeFlag = await Promise.all(
-      comments.map(async c => {
-        const liked = await CommentLike.findOne({ commentId: c.id, userId: currentUserId }).lean();
-        return { ...c, isLikedByUser: !!liked, timestamp: formatRelativeTime(new Date(c.createdAt)) };
-      })
+    const enriched = await Promise.all(
+      comments.map((c) => enrichComment(c, currentUserId))
     );
-    res.status(200).json({ success: true, count: withLikeFlag.length, data: withLikeFlag });
+    res.status(200).json({ success: true, count: enriched.length, data: enriched });
   } catch (error) {
     console.error('[getPostComments] error:', error);
     res.status(500).json({ success: false, error: 'Server error while fetching comments' });
