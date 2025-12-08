@@ -48,6 +48,7 @@ const settingsRoutes = require("./routes/settings/settings");
 const adminRoutes = require("./routes/admin/admin");
 const mapRoutes = require("./routes/campus_map/campus_map");
 const loginRoutes = require("./routes/login/login");
+const notificationRoutes = require('./routes/notification/notification'); 
 
 // API Routes
 app.use("/api/events", eventsRoutes);
@@ -56,6 +57,7 @@ app.use("/api/settings", settingsRoutes);
 app.use("/api/map", mapRoutes);
 app.use("/api/auth", loginRoutes);
 app.use("/api/admin", adminRoutes);
+app.use('/api/notifications', notificationRoutes); 
 
 // Root route
 app.get("/", (req, res) => {

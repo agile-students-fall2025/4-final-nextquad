@@ -1,4 +1,5 @@
 const { formatRelativeTime } = require('../../utils/timeFormatting');
+const sendNotification = require('../../utils/sendNotification');
 const Comment = require('../../models/Comment');
 const Post = require('../../models/Post');
 const CommentLike = require('../../models/CommentLike');
@@ -15,12 +16,7 @@ const getPostComments = async (req, res) => {
       return res.status(404).json({ success: false, error: 'Post not found' });
     }
     const comments = await Comment.find({ postId }).sort({ createdAt: -1 }).lean();
-    
-    console.log(`Fetching comments for post ${postId}: Found ${comments.length} comments`);
-    if (comments.length > 0) {
-      console.log(`Comment IDs: ${comments.map(c => c.id).join(', ')}`);
-    }
-    
+
     const currentUserId = req.user.userId;
     const withLikeFlag = await Promise.all(
       comments.map(async c => {
@@ -52,11 +48,9 @@ const addComment = async (req, res) => {
     }
 
     const currentUser = req.user;
-    
-    // Check if user has completed profile setup
     if (!currentUser.firstName || !currentUser.lastName) {
-      return res.status(400).json({ 
-        success: false, 
+      return res.status(400).json({
+        success: false,
         error: 'Please complete your profile setup before commenting',
         requiresProfileSetup: true
       });
@@ -66,9 +60,7 @@ const addComment = async (req, res) => {
     const nextId = last ? last.id + 1 : 1;
     const createdAtDate = new Date();
     const authorName = `${currentUser.firstName} ${currentUser.lastName}`;
-    
-    console.log(`Creating comment for post ${postId}. Last comment ID: ${last?.id || 'none'}, Next comment ID: ${nextId}`);
-    
+
     const doc = await Comment.create({
       id: nextId,
       postId,
@@ -84,7 +76,39 @@ const addComment = async (req, res) => {
       editCount: 0,
     });
 
-    // Add dynamic timestamp for response
+    // send notifications
+    const postAuthorId = post.author?.userId;  // Safe access
+
+    // post_comment notification
+    if (postAuthorId && postAuthorId !== currentUser.userId) {
+      await sendNotification({
+        type: 'post_comment',
+        recipientId: postAuthorId,
+        senderId: currentUser.userId,
+        postId: post.id,
+        commentId: nextId,
+        message: `${authorName} commented on your post: ${post.title}`
+      });
+    }
+
+    // thread_reply notification
+    const pastCommenters = await Comment.find({ postId }).lean();
+    const uniqueOtherCommenters = [...new Set(
+      pastCommenters
+        .map(c => c.author.userId)
+        .filter(uid => uid !== currentUser.userId && uid !== postAuthorId)
+    )];
+    for (const recipientId of uniqueOtherCommenters) {
+      await sendNotification({
+        type: 'thread_reply',
+        recipientId,
+        senderId: currentUser.userId,
+        postId: post.id,
+        commentId: nextId,
+        message: `${authorName} also commented on a post you’re following: ${post.title}`
+      });
+    }
+
     const responseData = doc.toObject();
     responseData.timestamp = formatRelativeTime(new Date(responseData.createdAt));
 
@@ -140,7 +164,7 @@ const deleteComment = async (req, res) => {
     }
     const currentUserId = req.user.userId;
     const isAdmin = req.user.role === 'admin';
-    if (comment.author.userId !== req.user.userId && req.user.role !== 'admin') {
+    if (comment.author.userId !== currentUserId && !isAdmin) {
       return res.status(403).json({ success: false, error: 'You are not authorized to delete this comment' });
     }
     await Comment.deleteOne({ id: commentId });
@@ -158,17 +182,23 @@ const deleteComment = async (req, res) => {
 const toggleCommentLike = async (req, res) => {
   try {
     const commentId = parseInt(req.params.commentId, 10);
-    const currentUserId = req.user.userId;
+    const currentUser = req.user;
+
     const comment = await Comment.findOne({ id: commentId });
     if (!comment) {
       return res.status(404).json({ success: false, error: 'Comment not found' });
     }
-    const existing = await CommentLike.findOne({ commentId, userId: currentUserId });
+
+    const post = await Post.findOne({ id: comment.postId });
+
+    const existing = await CommentLike.findOne({ commentId, userId: currentUser.userId });
+
     if (existing) {
       // Unlike
       await CommentLike.deleteOne({ _id: existing._id });
       comment.likes = Math.max(0, (comment.likes || 0) - 1);
       await comment.save();
+
       return res.status(200).json({
         success: true,
         message: 'Comment unliked successfully',
@@ -176,9 +206,20 @@ const toggleCommentLike = async (req, res) => {
       });
     } else {
       // Like
-      await CommentLike.create({ commentId, userId: currentUserId });
+      await CommentLike.create({ commentId, userId: currentUser.userId });
       comment.likes = (comment.likes || 0) + 1;
       await comment.save();
+
+      // comment_like notification
+      await sendNotification({
+        type: 'comment_like',
+        recipientId: comment.author.userId, 
+        senderId: currentUser.userId,
+        postId: comment.postId,
+        commentId: comment.id,
+        message: `${currentUser.firstName} ${currentUser.lastName} liked your comment on: ${post ? post.title : 'a post'}`
+      });
+
       return res.status(200).json({
         success: true,
         message: 'Comment liked successfully',

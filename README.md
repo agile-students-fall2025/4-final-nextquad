@@ -139,7 +139,7 @@ The application can be run using Docker and Docker Compose for easier deployment
 
 **Quick Start:**
 ```bash
-# Ensure you have a .env file in the root directory with required variables
+# Ensure you have a .env file in both `back-end/` and `front-end/` directories with required variables
 # Then build and start all services
 docker-compose up --build
 
