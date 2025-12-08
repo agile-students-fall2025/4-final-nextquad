@@ -17,6 +17,22 @@ const setupProfile = async (req, res) => {
     });
   }
 
+  // Validate maximum length to prevent database/display issues
+  const MAX_NAME_LENGTH = 50;
+  if (firstName.trim().length > MAX_NAME_LENGTH) {
+    return res.status(400).json({
+      success: false,
+      error: `First name must not exceed ${MAX_NAME_LENGTH} characters`,
+    });
+  }
+
+  if (lastName.trim().length > MAX_NAME_LENGTH) {
+    return res.status(400).json({
+      success: false,
+      error: `Last name must not exceed ${MAX_NAME_LENGTH} characters`,
+    });
+  }
+
   // Validate graduation year
   const gradYearNum = parseInt(graduationYear, 10);
   if (isNaN(gradYearNum) || gradYearNum <= 2024) {

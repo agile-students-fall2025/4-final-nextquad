@@ -191,10 +191,27 @@ const updateFullName = async (req, res) => {
     const userId = req.user.userId;
     const { firstName, lastName } = req.body;
 
+    // Validate required fields
     if (!firstName || !lastName || firstName.trim() === '' || lastName.trim() === '') {
       return res.status(400).json({
         success: false,
         error: "First name and last name are required",
+      });
+    }
+
+    // Validate maximum length to prevent database/display issues
+    const MAX_NAME_LENGTH = 50;
+    if (firstName.trim().length > MAX_NAME_LENGTH) {
+      return res.status(400).json({
+        success: false,
+        error: `First name must not exceed ${MAX_NAME_LENGTH} characters`,
+      });
+    }
+
+    if (lastName.trim().length > MAX_NAME_LENGTH) {
+      return res.status(400).json({
+        success: false,
+        error: `Last name must not exceed ${MAX_NAME_LENGTH} characters`,
       });
     }
 
