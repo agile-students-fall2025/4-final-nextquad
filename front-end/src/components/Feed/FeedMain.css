@@ -211,7 +211,24 @@
   color: #333;
 }
 
+.feed-post-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .feed-post-timestamp {
+  margin: 0;
+  font-size: 13px;
+  color: #999;
+}
+
+.feed-post-meta-separator {
+  color: #ccc;
+  font-size: 12px;
+}
+
+.feed-post-author-email {
   margin: 0;
   font-size: 13px;
   color: #999;

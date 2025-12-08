@@ -301,6 +301,7 @@ const createPost = async (req, res) => {
         name: authorName,
         avatar: profileImage || `https://picsum.photos/seed/${currentUser.userId}/50/50`,
         userId: currentUser.userId,
+        email: currentUser.email || currentUser.nyuEmail || '',
       },
       isLikedByUser: false,
       isSavedByUser: false,
