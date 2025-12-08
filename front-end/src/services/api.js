@@ -495,6 +495,36 @@ export const updateProfilePicture = async (profileImage) => {
 };
 
 /**
+ * Update user's full name
+ */
+export const updateFullName = async (firstName, lastName) => {
+  const token = sessionStorage.getItem("jwt");
+  return fetchAPI("/settings/full-name", {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `jwt ${token}`,
+    },
+    body: JSON.stringify({ firstName, lastName }),
+  });
+};
+
+/**
+ * Update user's graduation year
+ */
+export const updateGraduationYear = async (graduationYear) => {
+  const token = sessionStorage.getItem("jwt");
+  return fetchAPI("/settings/graduation-year", {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `jwt ${token}`,
+    },
+    body: JSON.stringify({ graduationYear }),
+  });
+};
+
+/**
  * Change user password
  */
 export const changeUserPassword = async (currentPassword, newPassword, confirmPassword) => {
