@@ -1,6 +1,3 @@
-const { 
-  categories
-} = require('../../data/feed/mockFeedData');
 const User = require('../../models/User');
 const { formatRelativeTime } = require('../../utils/timeFormatting');
 const Post = require('../../models/Post');
@@ -9,6 +6,79 @@ const PostLike = require('../../models/PostLike');
 const PostSave = require('../../models/PostSave');
 const CommentLike = require('../../models/CommentLike');
 const sendNotification = require('../../utils/sendNotification');
+
+// Feed post categories (per UX-DESIGN.md)
+const categories = [
+  'All',
+  'General',
+  'Marketplace',
+  'Lost and Found',
+  'Roommate Request',
+  'Safety Alerts'
+];
+
+/**
+ * Helper: Batch enrich multiple posts with current user data and interaction flags
+ * Optimized to prevent N+1 queries by fetching all user data in a single query
+ * @param {Array} posts - Array of post documents
+ * @param {string} currentUserId - Current user ID for like/save status
+ * @param {boolean} skipUserData - If true, don't fetch fresh user data
+ */
+const enrichPosts = async (posts, currentUserId, skipUserData = false) => {
+  if (!posts || posts.length === 0) return [];
+
+  // Collect all unique author userIds
+  const uniqueUserIds = [...new Set(
+    posts
+      .map(p => p.author?.userId)
+      .filter(Boolean)
+  )];
+
+  // Fetch all users in a single query
+  let userDataMap = new Map();
+  if (!skipUserData && uniqueUserIds.length > 0) {
+    try {
+      const users = await User.find({ _id: { $in: uniqueUserIds } }).lean();
+      users.forEach(user => {
+        userDataMap.set(user._id.toString(), user);
+      });
+    } catch (err) {
+      console.error('Error batch fetching user data:', err);
+    }
+  }
+
+  // Enrich all posts
+  return Promise.all(
+    posts.map(async (post) => {
+      const count = await Comment.countDocuments({ postId: post.id });
+      const liked = await PostLike.findOne({ postId: post.id, userId: currentUserId }).lean();
+      const saved = await PostSave.findOne({ postId: post.id, userId: currentUserId }).lean();
+      
+      let enrichedPost = {
+        ...post,
+        commentCount: count,
+        isLikedByUser: !!liked,
+        isSavedByUser: !!saved,
+        timestamp: formatRelativeTime(new Date(post.createdAt)),
+      };
+      
+      // Apply fresh user data from the map (O(1) lookup)
+      if (!skipUserData && post.author?.userId) {
+        const userData = userDataMap.get(post.author.userId);
+        if (userData) {
+          enrichedPost.author = {
+            ...post.author,
+            name: `${userData.firstName} ${userData.lastName}`,
+            avatar: userData.profileImage || post.author.avatar,
+            email: userData.email || post.author.email,
+          };
+        }
+      }
+      
+      return enrichedPost;
+    })
+  );
+};
 
 /**
  * Helper: Enrich a single post with current user data and interaction flags
@@ -134,37 +204,61 @@ const getAllPosts = async (req, res) => {
 
     // Enrich posts with additional data (comment count, likes, saves, current user data)
     const currentUserId = req.user.userId;
-    const result = await Promise.all(
-      postsToReturn.map(async (p) => {
-        // For comments sort, commentCount is already included from aggregation
-        if (sort === 'comments') {
+    
+    let result;
+    if (sort === 'comments') {
+      // For comments sort, commentCount is already included from aggregation
+      // Collect unique user IDs for batch fetching
+      const uniqueUserIds = [...new Set(
+        postsToReturn
+          .map(p => p.author?.userId)
+          .filter(Boolean)
+      )];
+
+      // Fetch all users in a single query
+      let userDataMap = new Map();
+      if (uniqueUserIds.length > 0) {
+        try {
+          const users = await User.find({ _id: { $in: uniqueUserIds } }).lean();
+          users.forEach(user => {
+            userDataMap.set(user._id.toString(), user);
+          });
+        } catch (err) {
+          console.error('Error batch fetching user data:', err);
+        }
+      }
+
+      result = await Promise.all(
+        postsToReturn.map(async (p) => {
           const liked = await PostLike.findOne({ postId: p.id, userId: currentUserId }).lean();
           const saved = await PostSave.findOne({ postId: p.id, userId: currentUserId }).lean();
           
-          let enrichedPost = { ...p, isLikedByUser: !!liked, isSavedByUser: !!saved, timestamp: formatRelativeTime(new Date(p.createdAt)) };
+          let enrichedPost = { 
+            ...p, 
+            isLikedByUser: !!liked, 
+            isSavedByUser: !!saved, 
+            timestamp: formatRelativeTime(new Date(p.createdAt)) 
+          };
           
-          // Fetch fresh user data
+          // Apply fresh user data from the map (O(1) lookup)
           if (p.author?.userId) {
-            try {
-              const userData = await User.findById(p.author.userId).lean();
-              if (userData) {
-                enrichedPost.author = {
-                  ...p.author,
-                  name: `${userData.firstName} ${userData.lastName}`,
-                  avatar: userData.profileImage || p.author.avatar,
-                  email: userData.email || p.author.email,
-                };
-              }
-            } catch (err) {
-              console.error('Error fetching user data:', err);
+            const userData = userDataMap.get(p.author.userId);
+            if (userData) {
+              enrichedPost.author = {
+                ...p.author,
+                name: `${userData.firstName} ${userData.lastName}`,
+                avatar: userData.profileImage || p.author.avatar,
+                email: userData.email || p.author.email,
+              };
             }
           }
           return enrichedPost;
-        } else {
-          return enrichPost(p, currentUserId);
-        }
-      })
-    );
+        })
+      );
+    } else {
+      // Use batch enrichment for all other sorts
+      result = await enrichPosts(postsToReturn, currentUserId);
+    }
 
     res.status(200).json({
       success: true,
@@ -238,9 +332,7 @@ const searchPosts = async (req, res) => {
 
     // Enrich posts with additional data (comment count, likes, saves, current user data)
     const currentUserId = req.user.userId;
-    const result = await Promise.all(
-      postsToReturn.map((p) => enrichPost(p, currentUserId))
-    );
+    const result = await enrichPosts(postsToReturn, currentUserId);
 
     res.status(200).json({
       success: true,
@@ -636,36 +728,60 @@ const getMyPostsPaginated = async (req, res) => {
     }
 
     // Enrich posts with additional data and current user info
-    const result = await Promise.all(
-      postsToReturn.map(async (p) => {
-        if (sort === 'comments') {
+    let result;
+    if (sort === 'comments') {
+      // For comments sort, commentCount is already included from aggregation
+      // Collect unique user IDs for batch fetching
+      const uniqueUserIds = [...new Set(
+        postsToReturn
+          .map(p => p.author?.userId)
+          .filter(Boolean)
+      )];
+
+      // Fetch all users in a single query
+      let userDataMap = new Map();
+      if (uniqueUserIds.length > 0) {
+        try {
+          const users = await User.find({ _id: { $in: uniqueUserIds } }).lean();
+          users.forEach(user => {
+            userDataMap.set(user._id.toString(), user);
+          });
+        } catch (err) {
+          console.error('Error batch fetching user data:', err);
+        }
+      }
+
+      result = await Promise.all(
+        postsToReturn.map(async (p) => {
           const liked = await PostLike.findOne({ postId: p.id, userId: currentUserId }).lean();
           const saved = await PostSave.findOne({ postId: p.id, userId: currentUserId }).lean();
           
-          let enrichedPost = { ...p, isLikedByUser: !!liked, isSavedByUser: !!saved, timestamp: formatRelativeTime(new Date(p.createdAt)) };
+          let enrichedPost = { 
+            ...p, 
+            isLikedByUser: !!liked, 
+            isSavedByUser: !!saved, 
+            timestamp: formatRelativeTime(new Date(p.createdAt)) 
+          };
           
-          // Fetch fresh user data
+          // Apply fresh user data from the map (O(1) lookup)
           if (p.author?.userId) {
-            try {
-              const userData = await User.findById(p.author.userId).lean();
-              if (userData) {
-                enrichedPost.author = {
-                  ...p.author,
-                  name: `${userData.firstName} ${userData.lastName}`,
-                  avatar: userData.profileImage || p.author.avatar,
-                  email: userData.email || p.author.email,
-                };
-              }
-            } catch (err) {
-              console.error('Error fetching user data:', err);
+            const userData = userDataMap.get(p.author.userId);
+            if (userData) {
+              enrichedPost.author = {
+                ...p.author,
+                name: `${userData.firstName} ${userData.lastName}`,
+                avatar: userData.profileImage || p.author.avatar,
+                email: userData.email || p.author.email,
+              };
             }
           }
           return enrichedPost;
-        } else {
-          return enrichPost(p, currentUserId);
-        }
-      })
-    );
+        })
+      );
+    } else {
+      // Use batch enrichment for all other sorts
+      result = await enrichPosts(postsToReturn, currentUserId);
+    }
 
     res.status(200).json({
       success: true,
@@ -778,27 +894,48 @@ const getSavedPostsPaginated = async (req, res) => {
     }
 
     // Enrich posts with additional data and current user info
+    // Collect unique user IDs for batch fetching
+    const uniqueUserIds = [...new Set(
+      postsToReturn
+        .map(p => p.author?.userId)
+        .filter(Boolean)
+    )];
+
+    // Fetch all users in a single query
+    let userDataMap = new Map();
+    if (uniqueUserIds.length > 0) {
+      try {
+        const users = await User.find({ _id: { $in: uniqueUserIds } }).lean();
+        users.forEach(user => {
+          userDataMap.set(user._id.toString(), user);
+        });
+      } catch (err) {
+        console.error('Error batch fetching user data:', err);
+      }
+    }
+
     const result = await Promise.all(
       postsToReturn.map(async (p) => {
         if (sort === 'comments') {
           const liked = await PostLike.findOne({ postId: p.id, userId: currentUserId }).lean();
           
-          let enrichedPost = { ...p, isLikedByUser: !!liked, isSavedByUser: true, timestamp: formatRelativeTime(new Date(p.createdAt)) };
+          let enrichedPost = { 
+            ...p, 
+            isLikedByUser: !!liked, 
+            isSavedByUser: true, 
+            timestamp: formatRelativeTime(new Date(p.createdAt)) 
+          };
           
-          // Fetch fresh user data
+          // Apply fresh user data from the map (O(1) lookup)
           if (p.author?.userId) {
-            try {
-              const userData = await User.findById(p.author.userId).lean();
-              if (userData) {
-                enrichedPost.author = {
-                  ...p.author,
-                  name: `${userData.firstName} ${userData.lastName}`,
-                  avatar: userData.profileImage || p.author.avatar,
-                  email: userData.email || p.author.email,
-                };
-              }
-            } catch (err) {
-              console.error('Error fetching user data:', err);
+            const userData = userDataMap.get(p.author.userId);
+            if (userData) {
+              enrichedPost.author = {
+                ...p.author,
+                name: `${userData.firstName} ${userData.lastName}`,
+                avatar: userData.profileImage || p.author.avatar,
+                email: userData.email || p.author.email,
+              };
             }
           }
           return enrichedPost;
@@ -814,20 +951,16 @@ const getSavedPostsPaginated = async (req, res) => {
             timestamp: formatRelativeTime(new Date(p.createdAt)),
           };
           
-          // Fetch fresh user data
+          // Apply fresh user data from the map (O(1) lookup)
           if (p.author?.userId) {
-            try {
-              const userData = await User.findById(p.author.userId).lean();
-              if (userData) {
-                enrichedPost.author = {
-                  ...p.author,
-                  name: `${userData.firstName} ${userData.lastName}`,
-                  avatar: userData.profileImage || p.author.avatar,
-                  email: userData.email || p.author.email,
-                };
-              }
-            } catch (err) {
-              console.error('Error fetching user data:', err);
+            const userData = userDataMap.get(p.author.userId);
+            if (userData) {
+              enrichedPost.author = {
+                ...p.author,
+                name: `${userData.firstName} ${userData.lastName}`,
+                avatar: userData.profileImage || p.author.avatar,
+                email: userData.email || p.author.email,
+              };
             }
           }
           return enrichedPost;

@@ -30,6 +30,7 @@ import ChangePasswordForm from './components/Settings/ChangePassword';
 import PrivacyPolicy from './components/Settings/PrivacyPolicy';
 import NotificationSettings from './components/Settings/NotificationSettings';
 import Profile from './components/Profile/Profile';
+import NotificationsPage from './components/notification/NotificationsPage';
 
 import HelloWindow from './components/log_in/HelloWindow';
 import SignIn from './components/log_in/SignIn';
@@ -464,7 +465,16 @@ const renderAdminPages = () => {
         <NotificationSettings navigateTo={(page) => setActiveModule(page)} />
       </div>
     );
-  } 
+  }
+
+  // notifications page
+  if (activeModule === 'notifications') {
+    return (
+      <div className="notifications-wrapper">
+        <NotificationsPage navigateTo={(page) => setActiveModule(page)} />
+      </div>
+    );
+  }
 
 
   return null;
