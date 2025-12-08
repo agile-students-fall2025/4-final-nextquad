@@ -23,6 +23,10 @@
   align-items: center;
 }
 
+.profile-avatar-container {
+  position: relative;
+}
+
 .profile-avatar {
   width: 88px;
   height: 88px;
@@ -30,6 +34,33 @@
   object-fit: cover;
   border: 3px solid #ede9fe;
   background: #f7f5ff;
+}
+
+.profile-avatar-edit-btn {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #6b46c1;
+  color: white;
+  border: 3px solid white;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+}
+
+.profile-avatar-edit-btn:hover:not(:disabled) {
+  background: #7c3aed;
+}
+
+.profile-avatar-edit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .profile-name {

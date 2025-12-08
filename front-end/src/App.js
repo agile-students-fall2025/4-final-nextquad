@@ -423,7 +423,10 @@ const renderAdminPages = () => {
   if (activeModule === 'profile') {
     return (
       <div className="profile-wrapper">
-        <Profile navigateTo={(page) => setActiveModule(page)} />
+        <Profile 
+          navigateTo={(page) => setActiveModule(page)}
+          onShowToast={(toast) => setToast(toast)}
+        />
       </div>
     );
   }

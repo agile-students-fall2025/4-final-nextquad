@@ -480,6 +480,21 @@ export const updateUserSettings = async (updates) => {
 };
 
 /**
+ * Update user's profile picture
+ */
+export const updateProfilePicture = async (profileImage) => {
+  const token = sessionStorage.getItem("jwt");
+  return fetchAPI("/settings/profile-picture", {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `jwt ${token}`,
+    },
+    body: JSON.stringify({ profileImage }),
+  });
+};
+
+/**
  * Change user password
  */
 export const changeUserPassword = async (currentPassword, newPassword, confirmPassword) => {

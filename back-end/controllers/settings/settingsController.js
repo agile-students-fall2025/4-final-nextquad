@@ -65,6 +65,47 @@ const updateUserSettings = async (req, res) => {
   }
 };
 
+// PUT request to update user's profile picture
+const updateProfilePicture = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { profileImage } = req.body;
+
+    if (!profileImage) {
+      return res.status(400).json({
+        success: false,
+        error: "Profile image is required",
+      });
+    }
+
+    // Update user's profile image
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { profileImage },
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({
+        success: false,
+        error: "User not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: { profileImage: updatedUser.profileImage },
+      message: "Profile picture updated successfully",
+    });
+  } catch (error) {
+    console.error("Error updating profile picture:", error);
+    res.status(500).json({
+      success: false,
+      error: "Server error while updating profile picture",
+    });
+  }
+};
+
 // get Privacy Policy
 const getPrivacyPolicy = async (req, res) => {
   try {
@@ -148,6 +189,7 @@ const changeUserPassword = async (req, res) => {
 module.exports = {
   getUserSettings,
   updateUserSettings,
+  updateProfilePicture,
   getPrivacyPolicy,
   changeUserPassword,
 };
