@@ -4,6 +4,7 @@ const User = require('../../models/User');
 const Comment = require('../../models/Comment');
 const Post = require('../../models/Post');
 const CommentLike = require('../../models/CommentLike');
+const User = require('../../models/User');
 
 /**
  * GET /api/feed/posts/:id/comments
@@ -16,7 +17,7 @@ const getPostComments = async (req, res) => {
     if (!post) {
       return res.status(404).json({ success: false, error: 'Post not found' });
     }
-    const comments = await Comment.find({ postId }).sort({ createdAt: -1 }).lean();
+    const comments = await Comment.find({ postId }).sort({ createdAt: -1 }).allowDiskUse(true).lean();
 
     const currentUserId = req.user.userId;
     const withLikeFlag = await Promise.all(

@@ -70,12 +70,13 @@ const getAllPosts = async (req, res) => {
         { $project: { commentsList: 0 } } // Remove the comments array
       ];
       
-      posts = await Post.aggregate(pipeline);
+      posts = await Post.aggregate(pipeline).allowDiskUse(true);
     } else {
       // Fetch limit + 1 posts to detect if there are more posts
       posts = await Post.find(query)
         .sort(sortSpec)
         .limit(limitNum + 1)
+        .allowDiskUse(true)
         .lean();
     }
 
@@ -257,6 +258,10 @@ const createPost = async (req, res) => {
 
     const currentUser = req.user;
 
+    // Fetch freshest user profile to get stored profileImage
+    const userDoc = await User.findById(currentUser.userId).lean();
+    const profileImage = userDoc?.profileImage || null;
+    
     // Fetch freshest user profile to get stored profileImage
     const userDoc = await User.findById(currentUser.userId).lean();
     const profileImage = userDoc?.profileImage || null;
@@ -495,7 +500,7 @@ const getSavedPosts = async (req, res) => {
     if (postIds.length === 0) {
       return res.status(200).json({ success: true, count: 0, data: [] });
     }
-    const posts = await Post.find({ id: { $in: postIds } }).sort({ createdAt: -1 }).lean();
+    const posts = await Post.find({ id: { $in: postIds } }).sort({ createdAt: -1 }).allowDiskUse(true).lean();
     const result = await Promise.all(posts.map(async (p) => {
       const commentCount = await Comment.countDocuments({ postId: p.id });
       const liked = await PostLike.findOne({ postId: p.id, userId: currentUserId }).lean();
@@ -570,12 +575,13 @@ const getMyPostsPaginated = async (req, res) => {
         { $project: { commentsList: 0 } }
       ];
       
-      posts = await Post.aggregate(pipeline);
+      posts = await Post.aggregate(pipeline).allowDiskUse(true);
     } else {
       // Fetch limit + 1 posts to detect if there are more
       posts = await Post.find(query)
         .sort(sortSpec)
         .limit(limitNum + 1)
+        .allowDiskUse(true)
         .lean();
     }
 
@@ -696,11 +702,12 @@ const getSavedPostsPaginated = async (req, res) => {
         { $project: { commentsList: 0 } }
       ];
       
-      posts = await Post.aggregate(pipeline);
+      posts = await Post.aggregate(pipeline).allowDiskUse(true);
     } else {
       posts = await Post.find(query)
         .sort(sortSpec)
         .limit(limitNum + 1)
+        .allowDiskUse(true)
         .lean();
     }
 

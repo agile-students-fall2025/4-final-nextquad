@@ -15,6 +15,40 @@ export default function FeedCreatePost({ navigateTo, onShowToast }) {
 
   const categories = ['All','General','Marketplace','Lost and Found','Roommate Request','Safety Alerts'];
 
+  // Compress image to reduce file size
+  const compressImage = (file, maxWidth = 1200, quality = 0.8) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+
+          // Resize if image is too large
+          if (width > maxWidth) {
+            height = (height * maxWidth) / width;
+            width = maxWidth;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // Convert to base64 with compression
+          const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
+          resolve(compressedBase64);
+        };
+        img.onerror = reject;
+        img.src = e.target.result;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
   const handleImageChange = async (e) => {
     const files = Array.from(e.target.files);
     
@@ -44,15 +78,16 @@ export default function FeedCreatePost({ navigateTo, onShowToast }) {
         continue;
       }
 
-      // Convert to base64 - wrap in Promise to wait for it
-      const base64String = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-      
-      validFiles.push(base64String);
+      // Compress image before uploading
+      try {
+        const compressedBase64 = await compressImage(file);
+        validFiles.push(compressedBase64);
+      } catch (err) {
+        console.error('Error compressing image:', err);
+        if (onShowToast) {
+          onShowToast({ message: 'Failed to process image', type: 'error' });
+        }
+      }
     }
 
     // Update state with all valid files at once
