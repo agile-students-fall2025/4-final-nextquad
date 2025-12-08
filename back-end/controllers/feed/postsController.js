@@ -11,6 +11,46 @@ const CommentLike = require('../../models/CommentLike');
 const sendNotification = require('../../utils/sendNotification');
 
 /**
+ * Helper: Enrich a single post with current user data and interaction flags
+ * @param {Object} post - Post document
+ * @param {string} currentUserId - Current user ID for like/save status
+ * @param {boolean} skipUserData - If true, don't fetch fresh user data (for backward compatibility)
+ */
+const enrichPost = async (post, currentUserId, skipUserData = false) => {
+  const count = await Comment.countDocuments({ postId: post.id });
+  const liked = await PostLike.findOne({ postId: post.id, userId: currentUserId }).lean();
+  const saved = await PostSave.findOne({ postId: post.id, userId: currentUserId }).lean();
+  
+  let enrichedPost = {
+    ...post,
+    commentCount: count,
+    isLikedByUser: !!liked,
+    isSavedByUser: !!saved,
+    timestamp: formatRelativeTime(new Date(post.createdAt)),
+  };
+  
+  // Fetch fresh user data if author exists and userId is stored
+  if (!skipUserData && post.author?.userId) {
+    try {
+      const userData = await User.findById(post.author.userId).lean();
+      if (userData) {
+        enrichedPost.author = {
+          ...post.author,
+          name: `${userData.firstName} ${userData.lastName}`,
+          avatar: userData.profileImage || post.author.avatar,
+          email: userData.email || post.author.email,
+        };
+      }
+    } catch (err) {
+      console.error('Error fetching user data for post enrichment:', err);
+      // Keep original author data if fetch fails
+    }
+  }
+  
+  return enrichedPost;
+};
+
+/**
  * GET /api/feed/posts
  * Get paginated posts with cursor-based pagination
  * Query params:
@@ -92,21 +132,37 @@ const getAllPosts = async (req, res) => {
       nextCursor = postsToReturn[postsToReturn.length - 1].createdAt;
     }
 
-    // Enrich posts with additional data (comment count, likes, saves)
+    // Enrich posts with additional data (comment count, likes, saves, current user data)
     const currentUserId = req.user.userId;
     const result = await Promise.all(
       postsToReturn.map(async (p) => {
         // For comments sort, commentCount is already included from aggregation
-        const count = sort === 'comments' ? p.commentCount : await Comment.countDocuments({ postId: p.id });
-        const liked = await PostLike.findOne({ postId: p.id, userId: currentUserId }).lean();
-        const saved = await PostSave.findOne({ postId: p.id, userId: currentUserId }).lean();
-        return {
-          ...p,
-          commentCount: count,
-          isLikedByUser: !!liked,
-          isSavedByUser: !!saved,
-          timestamp: formatRelativeTime(new Date(p.createdAt)),
-        };
+        if (sort === 'comments') {
+          const liked = await PostLike.findOne({ postId: p.id, userId: currentUserId }).lean();
+          const saved = await PostSave.findOne({ postId: p.id, userId: currentUserId }).lean();
+          
+          let enrichedPost = { ...p, isLikedByUser: !!liked, isSavedByUser: !!saved, timestamp: formatRelativeTime(new Date(p.createdAt)) };
+          
+          // Fetch fresh user data
+          if (p.author?.userId) {
+            try {
+              const userData = await User.findById(p.author.userId).lean();
+              if (userData) {
+                enrichedPost.author = {
+                  ...p.author,
+                  name: `${userData.firstName} ${userData.lastName}`,
+                  avatar: userData.profileImage || p.author.avatar,
+                  email: userData.email || p.author.email,
+                };
+              }
+            } catch (err) {
+              console.error('Error fetching user data:', err);
+            }
+          }
+          return enrichedPost;
+        } else {
+          return enrichPost(p, currentUserId);
+        }
       })
     );
 
@@ -180,21 +236,10 @@ const searchPosts = async (req, res) => {
       nextCursor = postsToReturn[postsToReturn.length - 1].createdAt;
     }
 
-    // Enrich posts with additional data (comment count, likes, saves)
+    // Enrich posts with additional data (comment count, likes, saves, current user data)
     const currentUserId = req.user.userId;
     const result = await Promise.all(
-      postsToReturn.map(async (p) => {
-        const count = await Comment.countDocuments({ postId: p.id });
-        const liked = await PostLike.findOne({ postId: p.id, userId: currentUserId }).lean();
-        const saved = await PostSave.findOne({ postId: p.id, userId: currentUserId }).lean();
-        return {
-          ...p,
-          commentCount: count,
-          isLikedByUser: !!liked,
-          isSavedByUser: !!saved,
-          timestamp: formatRelativeTime(new Date(p.createdAt)),
-        };
-      })
+      postsToReturn.map((p) => enrichPost(p, currentUserId))
     );
 
     res.status(200).json({
@@ -225,11 +270,8 @@ const getPostById = async (req, res) => {
       return res.status(404).json({ success: false, error: 'Post not found' });
     }
 
-    const count = await Comment.countDocuments({ postId: post.id });
     const currentUserId = req.user.userId;
-    const liked = await PostLike.findOne({ postId: post.id, userId: currentUserId }).lean();
-    const saved = await PostSave.findOne({ postId: post.id, userId: currentUserId }).lean();
-    const data = { ...post, commentCount: count, isLikedByUser: !!liked, isSavedByUser: !!saved, timestamp: formatRelativeTime(new Date(post.createdAt)) };
+    const data = await enrichPost(post, currentUserId);
 
     res.status(200).json({ success: true, data });
   } catch (error) {
@@ -593,19 +635,35 @@ const getMyPostsPaginated = async (req, res) => {
       nextCursor = postsToReturn[postsToReturn.length - 1].createdAt;
     }
 
-    // Enrich posts with additional data
+    // Enrich posts with additional data and current user info
     const result = await Promise.all(
       postsToReturn.map(async (p) => {
-        const count = sort === 'comments' ? p.commentCount : await Comment.countDocuments({ postId: p.id });
-        const liked = await PostLike.findOne({ postId: p.id, userId: currentUserId }).lean();
-        const saved = await PostSave.findOne({ postId: p.id, userId: currentUserId }).lean();
-        return {
-          ...p,
-          commentCount: count,
-          isLikedByUser: !!liked,
-          isSavedByUser: !!saved,
-          timestamp: formatRelativeTime(new Date(p.createdAt)),
-        };
+        if (sort === 'comments') {
+          const liked = await PostLike.findOne({ postId: p.id, userId: currentUserId }).lean();
+          const saved = await PostSave.findOne({ postId: p.id, userId: currentUserId }).lean();
+          
+          let enrichedPost = { ...p, isLikedByUser: !!liked, isSavedByUser: !!saved, timestamp: formatRelativeTime(new Date(p.createdAt)) };
+          
+          // Fetch fresh user data
+          if (p.author?.userId) {
+            try {
+              const userData = await User.findById(p.author.userId).lean();
+              if (userData) {
+                enrichedPost.author = {
+                  ...p.author,
+                  name: `${userData.firstName} ${userData.lastName}`,
+                  avatar: userData.profileImage || p.author.avatar,
+                  email: userData.email || p.author.email,
+                };
+              }
+            } catch (err) {
+              console.error('Error fetching user data:', err);
+            }
+          }
+          return enrichedPost;
+        } else {
+          return enrichPost(p, currentUserId);
+        }
       })
     );
 
@@ -719,18 +777,61 @@ const getSavedPostsPaginated = async (req, res) => {
       nextCursor = postsToReturn[postsToReturn.length - 1].createdAt;
     }
 
-    // Enrich posts with additional data
+    // Enrich posts with additional data and current user info
     const result = await Promise.all(
       postsToReturn.map(async (p) => {
-        const count = sort === 'comments' ? p.commentCount : await Comment.countDocuments({ postId: p.id });
-        const liked = await PostLike.findOne({ postId: p.id, userId: currentUserId }).lean();
-        return {
-          ...p,
-          commentCount: count,
-          isLikedByUser: !!liked,
-          isSavedByUser: true,
-          timestamp: formatRelativeTime(new Date(p.createdAt)),
-        };
+        if (sort === 'comments') {
+          const liked = await PostLike.findOne({ postId: p.id, userId: currentUserId }).lean();
+          
+          let enrichedPost = { ...p, isLikedByUser: !!liked, isSavedByUser: true, timestamp: formatRelativeTime(new Date(p.createdAt)) };
+          
+          // Fetch fresh user data
+          if (p.author?.userId) {
+            try {
+              const userData = await User.findById(p.author.userId).lean();
+              if (userData) {
+                enrichedPost.author = {
+                  ...p.author,
+                  name: `${userData.firstName} ${userData.lastName}`,
+                  avatar: userData.profileImage || p.author.avatar,
+                  email: userData.email || p.author.email,
+                };
+              }
+            } catch (err) {
+              console.error('Error fetching user data:', err);
+            }
+          }
+          return enrichedPost;
+        } else {
+          const count = await Comment.countDocuments({ postId: p.id });
+          const liked = await PostLike.findOne({ postId: p.id, userId: currentUserId }).lean();
+          
+          let enrichedPost = {
+            ...p,
+            commentCount: count,
+            isLikedByUser: !!liked,
+            isSavedByUser: true,
+            timestamp: formatRelativeTime(new Date(p.createdAt)),
+          };
+          
+          // Fetch fresh user data
+          if (p.author?.userId) {
+            try {
+              const userData = await User.findById(p.author.userId).lean();
+              if (userData) {
+                enrichedPost.author = {
+                  ...p.author,
+                  name: `${userData.firstName} ${userData.lastName}`,
+                  avatar: userData.profileImage || p.author.avatar,
+                  email: userData.email || p.author.email,
+                };
+              }
+            } catch (err) {
+              console.error('Error fetching user data:', err);
+            }
+          }
+          return enrichedPost;
+        }
       })
     );
 
