@@ -257,6 +257,10 @@ const createPost = async (req, res) => {
     }
 
     const currentUser = req.user;
+
+    // Fetch freshest user profile to get stored profileImage
+    const userDoc = await User.findById(currentUser.userId).lean();
+    const profileImage = userDoc?.profileImage || null;
     
     // Fetch freshest user profile to get stored profileImage
     const userDoc = await User.findById(currentUser.userId).lean();
