@@ -1,5 +1,6 @@
 const { formatRelativeTime } = require('../../utils/timeFormatting');
 const sendNotification = require('../../utils/sendNotification');
+const User = require('../../models/User');
 const Comment = require('../../models/Comment');
 const Post = require('../../models/Post');
 const CommentLike = require('../../models/CommentLike');
