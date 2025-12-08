@@ -1,6 +1,7 @@
 const { 
   categories
 } = require('../../data/feed/mockFeedData');
+const User = require('../../models/User');
 const { formatRelativeTime } = require('../../utils/timeFormatting');
 const Post = require('../../models/Post');
 const Comment = require('../../models/Comment');
@@ -255,6 +256,10 @@ const createPost = async (req, res) => {
     }
 
     const currentUser = req.user;
+
+    // Fetch freshest user profile to get stored profileImage
+    const userDoc = await User.findById(currentUser.userId).lean();
+    const profileImage = userDoc?.profileImage || null;
     
     // Check if user has completed profile setup
     if (!currentUser.firstName || !currentUser.lastName) {
@@ -293,7 +298,7 @@ const createPost = async (req, res) => {
       images: postImages,
       author: {
         name: authorName,
-        avatar: currentUser.profileImage || `https://picsum.photos/seed/${currentUser.userId}/50/50`,
+        avatar: profileImage || `https://picsum.photos/seed/${currentUser.userId}/50/50`,
         userId: currentUser.userId,
       },
       isLikedByUser: false,
