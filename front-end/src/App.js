@@ -29,6 +29,7 @@ import Settings from './components/Settings/Settings';
 import ChangePasswordForm from './components/Settings/ChangePassword';
 import PrivacyPolicy from './components/Settings/PrivacyPolicy';
 import NotificationSettings from './components/Settings/NotificationSettings';
+import Profile from './components/Profile/Profile';
 
 import HelloWindow from './components/log_in/HelloWindow';
 import SignIn from './components/log_in/SignIn';
@@ -418,6 +419,15 @@ const renderAdminPages = () => {
   if (activeModule === 'map') {
     return <div className="events-wrapper">{renderCampusMapPage()}</div>;
   }
+
+  // Profile module
+  if (activeModule === 'profile') {
+    return (
+      <div className="profile-wrapper">
+        <Profile navigateTo={(page) => setActiveModule(page)} />
+      </div>
+    );
+  }
     
 //SETTINGS MODULE
   // main settings page 
@@ -483,6 +493,8 @@ const renderAdminPages = () => {
               { id: 'events', label: 'Events' },
               { id: 'feed', label: 'Feed' },
               { id: 'map', label: 'Campus Map' },
+              { id: 'notifications', label: 'Notifications' },
+              { id: 'profile', label: 'Profile' },
               { id: 'settings', label: 'Settings' }
             ].map((module) => (
               <button
@@ -529,6 +541,8 @@ const renderAdminPages = () => {
               { id: 'events', label: 'Events' },
               { id: 'feed', label: 'Feed' },
               { id: 'map', label: 'Campus Map' },
+              { id: 'notifications', label: 'Notifications' },
+              { id: 'profile', label: 'Profile' },
               { id: 'settings', label: 'Settings' }
             ].map((module) => (
               <button
