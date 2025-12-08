@@ -4,7 +4,6 @@ const User = require('../../models/User');
 const Comment = require('../../models/Comment');
 const Post = require('../../models/Post');
 const CommentLike = require('../../models/CommentLike');
-const User = require('../../models/User');
 
 // Enrich a comment with current author info and like state
 const enrichComment = async (comment, currentUserId) => {
