@@ -7,6 +7,7 @@ const Comment = require('../../models/Comment');
 const PostLike = require('../../models/PostLike');
 const PostSave = require('../../models/PostSave');
 const CommentLike = require('../../models/CommentLike');
+const sendNotification = require('../../utils/sendNotification');
 
 /**
  * GET /api/feed/posts
@@ -352,7 +353,28 @@ const updatePost = async (req, res) => {
       edited = true;
     }
     
-    if (typeof resolved === 'boolean' && resolved !== post.resolved) { post.resolved = resolved; edited = true; }
+    // Notification trigger for resolved status
+    // Check if resolved is a boolean and if the status has changed
+    if (typeof resolved === 'boolean' && resolved !== post.resolved) {
+
+      // update resolved status
+      post.resolved = resolved;
+      edited = true;
+
+      // Find all users who saved this post
+      const savers = await PostSave.find({ postId: post.id });
+
+      // send notification to each saver
+      for (const s of savers) {
+        await sendNotification({
+          recipientId: s.userId,
+          senderId: req.user.userId,
+          postId: post.id,
+          type: "post_resolved_status",
+          message: `A post you saved has been marked as ${resolved ? "resolved" : "unresolved"}: ${post.title}`
+        });
+      }
+    }
 
     if (edited) {
       post.editCount = (post.editCount || 0) + 1;

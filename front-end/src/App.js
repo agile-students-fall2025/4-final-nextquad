@@ -43,7 +43,7 @@ import AdminNotifications from './components/Admin/AdminNotifications';
 import AdminEmergencyAlert from './components/Admin/AdminEmergencyAlert';
 import AdminReportUser from './components/Admin/AdminReportUser';
 import AdminFeedMain from './components/Admin/AdminFeedMain';
-
+import NotificationsPage from './components/notification/NotificationsPage'; 
 
 export default function App() {
   const [mapSearchTerm, setMapSearchTerm] = useState("");
@@ -59,9 +59,8 @@ export default function App() {
   const [returnToPage, setReturnToPage] = useState('main'); // Track where to return from comments
   const [isAdmin, setIsAdmin] = useState(false);
 
-  // TODO Sprint 2: This will be managed by backend session/auth
   // For now, we track RSVP'd events in local state
-  const [rsvpedEventIds, setRsvpedEventIds] = useState([2, 3]); // Mock: user has RSVP'd to events 2 and 3
+  const [rsvpedEventIds, setRsvpedEventIds] = useState([2, 3]); 
   const [activeCats, setActiveCats] = useState(new Set());
   const [toast, setToast] = useState(null); // { message, type }
 
@@ -172,8 +171,8 @@ export default function App() {
   }, [selectedPostId]);
 
   const navigateTo = (page, entityId = null, returnTo = null) => {
-    // Handle module switches (auth, events, map, settings)
-    if (['auth', 'events', 'map', 'settings', 'feed', 'changePassword', 'privacyPolicy', 'notificationSettings'].includes(page)) {
+    // Handle module switches (auth, events, map, settings) 
+    if (['auth', 'events', 'map', 'settings', 'feed', 'changePassword', 'privacyPolicy', 'notificationSettings','notifications'].includes(page)) {
       setActiveModule(page);
   
       // If navigating to 'auth' without specifying a page, default to 'hellowindow'
@@ -227,7 +226,7 @@ export default function App() {
   };
 
 
-  // Auth Module Rendering ✅
+  // Auth Module Rendering 
   const renderAuthPages = () => {
     switch (currentPage) {
       case 'hellowindow':
@@ -452,6 +451,17 @@ const renderAdminPages = () => {
       </div>
     );
   } 
+  // notifications page
+  if (activeModule === 'notifications') {
+      return (
+        <div className="notifications-wrapper">
+          <NotificationsPage
+            navigateTo={navigateTo}
+            currentUserId={sessionStorage.getItem('userId')} 
+          />
+        </div>
+      );
+    }
 
 
   return null;
@@ -483,6 +493,7 @@ const renderAdminPages = () => {
               { id: 'events', label: 'Events' },
               { id: 'feed', label: 'Feed' },
               { id: 'map', label: 'Campus Map' },
+              { id: 'notifications', label: 'Notifications' },
               { id: 'settings', label: 'Settings' }
             ].map((module) => (
               <button
@@ -529,6 +540,7 @@ const renderAdminPages = () => {
               { id: 'events', label: 'Events' },
               { id: 'feed', label: 'Feed' },
               { id: 'map', label: 'Campus Map' },
+              { id: 'notifications', label: 'Notifications' },
               { id: 'settings', label: 'Settings' }
             ].map((module) => (
               <button
@@ -564,3 +576,4 @@ const renderAdminPages = () => {
     </div>
   );
 }
+
