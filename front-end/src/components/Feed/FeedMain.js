@@ -542,7 +542,15 @@ export default function FeedMain({ navigateTo, isAdmin = false }) {
               />
               <div className="feed-post-author-info">
                 <p className="feed-post-author-name">{post.author.name}</p>
-                <p className="feed-post-timestamp">{post.timestamp}</p>
+                <div className="feed-post-meta">
+                  <p className="feed-post-timestamp">{post.timestamp}</p>
+                  {post.author.email && (
+                    <>
+                      <span className="feed-post-meta-separator">•</span>
+                      <p className="feed-post-author-email">{post.author.email}</p>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
 

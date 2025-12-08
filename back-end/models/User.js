@@ -27,6 +27,13 @@ const UserSchema = new mongoose.Schema({
     type: String,
     default: null,
   },
+  nameChangeHistory: [
+    {
+      firstName: String,
+      lastName: String,
+      changedAt: { type: Date, default: Date.now }
+    }
+  ],
   createdAt: {
     type: Date,
     default: Date.now,

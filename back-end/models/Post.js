@@ -16,6 +16,7 @@ const PostSchema = new mongoose.Schema(
       name: String,
       avatar: String,
       userId: String,
+      email: String,
     },
     isLikedByUser: { type: Boolean, default: false }, // mostly frontend concern
     updatedAt: { type: Date },
