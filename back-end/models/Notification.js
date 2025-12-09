@@ -14,7 +14,9 @@ const NotificationSchema = new Schema(
         'post_like',
         'comment_like',
         'thread_reply',
-        'post_resolved_status'
+        'post_resolved_status',
+        'new_post_in_category',
+        "emergency_alert"
       ],
       required: true
     },

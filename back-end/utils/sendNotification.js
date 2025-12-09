@@ -1,15 +1,6 @@
 const Notification = require('../models/Notification');
+const UserSettings = require('../models/UserSettings'); 
 
-/**
- * Create a notification and save to DB
- * @param {Object} options
- * @param {String} options.recipientId - The user who will receive the notification
- * @param {String} [options.senderId] - The user who triggered the notification
- * @param {String} [options.postId] - Related post ID (optional)
- * @param {String} [options.commentId] - Related comment ID (optional)
- * @param {String} options.type - Type of notification (must match enum in schema)
- * @param {String} options.message - Message to display in the notification
- */
 const sendNotification = async ({
   recipientId,
   senderId,
@@ -20,10 +11,41 @@ const sendNotification = async ({
 }) => {
   try {
     if (!recipientId || !type || !message) {
-        console.error('❌ Missing Fields:', { recipientId, type, message });
-        throw new Error('Missing required fields for notification.');
+      console.error('❌ Missing Fields:', { recipientId, type, message });
+      throw new Error('Missing required fields for notification.');
     }
 
+    // Check user's notification settings
+    const userSettings = await UserSettings.findOne({ user: recipientId });
+
+    // If the user has no notification settings → allow sending by default
+    if (!userSettings) {
+      console.log(`ℹ️ User ${recipientId} has no settings, sending anyway.`);
+    }
+
+    // Map type -> setting key
+    const typeToSettingKey = {
+      comment_like: 'commentReplies',
+      comment_reply: 'commentReplies',
+      post_like: 'commentReplies',
+      new_lostfound_post: 'lostAndFound',
+      new_marketplace_post: 'marketplace',
+      new_roommate_post: 'roommateRequest',
+    };
+
+    const settingKey = typeToSettingKey[type];
+
+    // If this notification corresponds to a toggle and the user has turned it off → don't send
+    if (
+      userSettings?.notifications &&
+      settingKey &&
+      userSettings.notifications[settingKey] === false
+    ) {
+      console.log(`⚠️ User ${recipientId} disabled ${settingKey} notifications.`);
+      return;
+    }
+
+    // send notification
     const notification = new Notification({
       recipientId,
       senderId,
@@ -35,6 +57,7 @@ const sendNotification = async ({
 
     await notification.save();
     console.log('✅ Notification created:', message);
+
   } catch (error) {
     console.error('❌ Failed to create notification:', error.message);
   }

@@ -109,12 +109,15 @@ export default function NotificationsPage({ navigateTo }) {
             <NotificationItem
               key={n._id}
               id={n._id}
+              type={n.type}
+              postId={n.postId}
               message={n.message}
               timestamp={new Date(n.createdAt).toLocaleString()}
               isRead={n.isRead}
               isDeleting={deletingId === n._id}   
               onClick={() => markAsRead(n._id)}
               onDelete={() => deleteNotification(n._id)}
+              navigateTo={navigateTo}
             />
           ))
         )}

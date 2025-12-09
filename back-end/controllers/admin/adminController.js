@@ -5,7 +5,8 @@ const AdminReportUser = require("../../models/AdminReportUser");
 const { jwtSecret, jwtOptions } = require("../../config/jwt-config");
 const jwt = require("jsonwebtoken");
 const User = require("../../models/User");
-
+const UserSettings = require("../../models/UserSettings");
+const sendNotification = require("../../utils/sendNotification"); 
 //settings
 
 // get request for admin
@@ -182,14 +183,38 @@ const createEmergencyAlert = async (req, res) => {
 
     const adminId = req.user.id;
 
+    // Save alert to DB
     const newAlert = await AdminEmergencyAlert.create({
       admin: adminId,
       message: message.trim(),
     });
 
+    // Find users who enabled emergencyAlerts
+    const recipients = await UserSettings.find({
+      "notifications.emergencyAlerts": true,
+    })
+      .select("user")
+      .lean(); // lean() for performance
+
+    // Send notifications to eligible users
+    const notificationPromises = recipients.map((setting) => {
+      const recipientId = setting.user?.toString(); // Ensure it's a string
+      if (!recipientId) return null;
+
+      return sendNotification({
+        recipientId,
+        senderId: adminId,
+        type: "emergency_alert",
+        message: message.trim(),
+      });
+    });
+
+    // Filter out nulls and wait for all notifications to send
+    await Promise.all(notificationPromises.filter(Boolean));
+
     res.status(201).json({
       success: true,
-      message: "Emergency alert created successfully.",
+      message: "Emergency alert created and notifications sent successfully.",
       data: newAlert,
     });
   } catch (error) {

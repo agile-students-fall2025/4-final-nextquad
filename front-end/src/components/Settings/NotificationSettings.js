@@ -6,7 +6,17 @@ export default function NotificationSettings({ navigateTo }) {
   const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // get user preferences 
+  // Set preferred display order (excluding roomReservations)
+  const displayOrder = [
+    "all",
+    "emergencyAlerts",
+    "commentReplies",
+    "lostAndFound",
+    "marketplace",
+    "roommateRequest",
+  ];
+
+  // Get user preferences
   useEffect(() => {
     getUserSettings()
       .then((data) => {
@@ -16,33 +26,29 @@ export default function NotificationSettings({ navigateTo }) {
       .finally(() => setLoading(false));
   }, []);
 
-  // check if all notifications are on
+  // Check if all toggles (excluding 'all' and 'roomReservations') are on
   const allEnabled = settings
     ? Object.entries(settings.notifications)
-        .filter(([key]) => key !== "all")
+        .filter(([key]) => key !== "all" && key !== "roomReservations")
         .every(([_, value]) => value)
     : false;
 
-  // Handle toggling individual notification setting
+  // Toggle individual or all notification settings
   const handleToggle = (key) => {
     if (!settings || !settings.notifications) return;
 
-    // Copy notifications object
     let updatedNotifications = { ...settings.notifications };
 
     if (key === "all") {
-      // Toggle all notifications
       const newValue = !updatedNotifications.all;
       updatedNotifications = Object.fromEntries(
         Object.keys(updatedNotifications).map((k) => [k, newValue])
       );
     } else {
-      // Toggle individual notification
       updatedNotifications[key] = !updatedNotifications[key];
 
-      // Update "all" if all others are true
       const others = Object.entries(updatedNotifications)
-        .filter(([k]) => k !== "all")
+        .filter(([k]) => k !== "all" && k !== "roomReservations")
         .map(([_, v]) => v);
       updatedNotifications.all = others.every(Boolean);
     }
@@ -50,7 +56,7 @@ export default function NotificationSettings({ navigateTo }) {
     setSettings({ ...settings, notifications: updatedNotifications });
   };
 
-  // Save changes when leaving page
+  // Save settings and go back
   const handleBack = async () => {
     try {
       if (settings && settings.notifications) {
@@ -82,19 +88,21 @@ export default function NotificationSettings({ navigateTo }) {
         <h1 className="notification-header">Notification Settings</h1>
 
         <div className="toggle-group">
-          {Object.entries(notifications).map(([key, value]) => (
-            <div key={key} className="toggle-row">
-              <span>{formatLabel(key)}</span>
-              <label className="switch">
-                <input
-                  type="checkbox"
-                  checked={key === "all" ? allEnabled : value}
-                  onChange={() => handleToggle(key)}
-                />
-                <span className="slider"></span>
-              </label>
-            </div>
-          ))}
+          {displayOrder
+            .filter((key) => key in notifications)
+            .map((key) => (
+              <div key={key} className="toggle-row">
+                <span>{formatLabel(key)}</span>
+                <label className="switch">
+                  <input
+                    type="checkbox"
+                    checked={key === "all" ? allEnabled : notifications[key]}
+                    onChange={() => handleToggle(key)}
+                  />
+                  <span className="slider"></span>
+                </label>
+              </div>
+            ))}
         </div>
 
         <button className="back-button" onClick={handleBack}>
@@ -105,15 +113,16 @@ export default function NotificationSettings({ navigateTo }) {
   );
 }
 
-//format buttons to read as user friendly labels
+// Format buttons to user-friendly labels
 function formatLabel(key) {
   const labels = {
     all: "Turn On/Off All",
     emergencyAlerts: "Emergency Alerts",
-    roomReservations: "Room Reservations",
+    roommateRequest: "Roommate Requests",
     commentReplies: "Comment Replies",
     lostAndFound: "Lost & Found",
     marketplace: "Marketplace",
+    // roomReservations excluded
   };
   return labels[key] || key;
 }
