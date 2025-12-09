@@ -29,6 +29,7 @@ jobs:
         run: npm test
         env:
           NODE_ENV: test
+          JWT_SECRET: test_jwt_secret_for_ci_cd_pipeline
           # Add test environment variables if needed
           # MONGODB_URI: ${{ secrets.TEST_MONGODB_URI }}
 
