@@ -122,3 +122,46 @@
 .notification-item.fade-out {
   animation: fadeOut 0.4s ease forwards;
 }
+
+.notification-item.emergency {
+  background-color: #ffe6e6;
+  border-left: 5px solid #d00000;
+  color: #b00000;
+  font-weight: bold;
+}
+
+.notification-item.emergency .notification-message::before {
+  content: "🚨 ";
+  margin-right: 4px;
+}
+
+.notification-link-btn {
+  background: transparent;
+  border: none;
+  color: #6B46C1;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px 8px;
+  margin-left: 8px;
+  transition: color 0.2s ease;
+}
+
+.notification-link-btn:hover {
+  color: #4c2882;
+  text-decoration: underline;
+}
+
+.notification-jump-btn {
+  background-color: #6B46C1;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  padding: 6px 10px;
+  margin-left: 10px;
+  cursor: pointer;
+}
+
+.notification-jump-btn:hover {
+  background-color: #5532a5;
+}

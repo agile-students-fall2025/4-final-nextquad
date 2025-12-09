@@ -7,7 +7,7 @@ const UserSettingsSchema = new Schema(
     notifications: {
       all: { type: Boolean, default: false },
       emergencyAlerts: { type: Boolean, default: false },
-      roomReservations: { type: Boolean, default: false },
+      roommateRequest: { type: Boolean, default: false },
       commentReplies: { type: Boolean, default: false },
       lostAndFound: { type: Boolean, default: false },
       marketplace: { type: Boolean, default: false },

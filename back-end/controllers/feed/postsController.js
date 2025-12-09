@@ -6,6 +6,7 @@ const PostLike = require('../../models/PostLike');
 const PostSave = require('../../models/PostSave');
 const CommentLike = require('../../models/CommentLike');
 const sendNotification = require('../../utils/sendNotification');
+const UserSettings = require('../../models/UserSettings');
 
 // Feed post categories (per UX-DESIGN.md)
 const categories = [
@@ -391,12 +392,9 @@ const createPost = async (req, res) => {
     }
 
     const currentUser = req.user;
-
-    // Fetch freshest user profile to get current name and profileImage
     const userDoc = await User.findById(currentUser.userId).lean();
     const profileImage = userDoc?.profileImage || null;
-    
-    // Check if user has completed profile setup
+
     if (!userDoc?.firstName || !userDoc?.lastName) {
       return res.status(400).json({ 
         success: false, 
@@ -407,20 +405,17 @@ const createPost = async (req, res) => {
 
     const last = await Post.findOne().sort({ id: -1 }).lean();
     const nextId = last ? last.id + 1 : 1;
-    
-    console.log(`Creating new post. Last post ID: ${last?.id || 'none'}, Next ID: ${nextId}`);
 
     const createdAtDate = new Date();
     const authorName = `${userDoc.firstName} ${userDoc.lastName}`;
-    
-    // Handle both single image (backward compatibility) and multiple images
+
     let postImages = [];
     if (images && Array.isArray(images) && images.length > 0) {
       postImages = images;
     } else if (image) {
       postImages = [image];
     }
-    
+
     const doc = await Post.create({
       id: nextId,
       title,
@@ -429,7 +424,7 @@ const createPost = async (req, res) => {
       category,
       likes: 0,
       commentCount: 0,
-      image: postImages.length > 0 ? postImages[0] : null, // Backward compatibility
+      image: postImages.length > 0 ? postImages[0] : null,
       images: postImages,
       author: {
         name: authorName,
@@ -444,7 +439,29 @@ const createPost = async (req, res) => {
       editCount: 0,
     });
 
-    // Add dynamic timestamp for response
+    // Notify eligible users based on category
+    const categoryKeyMap = {
+      'Lost and Found': 'lostAndFound',
+      'Marketplace': 'marketplace',
+      'Roommate Request': 'roommateRequest'
+    };
+
+    const settingKey = categoryKeyMap[category];
+    if (settingKey) {
+      const eligibleUsers = await UserSettings.find({ [`notifications.${settingKey}`]: true }).lean();
+      for (const userSetting of eligibleUsers) {
+        const recipientId = userSetting.user?.toString();
+        if (recipientId) {
+          await sendNotification({
+            type: 'new_post_in_category',
+            recipientId,
+            senderId: currentUser.userId,
+            postId: nextId,
+            message: `A new post was created in ${category}: ${title}`
+          });
+        }
+      }
+    }
     const responseData = doc.toObject();
     responseData.timestamp = formatRelativeTime(new Date(responseData.createdAt));
 

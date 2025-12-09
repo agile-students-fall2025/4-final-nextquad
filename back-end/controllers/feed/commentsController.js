@@ -4,6 +4,7 @@ const User = require('../../models/User');
 const Comment = require('../../models/Comment');
 const Post = require('../../models/Post');
 const CommentLike = require('../../models/CommentLike');
+const UserSettings = require('../../models/UserSettings');
 
 // Enrich a comment with current author info and like state
 const enrichComment = async (comment, currentUserId) => {
@@ -129,14 +130,17 @@ const addComment = async (req, res) => {
         .filter(uid => uid !== currentUser.userId && uid !== postAuthorId)
     )];
     for (const recipientId of uniqueOtherCommenters) {
-      await sendNotification({
-        type: 'thread_reply',
-        recipientId,
-        senderId: currentUser.userId,
-        postId: post.id,
-        commentId: nextId,
-        message: `${authorName} also commented on a post you’re following: ${post.title}`
-      });
+      const setting = await UserSettings.findOne({ user: recipientId }).lean();
+      if (!setting || setting.notifications.commentReplies) {
+        await sendNotification({
+          type: 'thread_reply',
+          recipientId,
+          senderId: currentUser.userId,
+          postId: post.id,
+          commentId: nextId,
+          message: `${authorName} also commented on a post you’re following: ${post.title}`
+        });
+      }
     }
 
     const responseData = doc.toObject();
