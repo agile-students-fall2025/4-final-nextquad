@@ -51,6 +51,7 @@ jobs:
           context: ./back-end
           file: ./back-end/Dockerfile
           push: false
+          load: true
           tags: nextquad-backend:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -61,6 +62,7 @@ jobs:
           context: .
           file: ./front-end/Dockerfile
           push: false
+          load: true
           tags: nextquad-frontend:latest
           build-args: |
             REACT_APP_API_URL=${{ secrets.REACT_APP_API_URL || 'http://localhost:3000/api' }}
