@@ -1,0 +1,157 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, master, task/236/continuous-deployment]
+  pull_request:
+    branches: [main, master, task/236/continuous-deployment]
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: back-end/package-lock.json
+
+      - name: Install backend dependencies
+        working-directory: ./back-end
+        run: npm ci
+
+      - name: Run backend tests
+        working-directory: ./back-end
+        run: npm test
+        env:
+          NODE_ENV: test
+          # Add test environment variables if needed
+          # MONGODB_URI: ${{ secrets.TEST_MONGODB_URI }}
+
+  build:
+    name: Build Docker Images
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/task/236/continuous-deployment')
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build backend Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./back-end
+          file: ./back-end/Dockerfile
+          push: false
+          tags: nextquad-backend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build frontend Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ./front-end/Dockerfile
+          push: false
+          tags: nextquad-frontend:latest
+          build-args: |
+            REACT_APP_API_URL=${{ secrets.REACT_APP_API_URL || 'http://localhost:3000/api' }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Save Docker images
+        run: |
+          docker save nextquad-backend:latest -o backend-image.tar
+          docker save nextquad-frontend:latest -o frontend-image.tar
+
+      - name: Upload Docker images as artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: docker-images
+          path: |
+            backend-image.tar
+            frontend-image.tar
+          retention-days: 1
+
+  deploy:
+    name: Deploy to Digital Ocean
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/task/236/continuous-deployment')
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Download Docker images
+        uses: actions/download-artifact@v3
+        with:
+          name: docker-images
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.7.0
+        with:
+          ssh-private-key: ${{ secrets.DROPLET_SSH_KEY }}
+
+      - name: Add server to known hosts
+        run: |
+          ssh-keyscan -H ${{ secrets.DROPLET_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Copy Docker images to server
+        run: |
+          scp backend-image.tar frontend-image.tar ${{ secrets.DROPLET_USER }}@${{ secrets.DROPLET_HOST }}:/tmp/
+
+      - name: Copy docker-compose.prod.yml to server
+        run: |
+          scp docker-compose.prod.yml ${{ secrets.DROPLET_USER }}@${{ secrets.DROPLET_HOST }}:~/nextquad/docker-compose.yml
+
+      - name: Deploy application
+        run: |
+          ssh ${{ secrets.DROPLET_USER }}@${{ secrets.DROPLET_HOST }} << 'EOF'
+            set -e
+            
+            # Navigate to project directory
+            cd ~/nextquad || mkdir -p ~/nextquad && cd ~/nextquad
+            
+            # Load Docker images
+            docker load -i /tmp/backend-image.tar
+            docker load -i /tmp/frontend-image.tar
+            
+            # Stop existing containers
+            docker-compose down || true
+            
+            # Start new containers (images already loaded, no need to build)
+            docker-compose up -d
+            
+            # Clean up old images
+            docker image prune -f
+            
+            # Clean up temporary files
+            rm -f /tmp/backend-image.tar /tmp/frontend-image.tar
+          EOF
+
+      - name: Verify deployment
+        run: |
+          sleep 15
+          ssh ${{ secrets.DROPLET_USER }}@${{ secrets.DROPLET_HOST }} << 'EOF'
+            # Check if containers are running
+            docker ps | grep nextquad || exit 1
+            
+            # Check container health
+            cd ~/nextquad
+            docker-compose ps
+            
+            # Verify backend is responding
+            sleep 5
+            curl -f http://localhost:3000 || echo "Backend health check failed"
+          EOF
