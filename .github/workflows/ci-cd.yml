@@ -2,9 +2,9 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [main, master, task/236/continuous-deployment]
+    branches: [main, master]
   pull_request:
-    branches: [main, master, task/236/continuous-deployment]
+    branches: [main, master]
 
 jobs:
   test:
