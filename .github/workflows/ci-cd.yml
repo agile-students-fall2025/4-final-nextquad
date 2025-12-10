@@ -2,9 +2,9 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [main, master]
+    branches: [main, master, task/238/db-fix]
   pull_request:
-    branches: [main, master]
+    branches: [main, master, task/238/db-fix]
 
 jobs:
   test:
@@ -84,7 +84,7 @@ jobs:
     name: Deploy to Digital Ocean
     runs-on: ubuntu-latest
     needs: build
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/task/236/continuous-deployment')
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/task/236/continuous-deployment' || github.ref == 'refs/heads/task/238/db-fix')
     
     steps:
       - name: Checkout code
