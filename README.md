@@ -223,7 +223,7 @@ Replace the placeholder values (especially `your_google_maps_api_key_here`) with
 ### Live Application
 
 **Frontend:** [http://68.183.49.36:3002](http://68.183.49.36:3002)  
-**Backend API:** [http://68.183.49.36:3001/api](http://68.183.49.36:3001/api)
+**Backend API:** [http://68.183.49.36:3001](http://68.183.49.36:3001/api)
 
 The application is deployed on a Digital Ocean Droplet using Docker containers with automated CI/CD.
 
