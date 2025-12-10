@@ -75,7 +75,7 @@ jobs:
             ${{ secrets.DOCKERHUB_USERNAME }}/nextquad-frontend:latest
             ${{ secrets.DOCKERHUB_USERNAME }}/nextquad-frontend:${{ github.sha }}
           build-args: |
-            REACT_APP_API_URL=${{ secrets.REACT_APP_API_URL || 'http://localhost:3000/api' }}
+            REACT_APP_API_URL=${{ secrets.REACT_APP_API_URL || 'http://localhost:3001/api' }}
             REACT_APP_GOOGLE_MAPS_API_KEY=${{ secrets.REACT_APP_GOOGLE_MAPS_API_KEY }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -84,7 +84,7 @@ jobs:
     name: Deploy to Digital Ocean
     runs-on: ubuntu-latest
     needs: build
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/task/236/continuous-deployment')
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
     
     steps:
       - name: Checkout code
@@ -143,5 +143,5 @@ jobs:
             
             # Verify backend is responding
             sleep 5
-            curl -f http://localhost:3000 || echo "Backend health check failed"
+            curl -f http://localhost:3001 || echo "Backend health check failed"
           EOF
