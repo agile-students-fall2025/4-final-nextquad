@@ -157,15 +157,19 @@ export default function App() {
   // Fetch selected post details for Feed comments
   useEffect(() => {
     const fetchPostDetails = async () => {
+      console.log('📬 fetchPostDetails useEffect triggered:', { selectedPostId });
       if (selectedPostId) {
         try {
+          console.log('🔍 Fetching post with ID:', selectedPostId);
           const response = await getPostById(selectedPostId);
+          console.log('✅ Post fetched successfully:', response.data);
           setSelectedPost(response.data);
         } catch (error) {
-          console.error('Error fetching post details:', error);
+          console.error('❌ Error fetching post details:', error);
           setSelectedPost(null);
         }
       } else {
+        console.log('⚠️ No selectedPostId, setting selectedPost to null');
         setSelectedPost(null);
       }
     };
@@ -174,6 +178,8 @@ export default function App() {
   }, [selectedPostId]);
 
   const navigateTo = (page, entityId = null, returnTo = null) => {
+    console.log('🚀 navigateTo called:', { page, entityId, returnTo, currentModule: activeModule });
+    
     // Handle module switches (auth, events, map, settings)
     if (['auth', 'events', 'map', 'settings', 'feed', 'changePassword', 'privacyPolicy', 'notificationSettings'].includes(page)) {
       setActiveModule(page);
@@ -196,9 +202,22 @@ export default function App() {
       setPreviousPage(currentPage);
     }
 
-    // If navigating to 'comments', store returnTo page for back navigation
-    if (page === 'comments' && returnTo) {
-      setReturnToPage(returnTo);
+    // If navigating to 'comments', handle module switching and store returnTo page
+    if (page === 'comments') {
+      console.log('📝 Navigating to comments:', { entityId, returnTo, activeModule });
+      if (returnTo) {
+        setReturnToPage(returnTo);
+      }
+      // If coming from notifications or any non-feed module, switch to feed module first
+      if (activeModule !== 'feed' && activeModule !== 'admin') {
+        console.log('🔄 Switching module to feed');
+        setActiveModule('feed');
+      }
+      // Set the post ID and page
+      console.log('✅ Setting selectedPostId and currentPage:', entityId);
+      setSelectedPostId(entityId);
+      setCurrentPage(page);
+      return;
     }
   
     // Default page navigation within a module
@@ -471,7 +490,7 @@ const renderAdminPages = () => {
   if (activeModule === 'notifications') {
     return (
       <div className="notifications-wrapper">
-        <NotificationsPage navigateTo={(page) => setActiveModule(page)} />
+        <NotificationsPage navigateTo={navigateTo} />
       </div>
     );
   }

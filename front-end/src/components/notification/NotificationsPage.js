@@ -18,6 +18,7 @@ export default function NotificationsPage({ navigateTo }) {
       try {
         const res = await fetch(`${process.env.REACT_APP_API_URL}/notifications/${currentUserId}`);
         const data = await res.json();
+        console.log('📬 Fetched notifications:', data);
         setNotifications(data);
       } catch (error) {
         console.error('Error fetching notifications:', error);
