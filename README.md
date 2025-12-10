@@ -258,9 +258,8 @@ The CI/CD pipeline is configured in `.github/workflows/ci-cd.yml` and includes:
 3. **Deploy Job**: Pulls latest images and updates containers on production server
 
 **Workflow Triggers:**
-- Runs on push to `main`, `master`, and feature branches
+- Runs on push to `master`
 - Runs on pull requests for verification
-- Only deploys on push to main branches (not on PRs)
 
 ### Environment Variables
 
