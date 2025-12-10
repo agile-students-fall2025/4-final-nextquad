@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   backend:
-    image: nextquad-backend:latest
+    image: ${DOCKERHUB_USERNAME:-yourusername}/nextquad-backend:latest
     container_name: nextquad-backend
     ports:
       - "3000:3000"
@@ -22,7 +22,7 @@ services:
       start_period: 40s
 
   frontend:
-    image: nextquad-frontend:latest
+    image: ${DOCKERHUB_USERNAME:-yourusername}/nextquad-frontend:latest
     container_name: nextquad-frontend
     ports:
       - "3001:3000"
