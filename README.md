@@ -1,5 +1,7 @@
 # NextQuad
 
+![CI/CD Pipeline](https://github.com/agile-students-fall2025/4-final-nextquad/actions/workflows/ci-cd.yml/badge.svg)
+
 ## Product Vision Statement
 NextQuad is a verified campus community platform that connects NYU students through study space discovery, event management, social feed, and marketplace features, all within a safe, authenticated environment for academic collaboration and campus life.
 
@@ -216,14 +218,81 @@ Replace the placeholder values (especially `your_google_maps_api_key_here`) with
     - [Sprint 4 Backlog](https://github.com/orgs/agile-students-fall2025/projects/40/views/10)
     - [Sprint 4 Task Board](https://github.com/orgs/agile-students-fall2025/projects/40/views/11)
 
+## Deployment
+
+### Live Application
+
+**Frontend:** [http://68.183.49.36:3002](http://68.183.49.36:3002)  
+**Backend API:** [http://68.183.49.36:3001/api](http://68.183.49.36:3001/api)
+
+The application is deployed on a Digital Ocean Droplet using Docker containers with automated CI/CD.
+
+### Deployment Architecture
+
+- **Containerization**: The application is containerized using Docker
+  - Backend runs in a Docker container on port 3001
+  - Frontend runs in a Docker container on port 3002
+  - Images are built and stored in Docker Hub
+  - Production uses `docker-compose.prod.yml` for orchestration
+
+- **Continuous Integration (CI)**: Automated testing via GitHub Actions
+  - Tests run automatically on every push and pull request
+  - Backend tests connect to MongoDB Atlas for integration testing
+  - Build verification ensures Docker images can be created successfully
+  - CI status badge displayed in README shows current build status
+
+- **Continuous Deployment (CD)**: Automated deployment to production
+  - On push to `main`, `master`, or deployment branches:
+    1. Tests run automatically
+    2. Docker images are built and pushed to Docker Hub
+    3. Images are pulled on the Digital Ocean server
+    4. Containers are updated with zero downtime
+  - Deployment is fully automated - no manual steps required
+
+### CI/CD Pipeline
+
+The CI/CD pipeline is configured in `.github/workflows/ci-cd.yml` and includes:
+
+1. **Test Job**: Runs backend tests with MongoDB Atlas connection
+2. **Build Job**: Builds and pushes Docker images to Docker Hub registry
+3. **Deploy Job**: Pulls latest images and updates containers on production server
+
+**Workflow Triggers:**
+- Runs on push to `master`
+- Runs on pull requests for verification
+
+### Environment Variables
+
+Production environment variables are stored securely:
+- **GitHub Secrets**: Used for CI/CD (Docker Hub credentials, MongoDB URI for tests, API URLs)
+- **Server `.env` files**: Stored on Digital Ocean Droplet (never committed to git)
+  - `~/nextquad/back-end/.env` - Contains production MongoDB URI and other secrets
+
+### Deployment Process
+
+1. Developer pushes code to GitHub
+2. GitHub Actions automatically:
+   - Runs tests
+   - Builds Docker images
+   - Pushes images to Docker Hub
+   - Deploys to Digital Ocean server
+3. Server automatically:
+   - Pulls latest images from Docker Hub
+   - Updates running containers
+   - Restarts services with zero downtime
+
 ## Technology Stack
 
 - **Frontend**: React
 - **Backend**: Node.js/Express
-- **Database**: MongoDB
+- **Database**: MongoDB (MongoDB Atlas)
 - **Maps API**: Google Maps JavaScript API & Geocoding API
 - **Authentication**: JWT (JSON Web Tokens)
 - **Password Hashing**: bcryptjs
+- **Containerization**: Docker & Docker Compose
+- **CI/CD**: GitHub Actions
+- **Cloud Hosting**: Digital Ocean Droplet
+- **Container Registry**: Docker Hub
 
 ## License
 This project is licensed under the GNU General Public License v3.0 - see [LICENSE.md](./LICENSE.md)
