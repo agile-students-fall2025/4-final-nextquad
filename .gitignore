@@ -39,8 +39,8 @@ Thumbs.db
 # Typical Node.js artifacts #
 #############################
 
-# Lock file so we don't bloat the git log stats
-package-lock.json
+# Lock file - we commit it for consistent dependency versions in CI/CD
+# package-lock.json
 
 # Logs
 logs

@@ -7,31 +7,21 @@ WORKDIR /app
 COPY front-end/package*.json ./
 
 # Install dependencies
-RUN npm ci
+RUN npm install
 
 # Copy source code
 COPY front-end/ .
-
-# Copy back-end .env to read GOOGLE_MAPS_API_KEY (build context is root directory)
-COPY back-end/.env /tmp/backend.env
 
 # Build arguments for environment variables
 ARG REACT_APP_API_URL=http://localhost:3000/api
 ARG REACT_APP_GOOGLE_MAPS_API_KEY
 
-# Set default environment variables
+# Set environment variables for React build
 ENV REACT_APP_API_URL=$REACT_APP_API_URL
+ENV REACT_APP_GOOGLE_MAPS_API_KEY=$REACT_APP_GOOGLE_MAPS_API_KEY
 
-# Read GOOGLE_MAPS_API_KEY from backend .env if not provided as build arg, then set ENV and build
-RUN if [ -f /tmp/backend.env ] && [ -z "$REACT_APP_GOOGLE_MAPS_API_KEY" ]; then \
-      REACT_APP_GOOGLE_MAPS_API_KEY=$(grep -E '^GOOGLE_MAPS_API_KEY=' /tmp/backend.env | cut -d '=' -f2- | tr -d '"' | tr -d "'" | xargs); \
-      export REACT_APP_GOOGLE_MAPS_API_KEY; \
-    fi && \
-    export REACT_APP_GOOGLE_MAPS_API_KEY=${REACT_APP_GOOGLE_MAPS_API_KEY:-} && \
-    npm run build
-
-# Set environment variable for reference (build already happened above)
-ENV REACT_APP_GOOGLE_MAPS_API_KEY=${REACT_APP_GOOGLE_MAPS_API_KEY:-}
+# Build the React app
+RUN npm run build
 
 # Stage 2: Serve with serve
 FROM node:18-alpine

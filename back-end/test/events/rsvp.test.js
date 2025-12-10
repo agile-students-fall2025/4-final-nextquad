@@ -5,24 +5,8 @@ const {
   getEventRSVPs,
   checkRSVPStatus
 } = require('../../controllers/events/rsvpController');
-const { mockEvents } = require('../../data/events/mockEvents');
 
 describe('RSVP Controller', () => {
-  // Ensure test events have future dates
-  before(() => {
-    const futureDate = new Date();
-    futureDate.setDate(futureDate.getDate() + 7); // 7 days from now
-    const futureDateString = futureDate.toISOString().split('T')[0];
-    
-    // Set event 1 (user's hosted event) to future date
-    if (mockEvents.length > 0) {
-      mockEvents[0].date = futureDateString;
-    }
-    // Set event 4 (for RSVP test) to future date
-    if (mockEvents.length > 3) {
-      mockEvents[3].date = futureDateString;
-    }
-  });
 
   describe('rsvpToEvent', () => {
     it('should successfully RSVP to an event', (done) => {

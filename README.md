@@ -1,5 +1,7 @@
 # NextQuad
 
+![CI/CD Pipeline](https://github.com/agile-students-fall2025/4-final-nextquad/actions/workflows/ci-cd.yml/badge.svg)
+
 ## Product Vision Statement
 NextQuad is a verified campus community platform that connects NYU students through study space discovery, event management, social feed, and marketplace features, all within a safe, authenticated environment for academic collaboration and campus life.
 
