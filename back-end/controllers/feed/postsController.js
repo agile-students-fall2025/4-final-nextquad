@@ -143,7 +143,11 @@ const getAllPosts = async (req, res) => {
     }
     if (search) {
       const regex = new RegExp(search, 'i');
-      query.$or = [{ title: regex }, { content: regex }];
+      query.$or = [
+        { title: regex }, 
+        { content: regex },
+        { 'author.name': regex }
+      ];
     }
 
     // Cursor-based pagination: only fetch posts before the cursor

@@ -43,6 +43,7 @@ export default function NotificationItem({
           className="notification-jump-btn"
           onClick={(e) => {
             e.stopPropagation(); // prevent mark-as-read
+            console.log('🔔 View Post clicked:', { postId, type: typeof postId });
             navigateTo("comments", postId, "notifications");
           }}
         >
