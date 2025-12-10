@@ -1,42 +1,40 @@
-import './AdminDashboard.css';
+import "./AdminDashboard.css";
 
 export default function AdminDashboard({ navigateTo }) {
-
   const handleConfigureNotifications = () => {
-    console.log('Navigate to notifications');
-    navigateTo('adminNotifications');
+    console.log("Navigate to notifications");
+    navigateTo("adminNotifications");
   };
 
   const handleReportUser = () => {
-    console.log('Navigate to report User');
-    navigateTo('adminReportUser');
+    console.log("Navigate to report User");
+    navigateTo("adminReportUser");
   };
 
   const handleFeed = () => {
-    console.log('Navigate to Feed');
-    navigateTo('adminFeed');
+    console.log("Navigate to Feed");
+    navigateTo("adminFeed");
   };
 
   const handleEmergencyAlert = () => {
-    console.log('Navigate to send Alert');
-    navigateTo('adminEmergencyAlert');
+    console.log("Navigate to send Alert");
+    navigateTo("adminEmergencyAlert");
   };
   const handleLogOut = () => {
-    console.log('Logging out');
+    console.log("Logging out");
     // Clear auth data from session storage
-    sessionStorage.removeItem('jwt');
-    sessionStorage.removeItem('user');
-    sessionStorage.removeItem('isAdmin');
-    sessionStorage.removeItem('lastModule');
-    sessionStorage.removeItem('lastPage');
-    sessionStorage.removeItem('lastEventId');
-    sessionStorage.removeItem('lastPostId');
-    navigateTo('auth');
-  }
+    sessionStorage.removeItem("jwt");
+    sessionStorage.removeItem("user");
+    sessionStorage.removeItem("isAdmin");
+    sessionStorage.removeItem("lastModule");
+    sessionStorage.removeItem("lastPage");
+    sessionStorage.removeItem("lastEventId");
+    sessionStorage.removeItem("lastPostId");
+    navigateTo("auth");
+  };
 
   return (
     <div className="settings-container">
-
       <div className="settings-content">
         <h1 className="settings-header">Admin Dashboard</h1>
 

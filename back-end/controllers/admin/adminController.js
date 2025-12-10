@@ -6,7 +6,7 @@ const { jwtSecret, jwtOptions } = require("../../config/jwt-config");
 const jwt = require("jsonwebtoken");
 const User = require("../../models/User");
 const UserSettings = require("../../models/UserSettings");
-const sendNotification = require("../../utils/sendNotification"); 
+const sendNotification = require("../../utils/sendNotification");
 //settings
 
 // get request for admin
@@ -76,6 +76,7 @@ const getAllReports = async (req, res) => {
     // Fetch all reports from the database
     const reports = await AdminReportUser.find()
       .populate("admin", "username email")
+      .populate("username", "username email")
       .sort({ createdAt: -1 });
 
     res.status(200).json({

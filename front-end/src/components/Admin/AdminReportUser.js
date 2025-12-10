@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { getAllReports } from "../../services/api"; 
+import { getAllReports } from "../../services/api";
 import "./AdminReportUser.css";
 
 export default function AdminReportedUsers({ navigateTo }) {
@@ -28,7 +28,6 @@ export default function AdminReportedUsers({ navigateTo }) {
 
     fetchReports();
   }, []);
-
   return (
     <div className="admin-dashboard-container">
       <div className="admin-dashboard-header">
@@ -39,9 +38,7 @@ export default function AdminReportedUsers({ navigateTo }) {
         {loading && <p>Loading reports...</p>}
         {error && <p className="error-text">{error}</p>}
 
-        {!loading && !error && reports.length === 0 && (
-          <p>No reports found.</p>
-        )}
+        {!loading && !error && reports.length === 0 && <p>No reports found.</p>}
 
         {!loading && reports.length > 0 && (
           <table className="reports-table">
@@ -54,14 +51,16 @@ export default function AdminReportedUsers({ navigateTo }) {
               </tr>
             </thead>
             <tbody>
-              {reports.map((report) => (
-                <tr key={report._id}>
-                  <td>{report.username || "N/A"}</td>
-                  <td>{report.admin?.email || "N/A"}</td>
-                  <td>{report.reason}</td>
-                  <td>{new Date(report.createdAt).toLocaleString()}</td>
-                </tr>
-              ))}
+              {reports.map((report) => {
+                return (
+                  <tr key={report._id}>
+                    <td>{report.username?.email || "N/A"}</td>
+                    <td>{report.admin?.email || "N/A"}</td>
+                    <td>{report.reason}</td>
+                    <td>{new Date(report.createdAt).toLocaleString()}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}
