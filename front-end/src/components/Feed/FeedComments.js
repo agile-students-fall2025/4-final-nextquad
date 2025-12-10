@@ -29,8 +29,8 @@ export default function FeedComments({ post, navigateTo, onShowToast, isAdmin = 
   const menuRef = useRef(null);
   const sortMenuRef = useRef(null);
   
-  // Get current user ID from localStorage
-  const userData = localStorage.getItem('user');
+  // Get current user ID from sessionStorage
+  const userData = sessionStorage.getItem('user');
   const currentUserId = userData ? JSON.parse(userData).id : null;
 
   // Update local post state when prop changes
