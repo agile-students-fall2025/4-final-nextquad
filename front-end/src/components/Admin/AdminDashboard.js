@@ -40,9 +40,9 @@ export default function AdminDashboard({ navigateTo }) {
       <div className="settings-content">
         <h1 className="settings-header">Admin Dashboard</h1>
 
-        <button className="settings-button" onClick={handleConfigureNotifications}>
+        {/* <button className="settings-button" onClick={handleConfigureNotifications}>
           Configure Notifications
-        </button>
+        </button> */}
 
         <button className="settings-button" onClick={handleReportUser}>
           Reported Users
